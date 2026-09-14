@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Portal de administración de Neo Seguridad." />
+    <meta name="theme-color" content="#111514" />
+    <meta name="robots" content="noindex" />
+    <title>Portal | Neo Seguridad</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23111514'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Arial,sans-serif'%20font-size='40'%20font-weight='800'%20text-anchor='middle'%20fill='%23b2e7bd'%3EN%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="index.html"><span>NEO</span> Seguridad</a>
+        <a class="btn portal-btn header-cta" href="index.html">Inicio</a>
+      </div>
+    </header>
+
+    <main class="container portal">
+      <section id="login-view" class="login-view section-block">
+        <div class="login-card">
+          <p class="eyebrow">Portal</p>
+          <h1 class="portal-title">Iniciar sesión</h1>
+          <form id="login-form" class="contact-form" action="#">
+            <div class="field">
+              <label for="user">Usuario</label>
+              <input id="user" type="text" name="user" autocomplete="username" required />
+            </div>
+            <div class="field">
+              <label for="pass">Contraseña</label>
+              <input id="pass" type="password" name="pass" autocomplete="current-password" required />
+            </div>
+            <button class="btn" type="submit">Ingresar</button>
+            <p id="login-error" class="login-error" role="alert" hidden></p>
+          </form>
+        </div>
+      </section>
+
+      <section id="panel-view" class="panel-view section-block" hidden>
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Panel administrador</p>
+            <h1 class="portal-title">Clientes potenciales</h1>
+          </div>
+          <button id="logout" class="btn btn-ghost" type="button">Cerrar sesión</button>
+        </div>
+        <div class="requests-wrap">
+          <table class="requests-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Empresa</th>
+                <th>RUT</th>
+                <th>Contacto</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Cámaras</th>
+                <th>Operadores</th>
+                <th>Sitios</th>
+                <th>Solución</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="requests-body"></tbody>
+          </table>
+          <p id="empty-state" class="empty-state">Aún no hay solicitudes registradas.</p>
+        </div>
+
+        <div class="panel-head panel-head-secondary">
+          <div>
+            <p class="eyebrow">Solicitud</p>
+            <h2 class="panel-subtitle">Solicitudes de clientes</h2>
+          </div>
+          <div class="field field-inline">
+            <label for="client-search">Buscar por cliente</label>
+            <input id="client-search" type="search" placeholder="Nombre del cliente" />
+          </div>
+        </div>
+        <div class="requests-wrap">
+          <table class="requests-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Detalle</th>
+                <th>Mensaje</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="client-body"></tbody>
+          </table>
+          <p id="client-empty" class="empty-state">Aún no hay solicitudes de clientes.</p>
+        </div>
+      </section>
+
+      <section id="client-view" class="client-view section-block" hidden>
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Portal cliente</p>
+            <h1 class="portal-title">Solicitudes de servicio</h1>
+            <p class="portal-subtitle">Gestiona tus solicitudes de grabación, cámaras y datos de la instalación.</p>
+          </div>
+          <button id="client-logout" class="btn btn-ghost" type="button">Cerrar sesión</button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Secciones del portal">
+          <button class="tab is-active" type="button" role="tab" data-tab="recording" aria-selected="true">Solicitar grabación</button>
+          <button class="tab" type="button" role="tab" data-tab="cameras" aria-selected="false">Aumento de cámaras</button>
+          <button class="tab" type="button" role="tab" data-tab="data" aria-selected="false">Actualización de datos</button>
+        </div>
+
+        <div class="tab-panel is-active" data-panel="recording">
+          <form id="recording-form" class="contact-form" action="#">
+            <div class="field">
+              <label for="rec-client">Cliente</label>
+              <input id="rec-client" type="text" autocomplete="organization" required />
+            </div>
+            <fieldset class="range-group">
+              <legend>Tiempo estimado</legend>
+              <div class="range-row">
+                <span class="range-label">Desde</span>
+                <div class="range-fields">
+                  <div class="field">
+                    <label for="rec-from-date">Fecha</label>
+                    <input id="rec-from-date" type="date" required />
+                  </div>
+                  <div class="field">
+                    <label for="rec-from-time">Hora</label>
+                    <input id="rec-from-time" type="time" required />
+                  </div>
+                </div>
+              </div>
+              <div class="range-row">
+                <span class="range-label">Hasta</span>
+                <div class="range-fields">
+                  <div class="field">
+                    <label for="rec-to-date">Fecha</label>
+                    <input id="rec-to-date" type="date" required />
+                  </div>
+                  <div class="field">
+                    <label for="rec-to-time">Hora</label>
+                    <input id="rec-to-time" type="time" required />
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+            <div class="field">
+              <label for="rec-message">Descripción del evento</label>
+              <textarea id="rec-message" rows="4" required></textarea>
+            </div>
+            <button class="btn" type="submit">Enviar solicitud</button>
+            <p id="rec-status" class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+
+        <div class="tab-panel" data-panel="cameras" hidden>
+          <form id="cameras-form" class="contact-form" action="#">
+            <div class="field">
+              <label for="cam-client">Cliente</label>
+              <input id="cam-client" type="text" autocomplete="organization" required />
+            </div>
+            <div class="field">
+              <label for="cam-count">Cantidad de cámaras a agregar</label>
+              <input id="cam-count" type="text" inputmode="numeric" pattern="[0-9]*" data-numeric required />
+            </div>
+            <div class="field">
+              <label for="cam-message">Descripción / motivo</label>
+              <textarea id="cam-message" rows="4" required></textarea>
+            </div>
+            <button class="btn" type="submit">Enviar solicitud</button>
+            <p id="cam-status" class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+
+        <div class="tab-panel" data-panel="data" hidden>
+          <form id="data-form" class="contact-form" action="#">
+            <div class="field">
+              <label for="inst-name">Nombre de la instalación</label>
+              <input id="inst-name" type="text" autocomplete="organization" required />
+            </div>
+            <div class="field">
+              <label for="inst-address">Dirección</label>
+              <input id="inst-address" type="text" autocomplete="street-address" required />
+              <a id="maps-link" class="maps-link" href="#" target="_blank" rel="noopener" hidden>Ver en Google Maps</a>
+            </div>
+            <fieldset class="call-list">
+              <legend>Orden a quiénes llamar</legend>
+              <p class="call-list-hint">Solo puedes cambiar el orden, si es guardia y el número.</p>
+              <ol id="call-list" class="call-list-items"></ol>
+            </fieldset>
+            <button class="btn" type="submit">Guardar datos</button>
+            <p id="data-status" class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© <span id="year"></span> Neo Seguridad. Portal interno.</small>
+        <a class="footer-link" href="index.html">Volver al sitio</a>
+      </div>
+    </footer>
+
+    <script>
+      const LEADS_KEY = 'neo_solicitudes';
+      const CLIENT_KEY = 'neo_solicitudes_cliente';
+      const DATA_KEY = 'neo_datos_instalacion';
+      const SESSION_KEY = 'neo_admin_session';
+      const ORDER = ['nuevo', 'proceso', 'atendido'];
+      const CONTACT_NAMES = ['Administrador', 'Jefe de seguridad', 'Supervisor', 'Guardia principal', 'Central de monitoreo'];
+      let contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
+      const STATUS = {
+        nuevo: { label: 'Tomar cliente', className: 'status-nuevo' },
+        proceso: { label: 'En proceso', className: 'status-proceso' },
+        atendido: { label: 'Ya atendido', className: 'status-atendido' },
+      };
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      const loginView = document.getElementById('login-view');
+      const panelView = document.getElementById('panel-view');
+      const clientView = document.getElementById('client-view');
+      const loginForm = document.getElementById('login-form');
+      const loginError = document.getElementById('login-error');
+
+      const session = {
+        get(key) { try { return sessionStorage.getItem(key); } catch (error) { return null; } },
+        set(key, value) { try { sessionStorage.setItem(key, value); } catch (error) {} },
+        remove(key) { try { sessionStorage.removeItem(key); } catch (error) {} },
+      };
+
+      function readStore(key) {
+        try {
+          return JSON.parse(localStorage.getItem(key) || '[]');
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function writeStore(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          /* almacenamiento no disponible */
+        }
+      }
+
+      function formatDateTime(value) {
+        if (!value) return '-';
+        return String(value).replace('T', ' ');
+      }
+
+      function makeStatusButton(item, list, key) {
+        const status = STATUS[item.status] || STATUS.nuevo;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'status-btn ' + status.className;
+        button.textContent = status.label;
+        button.addEventListener('click', () => {
+          const current = Math.max(0, ORDER.indexOf(item.status));
+          item.status = ORDER[(current + 1) % ORDER.length];
+          writeStore(key, list);
+          renderAll();
+        });
+        return button;
+      }
+
+      function renderLeads() {
+        const leads = readStore(LEADS_KEY);
+        const body = document.getElementById('requests-body');
+        const empty = document.getElementById('empty-state');
+        body.innerHTML = '';
+        empty.hidden = leads.length > 0;
+
+        leads.slice().reverse().forEach((lead) => {
+          const row = document.createElement('tr');
+          [
+            ['Fecha', lead.date],
+            ['Empresa', lead.company],
+            ['RUT', lead.rut],
+            ['Contacto', lead.manager],
+            ['Correo', lead.email],
+            ['Teléfono', lead.phone],
+            ['Cámaras', lead.cameras],
+            ['Operadores', lead.operators],
+            ['Sitios', lead.sites],
+            ['Solución', lead.solution],
+          ].forEach(([label, value]) => {
+            const cell = document.createElement('td');
+            cell.dataset.label = label;
+            cell.textContent = value || '-';
+            row.appendChild(cell);
+          });
+          const statusCell = document.createElement('td');
+          statusCell.dataset.label = 'Estado';
+          statusCell.appendChild(makeStatusButton(lead, leads, LEADS_KEY));
+          row.appendChild(statusCell);
+          body.appendChild(row);
+        });
+      }
+
+      function renderClientRequests() {
+        const query = (document.getElementById('client-search').value || '').trim().toLowerCase();
+        const all = readStore(CLIENT_KEY);
+        const list = query
+          ? all.filter((item) => (item.client || '').toLowerCase().includes(query))
+          : all;
+        const body = document.getElementById('client-body');
+        const empty = document.getElementById('client-empty');
+        body.innerHTML = '';
+        empty.hidden = list.length > 0;
+
+        list.slice().reverse().forEach((item) => {
+          const detail = item.type === 'grabacion'
+            ? (item.from
+              ? 'Grabación: desde ' + formatDateTime(item.from) + ' hasta ' + formatDateTime(item.to)
+              : 'Grabación: ' + formatDateTime(item.eventAt))
+            : 'Aumento: ' + (item.cameras || '0') + ' cámara(s)';
+          const row = document.createElement('tr');
+          [
+            ['Fecha', item.date],
+            ['Cliente', item.client],
+            ['Tipo', item.typeLabel],
+            ['Detalle', detail],
+            ['Mensaje', item.message],
+          ].forEach(([label, value]) => {
+            const cell = document.createElement('td');
+            cell.dataset.label = label;
+            cell.textContent = value || '-';
+            row.appendChild(cell);
+          });
+          const statusCell = document.createElement('td');
+          statusCell.dataset.label = 'Estado';
+          statusCell.appendChild(makeStatusButton(item, all, CLIENT_KEY));
+          row.appendChild(statusCell);
+          body.appendChild(row);
+        });
+      }
+
+      function renderAll() {
+        renderLeads();
+        renderClientRequests();
+      }
+
+      function showView(view) {
+        loginView.hidden = view !== 'login';
+        panelView.hidden = view !== 'admin';
+        clientView.hidden = view !== 'cliente';
+        if (view === 'admin') renderAll();
+        if (view === 'cliente') initClientData();
+        if (view === 'login') {
+          loginForm.reset();
+          loginError.hidden = true;
+        }
+      }
+
+      function combineDateTime(dateId, timeId) {
+        const dateValue = document.getElementById(dateId).value;
+        const timeValue = document.getElementById(timeId).value;
+        if (!dateValue) return '';
+        return timeValue ? dateValue + ' ' + timeValue : dateValue;
+      }
+
+      function nowLabel() {
+        const now = new Date();
+        return now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function saveClientRequest(request) {
+        const all = readStore(CLIENT_KEY);
+        all.push(request);
+        writeStore(CLIENT_KEY, all);
+      }
+
+      function updateMapsLink(address) {
+        const link = document.getElementById('maps-link');
+        const value = (address || '').trim();
+        if (value) {
+          link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(value);
+          link.hidden = false;
+        } else {
+          link.hidden = true;
+        }
+      }
+
+      function moveContact(index, direction) {
+        const target = index + direction;
+        if (target < 0 || target >= contacts.length) return;
+        const swap = contacts[index];
+        contacts[index] = contacts[target];
+        contacts[target] = swap;
+        renderCallList();
+      }
+
+      function renderCallList() {
+        const list = document.getElementById('call-list');
+        list.innerHTML = '';
+        contacts.forEach((contact, index) => {
+          const item = document.createElement('li');
+          item.className = 'call-item';
+
+          const order = document.createElement('span');
+          order.className = 'call-order';
+          order.textContent = String(index + 1);
+
+          const name = document.createElement('span');
+          name.className = 'call-name';
+          name.textContent = contact.name;
+
+          const number = document.createElement('input');
+          number.className = 'call-number';
+          number.type = 'tel';
+          number.inputMode = 'tel';
+          number.placeholder = 'Número';
+          number.value = contact.number;
+          number.addEventListener('input', () => { contact.number = number.value; });
+
+          const guardLabel = document.createElement('label');
+          guardLabel.className = 'call-guard';
+          const guard = document.createElement('input');
+          guard.type = 'checkbox';
+          guard.checked = contact.guard;
+          guard.addEventListener('change', () => { contact.guard = guard.checked; });
+          guardLabel.appendChild(guard);
+          guardLabel.appendChild(document.createTextNode('Guardia'));
+
+          const move = document.createElement('span');
+          move.className = 'call-move';
+          const up = document.createElement('button');
+          up.type = 'button';
+          up.textContent = '\u2191';
+          up.setAttribute('aria-label', 'Subir ' + contact.name);
+          up.disabled = index === 0;
+          up.addEventListener('click', () => moveContact(index, -1));
+          const down = document.createElement('button');
+          down.type = 'button';
+          down.textContent = '\u2193';
+          down.setAttribute('aria-label', 'Bajar ' + contact.name);
+          down.disabled = index === contacts.length - 1;
+          down.addEventListener('click', () => moveContact(index, 1));
+          move.append(up, down);
+
+          item.append(order, name, number, guardLabel, move);
+          list.appendChild(item);
+        });
+      }
+
+      function initClientData() {
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(DATA_KEY) || 'null');
+        } catch (error) {
+          saved = null;
+        }
+        if (saved && Array.isArray(saved.contacts) && saved.contacts.length) {
+          contacts = saved.contacts.map((item) => ({ name: item.name, number: item.number || '', guard: !!item.guard }));
+          document.getElementById('inst-name').value = saved.installation || '';
+          document.getElementById('inst-address').value = saved.address || '';
+          updateMapsLink(saved.address || '');
+        } else {
+          document.getElementById('inst-name').value = '';
+          document.getElementById('inst-address').value = '';
+          updateMapsLink('');
+        }
+        renderCallList();
+      }
+
+      loginForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const user = document.getElementById('user').value.trim();
+        const pass = document.getElementById('pass').value;
+        if (user === 'admin' && pass === 'admin123') {
+          session.set(SESSION_KEY, 'admin');
+          showView('admin');
+        } else if (user === 'cliente' && pass === 'cliente') {
+          session.set(SESSION_KEY, 'cliente');
+          showView('cliente');
+        } else {
+          loginError.textContent = 'Usuario o contraseña incorrectos.';
+          loginError.hidden = false;
+        }
+      });
+
+      document.getElementById('logout').addEventListener('click', () => {
+        session.remove(SESSION_KEY);
+        showView('login');
+      });
+      document.getElementById('client-logout').addEventListener('click', () => {
+        session.remove(SESSION_KEY);
+        showView('login');
+      });
+
+      document.getElementById('client-search').addEventListener('input', renderClientRequests);
+
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((item) => {
+            const active = item === tab;
+            item.classList.toggle('is-active', active);
+            item.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+          document.querySelectorAll('.tab-panel').forEach((panel) => {
+            panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+          });
+        });
+      });
+
+      document.querySelectorAll('[data-numeric]').forEach((input) => {
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/\D/g, '');
+        });
+      });
+
+      document.getElementById('recording-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        saveClientRequest({
+          id: Date.now(),
+          date: nowLabel(),
+          client: document.getElementById('rec-client').value.trim(),
+          type: 'grabacion',
+          typeLabel: 'Grabación',
+          from: combineDateTime('rec-from-date', 'rec-from-time'),
+          to: combineDateTime('rec-to-date', 'rec-to-time'),
+          message: document.getElementById('rec-message').value.trim(),
+          status: 'nuevo',
+        });
+        const status = document.getElementById('rec-status');
+        status.textContent = 'Solicitud de grabación enviada correctamente.';
+        status.hidden = false;
+        event.target.reset();
+      });
+
+      document.getElementById('cameras-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        saveClientRequest({
+          id: Date.now(),
+          date: nowLabel(),
+          client: document.getElementById('cam-client').value.trim(),
+          type: 'camaras',
+          typeLabel: 'Aumento de cámaras',
+          cameras: document.getElementById('cam-count').value.trim(),
+          message: document.getElementById('cam-message').value.trim(),
+          status: 'nuevo',
+        });
+        const status = document.getElementById('cam-status');
+        status.textContent = 'Solicitud de aumento de cámaras enviada correctamente.';
+        status.hidden = false;
+        event.target.reset();
+      });
+
+      document.getElementById('inst-address').addEventListener('input', (event) => {
+        updateMapsLink(event.target.value);
+      });
+
+      document.getElementById('data-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        writeStore(DATA_KEY, {
+          installation: document.getElementById('inst-name').value.trim(),
+          address: document.getElementById('inst-address').value.trim(),
+          contacts: contacts.map((item) => ({ name: item.name, number: item.number, guard: item.guard })),
+          updatedAt: nowLabel(),
+        });
+        const status = document.getElementById('data-status');
+        status.textContent = 'Datos actualizados correctamente.';
+        status.hidden = false;
+      });
+
+      const activeSession = session.get(SESSION_KEY);
+      if (activeSession === 'admin' || activeSession === 'cliente') {
+        showView(activeSession);
+      } else {
+        showView('login');
+      }
+    </script>
+  </body>
+</html>
