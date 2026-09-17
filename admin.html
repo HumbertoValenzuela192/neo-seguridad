@@ -81,7 +81,10 @@
               <div class="calc dash-block">
                 <div class="agenda-head">
                   <h2 class="panel-subtitle">Resumen del día</h2>
-                  <button id="summary-listen" class="btn btn-sm" type="button">Escuchar resumen</button>
+                  <div class="summary-actions">
+                    <select id="summary-voice" class="price-input" aria-label="Voz"></select>
+                    <button id="summary-listen" class="btn btn-sm" type="button">Escuchar resumen</button>
+                  </div>
                 </div>
                 <p id="summary-text" class="summary-text"></p>
               </div>
@@ -307,6 +310,7 @@
                   <div class="field">
                     <label for="s-afp">AFP</label>
                     <select id="s-afp"></select>
+                    <span class="field-hint">10% obligatorio + comisión de la AFP</span>
                   </div>
                   <div class="field">
                     <label for="s-salud">Salud</label>
@@ -314,6 +318,7 @@
                       <option value="fonasa">Fonasa (7%)</option>
                       <option value="isapre">Isapre (plan en UF)</option>
                     </select>
+                    <span class="field-hint">Fonasa 7% · Isapre: el mayor entre 7% y el plan</span>
                   </div>
                   <div class="field" id="s-plan-field" hidden>
                     <label for="s-plan">Plan Isapre (UF)</label>
@@ -326,6 +331,7 @@
                   <div class="field">
                     <label for="s-cesantia">Seguro cesantía (%)</label>
                     <input id="s-cesantia" type="text" inputmode="decimal" value="0,6" />
+                    <span class="field-hint">0,6% contrato indefinido · 0% plazo fijo</span>
                   </div>
                   <div class="field">
                     <label for="s-jornada">Jornada semanal (horas)</label>
@@ -336,14 +342,21 @@
                     <input id="s-utm" type="text" inputmode="numeric" value="0" />
                   </div>
                 </div>
+                <div class="rate-summary">
+                  <span>Tasa de descuento total (AFP + salud + cesantía)</span>
+                  <strong id="s-rate">0%</strong>
+                </div>
                 <div class="price-actions">
                   <button id="s-update" class="btn btn-ghost" type="button">Actualizar UF/UTM</button>
+                  <button id="s-reset" class="btn btn-ghost" type="button">Restablecer valores</button>
                   <p id="s-status" class="uf-status" role="status" aria-live="polite"></p>
                 </div>
               </div>
 
               <div class="calc calc-subtitle">
                 <h2 class="panel-subtitle">Agregar operador</h2>
+
+                <h3 class="calc-subheading">Datos personales</h3>
                 <div class="calc-grid">
                   <div class="field">
                     <label for="op-name">Nombre</label>
@@ -353,6 +366,10 @@
                     <label for="op-cargo">Cargo</label>
                     <input id="op-cargo" type="text" placeholder="Ej: Operador, Supervisor" />
                   </div>
+                </div>
+
+                <h3 class="calc-subheading">Remuneración</h3>
+                <div class="calc-grid">
                   <div class="field">
                     <label for="op-base">Sueldo base (CLP)</label>
                     <input id="op-base" type="text" inputmode="numeric" placeholder="0" />
@@ -374,8 +391,15 @@
                     <input id="op-liquid" type="text" inputmode="numeric" placeholder="Autocompleta el sueldo base" />
                   </div>
                 </div>
+
+                <div class="rate-summary">
+                  <span>Sueldo líquido estimado</span>
+                  <strong id="op-preview">$0</strong>
+                </div>
+
                 <div class="price-actions">
                   <button id="salary-add" class="btn" type="button">Agregar operador</button>
+                  <button id="salary-clear" class="btn btn-ghost" type="button">Limpiar</button>
                   <p id="salary-status" class="uf-status" role="status" aria-live="polite"></p>
                 </div>
               </div>
@@ -1262,6 +1286,33 @@
         const isapre = salaryParams.salud === 'isapre';
         document.getElementById('s-plan-field').hidden = !isapre;
         document.getElementById('s-uf-field').hidden = !isapre;
+        updateRate();
+      }
+
+      function updateRate() {
+        const afpKey = salaryParams.afp || 'capital';
+        const comision = AFP_COMISIONES[afpKey] ? AFP_COMISIONES[afpKey].comision : 0;
+        const afpRate = 10 + comision;
+        const saludRate = 7;
+        const cesantia = parseUf(salaryParams.cesantia);
+        const total = afpRate + saludRate + cesantia;
+        const el = document.getElementById('s-rate');
+        if (el) el.textContent = total.toFixed(2).replace('.', ',') + '%';
+      }
+
+      function previewSalary() {
+        const el = document.getElementById('op-preview');
+        if (!el) return;
+        const result = computeOperator({
+          base: salaryForm.base.value,
+          otros: salaryForm.otros.value,
+          noImponibles: salaryForm.noImponibles.value,
+          horasExtra: '',
+          diasTrabajados: '30',
+          horasAtraso: '',
+          gratificacion: salaryForm.grat.value,
+        });
+        el.textContent = formatClp(result.liquido);
       }
 
       function renderSalaryList() {
@@ -1531,6 +1582,7 @@
       function renderSalary() {
         renderSalaryParams();
         renderSalaryList();
+        previewSalary();
       }
 
       function dateKey(date) {
@@ -1613,12 +1665,34 @@
         el.textContent = daySummary(agendaDate);
       }
 
+      function populateVoices() {
+        const select = document.getElementById('summary-voice');
+        if (!select || !('speechSynthesis' in window)) return;
+        const all = window.speechSynthesis.getVoices();
+        const spanish = all.filter((voice) => /^es/i.test(voice.lang));
+        const list = spanish.length ? spanish : all;
+        select.innerHTML = '';
+        list.forEach((voice) => {
+          const option = document.createElement('option');
+          option.value = voice.name;
+          option.textContent = voice.name + ' (' + voice.lang + ')';
+          select.appendChild(option);
+        });
+      }
+
       function speakSummary() {
         const el = document.getElementById('summary-text');
         if (!el || !('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(el.textContent);
         utterance.lang = 'es-CL';
+        const select = document.getElementById('summary-voice');
+        if (select && select.value) {
+          const chosen = window.speechSynthesis.getVoices().find((voice) => voice.name === select.value);
+          if (chosen) utterance.voice = chosen;
+        }
+        utterance.rate = 1;
+        utterance.pitch = 1;
         window.speechSynthesis.speak(utterance);
       }
 
@@ -2243,6 +2317,11 @@
 
       document.getElementById('summary-listen').addEventListener('click', speakSummary);
 
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = populateVoices;
+      }
+      populateVoices();
+
       document.getElementById('price-add').addEventListener('click', () => {
         prices.push({ qty: '', price: '' });
         renderPrices();
@@ -2305,6 +2384,7 @@
           salaryParams[field] = event.target.value;
           writeStore(SALARY_PARAMS_KEY, salaryParams);
           renderSalaryList();
+          updateRate();
         });
       });
 
@@ -2312,10 +2392,18 @@
         salaryParams.afp = event.target.value;
         writeStore(SALARY_PARAMS_KEY, salaryParams);
         renderSalaryList();
+        updateRate();
       });
 
       document.getElementById('s-salud').addEventListener('change', (event) => {
         salaryParams.salud = event.target.value;
+        writeStore(SALARY_PARAMS_KEY, salaryParams);
+        renderSalaryParams();
+        renderSalaryList();
+      });
+
+      document.getElementById('s-reset').addEventListener('click', () => {
+        salaryParams = Object.assign({}, DEFAULT_SALARY_PARAMS);
         writeStore(SALARY_PARAMS_KEY, salaryParams);
         renderSalaryParams();
         renderSalaryList();
@@ -2347,6 +2435,17 @@
         const grat = Math.round(base * 0.25);
         salaryForm.base.value = liquid > 0 ? String(base) : '';
         salaryForm.grat.value = liquid > 0 ? String(grat) : '';
+        previewSalary();
+      });
+
+      Object.keys(salaryForm).forEach((key) => {
+        salaryForm[key].addEventListener('input', previewSalary);
+      });
+
+      document.getElementById('salary-clear').addEventListener('click', () => {
+        Object.keys(salaryForm).forEach((key) => { salaryForm[key].value = ''; });
+        document.getElementById('salary-status').textContent = '';
+        previewSalary();
       });
 
       document.getElementById('salary-print-all').addEventListener('click', printAllLiquidations);
@@ -2371,6 +2470,7 @@
         salaryOperators.push(operator);
         writeStore(SALARY_KEY, salaryOperators);
         Object.keys(salaryForm).forEach((field) => { salaryForm[field].value = ''; });
+        previewSalary();
         const status = document.getElementById('salary-status');
         status.textContent = 'Operador agregado.';
         renderSalaryList();

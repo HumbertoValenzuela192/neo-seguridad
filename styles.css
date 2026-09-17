@@ -259,6 +259,8 @@ h3 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: -0.055em; l
 .stat-label { display: block; color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em; }
 .stat-value { display: block; margin-top: 0.5rem; color: var(--accent-bright); font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.04em; }
 .summary-text { margin: 1rem 0 0; color: var(--muted); font-size: 1rem; line-height: 1.7; }
+.summary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.summary-actions select { max-width: 260px; }
 .dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.5rem; align-items: start; }
 .dash-chart { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 40px; align-items: center; gap: 0.85rem; }
@@ -321,6 +323,10 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 /* Calculator */
 .calc { margin-top: 1.75rem; padding: clamp(1.4rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .calc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.calc-subheading { margin: 1.5rem 0 0.85rem; color: #fff7ee; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+.field-hint { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 0.72rem; line-height: 1.4; }
+.rate-summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; padding: 0.9rem 1.1rem; border: 1px solid rgba(127, 202, 145, 0.45); border-radius: 10px; background: rgba(127, 202, 145, 0.1); color: var(--muted); font-size: 0.9rem; }
+.rate-summary strong { color: var(--accent-bright); font-size: 1.35rem; font-weight: 800; }
 .calc-expenses { margin: 1.5rem 0 0; padding: 0; border: 0; }
 .calc-expenses legend { margin-bottom: 0.7rem; padding: 0; color: var(--ink); font-size: 0.88rem; font-weight: 700; }
 .calc-expense-list { display: grid; gap: 0.6rem; margin-bottom: 0.85rem; }
