@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
     <header class="site-header">
       <div class="container header-inner">
         <a class="logo" href="index.html"><span>NEO</span> Seguridad</a>
@@ -18,7 +19,7 @@
       </div>
     </header>
 
-    <main class="container portal">
+    <main id="main" class="container portal">
       <section id="login-view" class="login-view section-block">
         <div class="login-card">
           <p class="eyebrow">Portal</p>
@@ -1725,7 +1726,7 @@
           track.className = 'bar-track';
           const fill = document.createElement('div');
           fill.className = 'bar-fill';
-          fill.style.width = Math.round((value / max) * 100) + '%';
+          fill.style.transform = 'scaleX(' + (value / max) + ')';
           track.appendChild(fill);
           const count = document.createElement('span');
           count.className = 'bar-value';
@@ -2356,7 +2357,7 @@
 
       document.getElementById('uf-refresh').addEventListener('click', () => {
         const status = document.getElementById('uf-status');
-        status.textContent = 'Consultando la UF...';
+        status.textContent = 'Consultando la UF…';
         fetch('https://mindicador.cl/api/uf')
           .then((response) => response.json())
           .then((data) => {
@@ -2478,7 +2479,7 @@
 
       document.getElementById('s-update').addEventListener('click', () => {
         const status = document.getElementById('s-status');
-        status.textContent = 'Consultando UF/UTM...';
+        status.textContent = 'Consultando UF/UTM…';
         fetch('https://mindicador.cl/api')
           .then((response) => response.json())
           .then((data) => {

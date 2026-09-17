@@ -21,9 +21,9 @@ body::before {
 .tigrr-hero { overflow: hidden; }
 .tigrr-hero-inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: clamp(2.5rem, 7vw, 6rem); padding-block: clamp(3.5rem, 9vw, 7rem); }
 .tigrr-brand { display: inline-block; color: var(--accent); font-size: 1rem; font-weight: 800; letter-spacing: 0.32em; }
-.tigrr-hero h1 { margin: 1rem 0 0; color: #fff7ee; font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 750; letter-spacing: -0.055em; line-height: 1; }
+.tigrr-hero h1 { margin: 1rem 0 0; color: #fff7ee; font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 750; letter-spacing: -0.04em; line-height: 1; }
 .tigrr-lead { max-width: 34rem; margin: 1.5rem 0 0; color: var(--muted); font-size: clamp(1.05rem, 1.6vw, 1.2rem); line-height: 1.6; }
-.tigrr-claim { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 3px solid var(--accent); color: var(--accent-bright); font-weight: 700; }
+.tigrr-claim { margin: 1.5rem 0 0; padding: 0.85rem 1.1rem; border-radius: 12px; background: rgba(242, 113, 28, 0.14); color: var(--accent-bright); font-weight: 700; }
 .tigrr-actions { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 2rem; }
 .tigrr-visual { display: grid; justify-items: center; gap: 0.5rem; }
 .tigrr-logo { width: min(100%, 420px); height: auto; border-radius: 28px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45); }
@@ -68,7 +68,7 @@ body::before {
 .t-funnel { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 6vw, 4rem); margin-top: 2.5rem; }
 .t-funnel-steps { display: grid; gap: 1rem; justify-items: center; }
 .t-funnel-step { width: 100%; padding: 1.1rem 1.4rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.t-funnel-step strong { display: block; color: #fff7ee; font-size: 1.05rem; letter-spacing: 0.03em; text-transform: uppercase; }
+.t-funnel-step strong { display: block; color: #fff7ee; font-size: 1.05rem; letter-spacing: 0.01em; }
 .t-funnel-step span { color: var(--muted); font-size: 0.95rem; }
 .t-funnel-step.s1 { width: 70%; }
 .t-funnel-step.s2 { width: 82%; background: rgba(242, 113, 28, 0.08); }
@@ -95,7 +95,7 @@ body::before {
 .t-note { margin: 0.8rem 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
 
 .t-tags { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
-.t-tags span { padding: 0.6rem 1.1rem; border: 1px solid rgba(242, 113, 28, 0.45); border-radius: 999px; background: rgba(242, 113, 28, 0.08); color: var(--accent-bright); font-size: 0.82rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.t-tags span { padding: 0.6rem 1.1rem; border: 1px solid rgba(242, 113, 28, 0.45); border-radius: 999px; background: rgba(242, 113, 28, 0.08); color: var(--accent-bright); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.01em; }
 .t-tag-highlight { background: var(--accent) !important; color: #1a0f06 !important; }
 
 .t-close { text-align: center; }
@@ -110,6 +110,15 @@ body::before {
 .video-play { position: relative; width: 74px; height: 74px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 10px rgba(242, 113, 28, 0.18); }
 .video-play::before { position: absolute; top: 50%; left: 54%; border-style: solid; border-width: 12px 0 12px 20px; border-color: transparent transparent transparent #1a0f06; content: ""; transform: translate(-50%, -50%); }
 .video-note { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; }
+
+/* Glassmorphism */
+.t-card, .t-flow-card, .t-cycle-card, .t-compare-card, .t-result, .t-funnel-step, .video-frame {
+  background: linear-gradient(155deg, rgba(242, 113, 28, 0.12), rgba(255, 255, 255, 0.02) 62%);
+  border-color: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
 
 @media (max-width: 960px) {
   .nav { background: rgba(20, 15, 22, 0.98); }

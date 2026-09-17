@@ -25,8 +25,10 @@
     <meta name="twitter:image" content="https://TU-DOMINIO.com/a2791a37-6fe2-413d-9f5a-526532134dcc.jpg" />
     -->
     <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://flagcdn.com" crossorigin />
   </head>
   <body>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
     <header class="site-header">
       <div class="container header-inner">
         <h1 class="logo"><span>NEO</span> Seguridad</h1>
@@ -39,7 +41,7 @@
             <a href="#contacto">Contacto</a>
           </nav>
           <span class="country-badge" id="country-badge" hidden>
-            <img class="country-flag" id="country-flag" alt="" width="20" height="15" />
+            <img class="country-flag" id="country-flag" alt="" width="20" height="15" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
             <span id="country-name"></span>
           </span>
           <a class="btn portal-btn" href="admin.html">Portal</a>
@@ -53,6 +55,7 @@
     </header>
 
     <section class="hero" aria-labelledby="hero-title">
+      <div class="threads-bg" id="threads-bg" aria-hidden="true"></div>
       <div class="container hero-content">
         <div class="hero-copy">
           <p class="eyebrow">NEO Seguridad</p>
@@ -66,7 +69,7 @@
       </div>
     </section>
 
-    <main class="container">
+    <main id="main" class="container">
       <section id="arquitectura" class="architecture section-block">
         <div class="section-intro">
           <p class="eyebrow">Arquitectura</p>
@@ -225,7 +228,7 @@
           </div>
           <div class="field">
             <label for="email">Correo corporativo</label>
-            <input id="email" type="email" name="email" autocomplete="email" required />
+            <input id="email" type="email" name="email" autocomplete="email" spellcheck="false" required />
           </div>
           <div class="field">
             <label for="phone">Teléfono</label>
@@ -398,6 +401,366 @@
         }, { threshold: 0.16 });
         revealItems.forEach((item) => revealObserver.observe(item));
       }
+    </script>
+
+    <script>
+      (function () {
+        var container = document.getElementById('threads-bg');
+        if (!container) return;
+
+        function hexToVec3(hex) {
+          var h = hex.replace('#', '');
+          return [
+            parseInt(h.slice(0, 2), 16) / 255,
+            parseInt(h.slice(2, 4), 16) / 255,
+            parseInt(h.slice(4, 6), 16) / 255
+          ];
+        }
+
+        var reduceMotion = false;
+        try {
+          reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (error) {
+          reduceMotion = false;
+        }
+
+        function useFallback() {
+          container.classList.add('is-fallback');
+          var existing = container.querySelector('canvas');
+          if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+        }
+
+        if (reduceMotion) {
+          useFallback();
+          return;
+        }
+
+        const vertexShader = `
+attribute vec2 uv;
+attribute vec2 position;
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position, 0, 1);
+}
+`;
+
+        const fragmentShader = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform float iTime;
+uniform vec3 iResolution;
+uniform vec3 uColor;
+uniform float uAmplitude;
+uniform float uDistance;
+uniform vec2 uMouse;
+
+#define PI 3.1415926538
+
+const int u_line_count = 40;
+const float u_line_width = 7.0;
+const float u_line_blur = 10.0;
+
+float Perlin2D(vec2 P) {
+    vec2 Pi = floor(P);
+    vec4 Pf_Pfmin1 = P.xyxy - vec4(Pi, Pi + 1.0);
+    vec4 Pt = vec4(Pi.xy, Pi.xy + 1.0);
+    Pt = Pt - floor(Pt * (1.0 / 71.0)) * 71.0;
+    Pt += vec2(26.0, 161.0).xyxy;
+    Pt *= Pt;
+    Pt = Pt.xzxz * Pt.yyww;
+    vec4 hash_x = fract(Pt * (1.0 / 951.135664));
+    vec4 hash_y = fract(Pt * (1.0 / 642.949883));
+    vec4 grad_x = hash_x - 0.49999;
+    vec4 grad_y = hash_y - 0.49999;
+    vec4 grad_results = inversesqrt(grad_x * grad_x + grad_y * grad_y)
+        * (grad_x * Pf_Pfmin1.xzxz + grad_y * Pf_Pfmin1.yyww);
+    grad_results *= 1.4142135623730950;
+    vec2 blend = Pf_Pfmin1.xy * Pf_Pfmin1.xy * Pf_Pfmin1.xy
+               * (Pf_Pfmin1.xy * (Pf_Pfmin1.xy * 6.0 - 15.0) + 10.0);
+    vec4 blend2 = vec4(blend, vec2(1.0 - blend));
+    return dot(grad_results, blend2.zxzx * blend2.wwyy);
+}
+
+float pixel(float count, vec2 resolution) {
+    return (1.0 / max(resolution.x, resolution.y)) * count;
+}
+
+float lineFn(vec2 st, float width, float perc, float offset, vec2 mouse, float time, float amplitude, float distance) {
+    float split_offset = (perc * 0.4);
+    float split_point = 0.1 + split_offset;
+
+    float amplitude_normal = smoothstep(split_point, 0.7, st.x);
+    float amplitude_strength = 0.5;
+    float finalAmplitude = amplitude_normal * amplitude_strength
+                           * amplitude * (1.0 + (mouse.y - 0.5) * 0.2);
+
+    float time_scaled = time / 10.0 + (mouse.x - 0.5) * 1.0;
+    float blur = smoothstep(split_point, split_point + 0.05, st.x) * perc;
+
+    float xnoise = mix(
+        Perlin2D(vec2(time_scaled, st.x + perc) * 2.5),
+        Perlin2D(vec2(time_scaled, st.x + time_scaled) * 3.5) / 1.5,
+        st.x * 0.3
+    );
+
+    float y = 0.5 + (perc - 0.5) * distance + xnoise / 2.0 * finalAmplitude;
+
+    float line_start = smoothstep(
+        y + (width / 2.0) + (u_line_blur * pixel(1.0, iResolution.xy) * blur),
+        y,
+        st.y
+    );
+
+    float line_end = smoothstep(
+        y,
+        y - (width / 2.0) - (u_line_blur * pixel(1.0, iResolution.xy) * blur),
+        st.y
+    );
+
+    return clamp(
+        (line_start - line_end) * (1.0 - smoothstep(0.0, 1.0, pow(perc, 0.3))),
+        0.0,
+        1.0
+    );
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 uv = fragCoord / iResolution.xy;
+
+    float line_strength = 1.0;
+    for (int i = 0; i < u_line_count; i++) {
+        float p = float(i) / float(u_line_count);
+        line_strength *= (1.0 - lineFn(
+            uv,
+            u_line_width * pixel(1.0, iResolution.xy) * (1.0 - p),
+            p,
+            (PI * 1.0) * p,
+            uMouse,
+            iTime,
+            uAmplitude,
+            uDistance
+        ));
+    }
+
+    float colorVal = 1.0 - line_strength;
+    fragColor = vec4(uColor * colorVal, colorVal);
+}
+
+void main() {
+    mainImage(gl_FragColor, gl_FragCoord.xy);
+}
+`;
+
+        var canvas = document.createElement('canvas');
+        var contextAttributes = {
+          alpha: true,
+          premultipliedAlpha: false,
+          antialias: false,
+          depth: false,
+          stencil: false,
+          powerPreference: 'low-power'
+        };
+        var gl = null;
+        try {
+          gl = canvas.getContext('webgl', contextAttributes) || canvas.getContext('experimental-webgl', contextAttributes);
+        } catch (error) {
+          gl = null;
+        }
+        if (!gl) {
+          useFallback();
+          return;
+        }
+
+        function compileShader(type, source) {
+          var shader = gl.createShader(type);
+          if (!shader) return null;
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            gl.deleteShader(shader);
+            return null;
+          }
+          return shader;
+        }
+
+        var vs = compileShader(gl.VERTEX_SHADER, vertexShader);
+        var fs = compileShader(gl.FRAGMENT_SHADER, fragmentShader);
+        var program = gl.createProgram();
+        if (!vs || !fs || !program) {
+          useFallback();
+          return;
+        }
+        gl.attachShader(program, vs);
+        gl.attachShader(program, fs);
+        gl.bindAttribLocation(program, 0, 'position');
+        gl.bindAttribLocation(program, 1, 'uv');
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          useFallback();
+          return;
+        }
+        gl.useProgram(program);
+        gl.deleteShader(vs);
+        gl.deleteShader(fs);
+
+        var positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+        var uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 2, 0, 0, 2]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+
+        var uTime = gl.getUniformLocation(program, 'iTime');
+        var uResolution = gl.getUniformLocation(program, 'iResolution');
+        var uColor = gl.getUniformLocation(program, 'uColor');
+        var uAmplitude = gl.getUniformLocation(program, 'uAmplitude');
+        var uDistance = gl.getUniformLocation(program, 'uDistance');
+        var uMouse = gl.getUniformLocation(program, 'uMouse');
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        container.appendChild(canvas);
+
+        var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function (cb) {
+          return window.setTimeout(function () { cb(Date.now()); }, 16);
+        };
+        var caf = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.clearTimeout;
+
+        var isTouch = false;
+        var smallScreenQuery = null;
+        try {
+          isTouch = window.matchMedia('(pointer: coarse)').matches;
+          smallScreenQuery = window.matchMedia('(max-width: 760px)');
+        } catch (error) {
+          isTouch = false;
+          smallScreenQuery = null;
+        }
+
+        function isSmallScreen() {
+          return smallScreenQuery ? smallScreenQuery.matches : window.innerWidth <= 760;
+        }
+
+        var mouse = [0.5, 0.5];
+        var targetMouse = [0.5, 0.5];
+        var animationFrameId = 0;
+
+        function handleMouseMove(event) {
+          var rect = container.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          targetMouse[0] = (event.clientX - rect.left) / rect.width;
+          targetMouse[1] = 1.0 - (event.clientY - rect.top) / rect.height;
+        }
+        function handleMouseLeave() {
+          targetMouse[0] = 0.5;
+          targetMouse[1] = 0.5;
+        }
+
+        // Cap the internal render resolution so high-DPI phones don't push the
+        // per-pixel Perlin shader past what a mobile GPU can keep at 60fps.
+        function resize() {
+          var width = container.clientWidth;
+          var height = container.clientHeight;
+          if (!width || !height) return;
+          var baseDpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2);
+          var maxRenderDim = isSmallScreen() ? 1280 : 1920;
+          var longestSide = Math.max(width, height) * baseDpr;
+          var dpr = longestSide > maxRenderDim ? (baseDpr * maxRenderDim) / longestSide : baseDpr;
+          canvas.width = Math.max(1, Math.round(width * dpr));
+          canvas.height = Math.max(1, Math.round(height * dpr));
+          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.uniform3f(uResolution, canvas.width, canvas.height, canvas.width / canvas.height);
+        }
+
+        // On phones the hero is tall and narrow, so tighten the wave and add a
+        // little line spacing to keep the pattern readable behind the stacked text.
+        function applyProfile() {
+          var small = isSmallScreen();
+          gl.uniform1f(uAmplitude, small ? 0.8 : 1.0);
+          gl.uniform1f(uDistance, small ? 0.16 : 0.0);
+        }
+
+        function handleMediaChange() {
+          applyProfile();
+          resize();
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', resize);
+        if (smallScreenQuery) {
+          if (smallScreenQuery.addEventListener) smallScreenQuery.addEventListener('change', handleMediaChange);
+          else if (smallScreenQuery.addListener) smallScreenQuery.addListener(handleMediaChange);
+        }
+
+        if (!isTouch) {
+          window.addEventListener('mousemove', handleMouseMove);
+          document.documentElement.addEventListener('mouseleave', handleMouseLeave);
+        }
+
+        // Only animate while the hero is on screen and the tab is visible so the
+        // shader never burns battery in the background or further down the page.
+        var isVisible = true;
+        if ('IntersectionObserver' in window) {
+          try {
+            var visibilityObserver = new IntersectionObserver(function (entries) {
+              isVisible = entries[0].isIntersecting;
+            }, { threshold: 0 });
+            visibilityObserver.observe(container);
+          } catch (error) {
+            isVisible = true;
+          }
+        }
+
+        canvas.addEventListener('webglcontextlost', function (event) {
+          event.preventDefault();
+          if (animationFrameId) caf(animationFrameId);
+          animationFrameId = 0;
+          useFallback();
+        }, false);
+
+        gl.uniform3fv(uColor, hexToVec3('#7fca91'));
+        gl.uniform2f(uMouse, 0.5, 0.5);
+        applyProfile();
+        resize();
+
+        var TARGET_FPS = 30;
+        var frameInterval = 1000 / TARGET_FPS;
+        var elapsed = 0;
+        var lastTime = 0;
+        var frameAccumulator = 0;
+
+        function update(time) {
+          animationFrameId = raf(update);
+          if (!lastTime) lastTime = time;
+          var delta = time - lastTime;
+          lastTime = time;
+          if (delta > 100) delta = frameInterval;
+          if (!isVisible || document.hidden) return;
+          // Decouple the wave speed from the refresh rate: accumulate real time
+          // and only draw once per frame interval so the effect runs at a steady
+          // 30fps even on 60/120Hz screens.
+          frameAccumulator += delta;
+          if (frameAccumulator < frameInterval) return;
+          elapsed += frameAccumulator * 0.001;
+          frameAccumulator = 0;
+          mouse[0] += 0.05 * (targetMouse[0] - mouse[0]);
+          mouse[1] += 0.05 * (targetMouse[1] - mouse[1]);
+          gl.uniform1f(uTime, elapsed);
+          gl.uniform2f(uMouse, mouse[0], mouse[1]);
+          gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+        animationFrameId = raf(update);
+      })();
     </script>
   </body>
 </html>
