@@ -39,60 +39,356 @@
       </section>
 
       <section id="panel-view" class="panel-view section-block" hidden>
-        <div class="panel-head">
-          <div>
-            <p class="eyebrow">Panel administrador</p>
-            <h1 class="portal-title">Clientes potenciales</h1>
-          </div>
-          <button id="logout" class="btn btn-ghost" type="button">Cerrar sesión</button>
-        </div>
-        <div class="requests-wrap">
-          <table class="requests-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Empresa</th>
-                <th>RUT</th>
-                <th>Contacto</th>
-                <th>Correo</th>
-                <th>Teléfono</th>
-                <th>Cámaras</th>
-                <th>Operadores</th>
-                <th>Sitios</th>
-                <th>Solución</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody id="requests-body"></tbody>
-          </table>
-          <p id="empty-state" class="empty-state">Aún no hay solicitudes registradas.</p>
-        </div>
+        <div class="admin-layout">
+          <aside class="admin-sidebar" aria-label="Secciones del panel">
+            <p class="admin-sidebar-title">Panel</p>
+            <button class="admin-nav-btn is-active" type="button" data-admin="inicio">Inicio</button>
+            <button class="admin-nav-btn" type="button" data-admin="solicitudes">Clientes potenciales</button>
+            <button class="admin-nav-btn" type="button" data-admin="clientes">Solicitudes de clientes</button>
+            <button class="admin-nav-btn" type="button" data-admin="precios">Precios por cámaras</button>
+            <button class="admin-nav-btn" type="button" data-admin="mensual">Cálculo mensual</button>
+            <button class="admin-nav-btn" type="button" data-admin="sueldo">Sueldos</button>
+            <button id="logout" class="btn btn-ghost admin-logout" type="button">Cerrar sesión</button>
+          </aside>
 
-        <div class="panel-head panel-head-secondary">
-          <div>
-            <p class="eyebrow">Solicitud</p>
-            <h2 class="panel-subtitle">Solicitudes de clientes</h2>
+          <div class="admin-content">
+            <div class="admin-panel is-active" data-admin-panel="inicio">
+              <div class="dash-hello">
+                <p class="eyebrow" id="dash-date">—</p>
+                <h1 class="portal-title" id="dash-greeting">Hola</h1>
+                <p class="portal-subtitle" id="dash-clock">—</p>
+              </div>
+
+              <div class="dash-stats">
+                <article class="stat-card">
+                  <span class="stat-label">Trabajadores</span>
+                  <strong class="stat-value" id="stat-workers">0</strong>
+                </article>
+                <article class="stat-card">
+                  <span class="stat-label">Clientes potenciales</span>
+                  <strong class="stat-value" id="stat-leads">0</strong>
+                </article>
+                <article class="stat-card">
+                  <span class="stat-label">Potenciales en proceso</span>
+                  <strong class="stat-value" id="stat-leads-proceso">0</strong>
+                </article>
+                <article class="stat-card">
+                  <span class="stat-label">Solicitudes de clientes</span>
+                  <strong class="stat-value" id="stat-clients">0</strong>
+                </article>
+              </div>
+
+              <div class="calc dash-block">
+                <div class="agenda-head">
+                  <h2 class="panel-subtitle">Resumen del día</h2>
+                  <button id="summary-listen" class="btn btn-sm" type="button">Escuchar resumen</button>
+                </div>
+                <p id="summary-text" class="summary-text"></p>
+              </div>
+
+              <div class="calc dash-block">
+                <h2 class="panel-subtitle">Resumen general</h2>
+                <div class="dash-chart" id="dash-chart"></div>
+              </div>
+
+              <div class="calc dash-block">
+                <div class="agenda-head">
+                  <h2 class="panel-subtitle">Agenda</h2>
+                  <div class="agenda-views" role="group" aria-label="Vista de agenda">
+                    <button class="filter-chip is-active" type="button" data-agenda-view="dia">Día</button>
+                    <button class="filter-chip" type="button" data-agenda-view="semana">Semana</button>
+                    <button class="filter-chip" type="button" data-agenda-view="mes">Mes</button>
+                  </div>
+                </div>
+                <div class="week" id="week-schedule"></div>
+                <datalist id="agenda-clients"></datalist>
+              </div>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="solicitudes" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Panel administrador</p>
+                  <h1 class="portal-title">Clientes potenciales</h1>
+                </div>
+              </div>
+
+              <div class="section-bar">
+                <h2 class="panel-subtitle">Listado</h2>
+                <div class="record-filters" role="group" aria-label="Filtrar por estado">
+                  <button class="filter-chip is-active" type="button" data-filter="all">Todos</button>
+                  <button class="filter-chip" type="button" data-filter="nuevo">Tomar cliente</button>
+                  <button class="filter-chip" type="button" data-filter="proceso">En proceso</button>
+                  <button class="filter-chip" type="button" data-filter="atendido">Ya atendido</button>
+                </div>
+              </div>
+              <div id="requests-list" class="record-list"></div>
+              <p id="empty-state" class="empty-state">Aún no hay solicitudes registradas.</p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="clientes" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Solicitud</p>
+                  <h1 class="portal-title">Solicitudes de clientes</h1>
+                </div>
+              </div>
+
+              <div class="section-bar">
+                <h2 class="panel-subtitle">Listado</h2>
+                <div class="field field-inline">
+                  <label for="client-search">Buscar por cliente</label>
+                  <input id="client-search" type="search" placeholder="Nombre del cliente" />
+                </div>
+              </div>
+              <div class="record-filters" role="group" aria-label="Filtrar por estado">
+                <button class="filter-chip is-active" type="button" data-client-filter="all">Todos</button>
+                <button class="filter-chip" type="button" data-client-filter="nuevo">Tomar cliente</button>
+                <button class="filter-chip" type="button" data-client-filter="proceso">En proceso</button>
+                <button class="filter-chip" type="button" data-client-filter="atendido">Ya atendido</button>
+              </div>
+              <div id="client-list" class="record-list"></div>
+              <p id="client-empty" class="empty-state">Aún no hay solicitudes de clientes.</p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="precios" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Precios</p>
+                  <h1 class="portal-title">Precios por cámaras</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Calcula un precio según cámaras y gastos, o define los tramos manualmente.</p>
+
+              <div class="calc">
+                <h2 class="panel-subtitle">Calculadora de precios</h2>
+                <div class="calc-grid">
+                  <div class="field">
+                    <label for="calc-cameras">Cantidad de cámaras</label>
+                    <input id="calc-cameras" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="calc-cost">Costo por cámara (CLP)</label>
+                    <input id="calc-cost" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="calc-margin">Margen de ganancia (%)</label>
+                    <input id="calc-margin" type="text" inputmode="numeric" value="30" />
+                  </div>
+                </div>
+
+                <fieldset class="calc-expenses">
+                  <legend>Gastos adicionales</legend>
+                  <div id="calc-expense-list" class="calc-expense-list"></div>
+                  <button id="calc-expense-add" class="btn btn-ghost" type="button">Agregar gasto</button>
+                </fieldset>
+
+                <div class="calc-result">
+                  <div class="calc-result-row"><span>Costo cámaras</span><strong id="calc-cost-cameras">$0</strong></div>
+                  <div class="calc-result-row"><span>Gastos adicionales</span><strong id="calc-cost-expenses">$0</strong></div>
+                  <div class="calc-result-row"><span>Costo total</span><strong id="calc-cost-total">$0</strong></div>
+                  <div class="calc-result-row calc-result-total"><span>Precio sugerido</span><strong id="calc-price">$0</strong></div>
+                  <div class="calc-result-row"><span>Precio por cámara</span><strong id="calc-price-camera">$0</strong></div>
+                </div>
+                <button id="calc-to-price" class="btn" type="button">Usar en la tabla de precios</button>
+              </div>
+
+              <h2 class="panel-subtitle calc-subtitle">Tramos de precios</h2>
+              <div class="uf-bar">
+                <div class="field field-inline">
+                  <label for="uf-value">Valor UF (CLP)</label>
+                  <input id="uf-value" type="text" inputmode="numeric" value="39000" />
+                </div>
+                <button id="uf-refresh" class="btn btn-ghost" type="button">Actualizar UF</button>
+                <p id="uf-status" class="uf-status" role="status" aria-live="polite"></p>
+              </div>
+              <div class="price-table-wrap">
+                <table class="price-table">
+                  <thead>
+                    <tr>
+                      <th>Cantidad de cámaras</th>
+                      <th>Precio por cámara (UF)</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="price-body"></tbody>
+                </table>
+              </div>
+              <div class="price-actions">
+                <button id="price-add" class="btn btn-ghost" type="button">Agregar fila</button>
+                <button id="price-save" class="btn" type="button">Guardar precios</button>
+              </div>
+              <p id="price-status" class="form-status" role="status" aria-live="polite" hidden></p>
+
+              <h2 class="panel-subtitle calc-subtitle">Implementación única</h2>
+              <p class="portal-subtitle">Costo de implementación según la cantidad de cámaras por instalación.</p>
+              <div class="price-table-wrap">
+                <table class="price-table">
+                  <thead>
+                    <tr>
+                      <th>Cámaras por instalación</th>
+                      <th>Implementación única (UF)</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="impl-body"></tbody>
+                </table>
+              </div>
+              <div class="price-actions">
+                <button id="impl-add" class="btn btn-ghost" type="button">Agregar fila</button>
+                <button id="impl-save" class="btn" type="button">Guardar implementación</button>
+              </div>
+              <p id="impl-status" class="form-status" role="status" aria-live="polite" hidden></p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="mensual" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Cálculo mensual</p>
+                  <h1 class="portal-title">Sueldo, IVA e integración</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Estima el costo mensual de la operación: sueldos, integración de la plataforma e IVA.</p>
+
+              <div class="calc">
+                <h2 class="panel-subtitle">Datos mensuales</h2>
+                <div class="calc-grid">
+                  <div class="field">
+                    <label for="m-ops">Cantidad de operadores</label>
+                    <input id="m-ops" type="text" inputmode="numeric" value="1" />
+                  </div>
+                  <div class="field">
+                    <label for="m-salary">Sueldo por operador (CLP)</label>
+                    <input id="m-salary" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="m-cameras">Cantidad de cámaras</label>
+                    <input id="m-cameras" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="m-integration">Integración por cámara (CLP)</label>
+                    <input id="m-integration" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="m-other">Otros gastos mensuales (CLP)</label>
+                    <input id="m-other" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="m-iva">IVA (%)</label>
+                    <input id="m-iva" type="text" inputmode="numeric" value="19" />
+                  </div>
+                </div>
+
+                <div class="calc-result">
+                  <div class="calc-result-row"><span>Sueldos</span><strong id="m-out-salary">$0</strong></div>
+                  <div class="calc-result-row"><span>Integración plataforma</span><strong id="m-out-integration">$0</strong></div>
+                  <div class="calc-result-row"><span>Otros gastos</span><strong id="m-out-other">$0</strong></div>
+                  <div class="calc-result-row"><span>Subtotal</span><strong id="m-out-subtotal">$0</strong></div>
+                  <div class="calc-result-row"><span>IVA</span><strong id="m-out-iva">$0</strong></div>
+                  <div class="calc-result-row calc-result-total"><span>Total mensual</span><strong id="m-out-total">$0</strong></div>
+                  <div class="calc-result-row"><span>Descuento primeros 2 meses (30%)</span><strong id="m-out-discount">$0</strong></div>
+                  <div class="calc-result-row calc-result-total"><span>Primeros 2 meses (70%)</span><strong id="m-out-promo">$0</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="sueldo" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Sueldos</p>
+                  <h1 class="portal-title">Cálculo de sueldo por operador</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Montos en pesos (CLP). Haberes imponibles y no imponibles, descuentos legales y sueldo líquido.</p>
+
+              <div class="calc">
+                <h2 class="panel-subtitle">Parámetros legales</h2>
+                <div class="calc-grid">
+                  <div class="field">
+                    <label for="s-afp">AFP</label>
+                    <select id="s-afp"></select>
+                  </div>
+                  <div class="field">
+                    <label for="s-salud">Salud</label>
+                    <select id="s-salud">
+                      <option value="fonasa">Fonasa (7%)</option>
+                      <option value="isapre">Isapre (plan en UF)</option>
+                    </select>
+                  </div>
+                  <div class="field" id="s-plan-field" hidden>
+                    <label for="s-plan">Plan Isapre (UF)</label>
+                    <input id="s-plan" type="text" inputmode="decimal" value="0" />
+                  </div>
+                  <div class="field" id="s-uf-field" hidden>
+                    <label for="s-uf">Valor UF (CLP)</label>
+                    <input id="s-uf" type="text" inputmode="numeric" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="s-cesantia">Seguro cesantía (%)</label>
+                    <input id="s-cesantia" type="text" inputmode="decimal" value="0,6" />
+                  </div>
+                  <div class="field">
+                    <label for="s-jornada">Jornada semanal (horas)</label>
+                    <input id="s-jornada" type="text" inputmode="numeric" value="45" />
+                  </div>
+                  <div class="field">
+                    <label for="s-utm">UTM (CLP)</label>
+                    <input id="s-utm" type="text" inputmode="numeric" value="0" />
+                  </div>
+                </div>
+                <div class="price-actions">
+                  <button id="s-update" class="btn btn-ghost" type="button">Actualizar UF/UTM</button>
+                  <p id="s-status" class="uf-status" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+
+              <div class="calc calc-subtitle">
+                <h2 class="panel-subtitle">Agregar operador</h2>
+                <div class="calc-grid">
+                  <div class="field">
+                    <label for="op-name">Nombre</label>
+                    <input id="op-name" type="text" placeholder="Nombre del trabajador" />
+                  </div>
+                  <div class="field">
+                    <label for="op-cargo">Cargo</label>
+                    <input id="op-cargo" type="text" placeholder="Ej: Operador, Supervisor" />
+                  </div>
+                  <div class="field">
+                    <label for="op-base">Sueldo base (CLP)</label>
+                    <input id="op-base" type="text" inputmode="numeric" placeholder="0" />
+                  </div>
+                  <div class="field">
+                    <label for="op-otros">Otros imponibles (CLP)</label>
+                    <input id="op-otros" type="text" inputmode="numeric" placeholder="0" />
+                  </div>
+                  <div class="field">
+                    <label for="op-noimp">No imponibles (CLP)</label>
+                    <input id="op-noimp" type="text" inputmode="numeric" placeholder="0" />
+                  </div>
+                  <div class="field">
+                    <label for="op-grat">Gratificación (CLP)</label>
+                    <input id="op-grat" type="text" inputmode="numeric" placeholder="Se calcula con el sueldo líquido" />
+                  </div>
+                  <div class="field">
+                    <label for="op-liquid">Sueldo líquido (CLP)</label>
+                    <input id="op-liquid" type="text" inputmode="numeric" placeholder="Autocompleta el sueldo base" />
+                  </div>
+                </div>
+                <div class="price-actions">
+                  <button id="salary-add" class="btn" type="button">Agregar operador</button>
+                  <p id="salary-status" class="uf-status" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+
+              <div class="section-bar">
+                <h2 class="panel-subtitle">Operadores</h2>
+                <button id="salary-print-all" class="btn btn-sm btn-ghost" type="button">PDF todas las liquidaciones</button>
+              </div>
+              <div id="salary-list" class="record-list"></div>
+              <p id="salary-empty" class="empty-state">Aún no hay operadores. Agrega uno arriba.</p>
+              <div id="salary-totals" class="salary-totals" hidden></div>
+            </div>
           </div>
-          <div class="field field-inline">
-            <label for="client-search">Buscar por cliente</label>
-            <input id="client-search" type="search" placeholder="Nombre del cliente" />
-          </div>
-        </div>
-        <div class="requests-wrap">
-          <table class="requests-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Tipo</th>
-                <th>Detalle</th>
-                <th>Mensaje</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody id="client-body"></tbody>
-          </table>
-          <p id="client-empty" class="empty-state">Aún no hay solicitudes de clientes.</p>
         </div>
       </section>
 
@@ -205,14 +501,85 @@
       </div>
     </footer>
 
+    <div id="detail-modal" class="modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <div class="modal-head no-print">
+          <h2 id="detail-title" class="panel-subtitle">Cotización</h2>
+          <button id="detail-close" class="price-del" type="button" aria-label="Cerrar">&times;</button>
+        </div>
+        <div id="detail-body" class="modal-body"></div>
+        <div class="modal-actions no-print">
+          <button id="detail-mail" class="btn btn-ghost" type="button">Enviar por correo</button>
+          <button id="detail-print" class="btn" type="button">Imprimir / Guardar PDF</button>
+          <button id="detail-ok" class="btn btn-ghost" type="button">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const LEADS_KEY = 'neo_solicitudes';
       const CLIENT_KEY = 'neo_solicitudes_cliente';
       const DATA_KEY = 'neo_datos_instalacion';
+      const PRICE_KEY = 'neo_precios';
+      const IMPL_KEY = 'neo_implementacion';
+      const SALARY_KEY = 'neo_sueldos';
+      const SALARY_PARAMS_KEY = 'neo_sueldo_params';
+      const WEEK_KEY = 'neo_horario';
+      const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+      const AGENDA_SLOTS = [
+        { value: '09:30', label: '09:30 - 11:00' },
+        { value: '11:00', label: '11:00 - 12:30' },
+        { value: '12:30', label: '12:30 - 14:00' },
+        { value: '14:00', label: '14:00 - 15:30' },
+        { value: '15:30', label: '15:30 - 17:00' },
+        { value: '17:00', label: '17:00 - 18:30' },
+      ];
+      const COMPLEXITY = {
+        baja: { label: 'Complejidad baja', className: 'complexity-baja' },
+        media: { label: 'Complejidad media', className: 'complexity-media' },
+        alta: { label: 'Complejidad alta', className: 'complexity-alta' },
+      };
+      const UF_KEY = 'neo_uf';
       const SESSION_KEY = 'neo_admin_session';
       const ORDER = ['nuevo', 'proceso', 'atendido'];
       const CONTACT_NAMES = ['Administrador', 'Jefe de seguridad', 'Supervisor', 'Guardia principal', 'Central de monitoreo'];
       let contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
+      const DEFAULT_PRICES = [
+        { qty: '1 a 10', price: '' },
+        { qty: '11 a 30', price: '' },
+        { qty: '31 a 60', price: '' },
+        { qty: 'Más de 60', price: '' },
+      ];
+      const DEFAULT_IMPLEMENTATION = [
+        { qty: '1 a 5', price: '3' },
+        { qty: '6 a 15', price: '5' },
+        { qty: '16 a 25', price: '7' },
+        { qty: '26 a 50', price: '10' },
+        { qty: '51 a 100', price: '15' },
+        { qty: '101 a 199', price: '20' },
+        { qty: '200 o más', price: '25' },
+      ];
+      let prices = readPrices();
+      let implTiers = readImplementation();
+      let ufValue = readUf();
+      let leadFilter = 'all';
+      let clientFilter = 'all';
+      const DEFAULT_SALARY_PARAMS = { afp: 'capital', salud: 'fonasa', plan: '0', uf: '0', cesantia: '0,6', jornada: '45', utm: '0' };
+      const AFP_COMISIONES = {
+        capital: { name: 'Capital', comision: 1.44 },
+        cuprum: { name: 'Cuprum', comision: 1.44 },
+        habitat: { name: 'Habitat', comision: 1.27 },
+        modelo: { name: 'Modelo', comision: 0.58 },
+        planvital: { name: 'PlanVital', comision: 1.16 },
+        provida: { name: 'Provida', comision: 1.45 },
+        uno: { name: 'Uno', comision: 0.49 },
+      };
+      let salaryOperators = readSalary();
+      let salaryParams = readSalaryParams();
+      let agendaData = readAgenda();
+      let agendaView = 'dia';
+      let agendaDate = new Date();
+      let currentLead = null;
       const STATUS = {
         nuevo: { label: 'Tomar cliente', className: 'status-nuevo' },
         proceso: { label: 'En proceso', className: 'status-proceso' },
@@ -254,65 +621,151 @@
         return String(value).replace('T', ' ');
       }
 
-      function makeStatusButton(item, list, key) {
-        const status = STATUS[item.status] || STATUS.nuevo;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'status-btn ' + status.className;
-        button.textContent = status.label;
-        button.addEventListener('click', () => {
-          const current = Math.max(0, ORDER.indexOf(item.status));
-          item.status = ORDER[(current + 1) % ORDER.length];
-          writeStore(key, list);
-          renderAll();
+      function makeStatusButton(item, list, key, onProceso) {
+        const group = document.createElement('div');
+        group.className = 'status-select';
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', 'Estado');
+        ORDER.forEach((statusKey) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'status-opt status-opt-' + statusKey;
+          option.textContent = STATUS[statusKey].label;
+          const isActive = (item.status || 'nuevo') === statusKey;
+          option.classList.toggle('is-active', isActive);
+          option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          option.addEventListener('click', () => {
+            if ((item.status || 'nuevo') === statusKey) return;
+            item.status = statusKey;
+            writeStore(key, list);
+            renderAll();
+          });
+          group.appendChild(option);
         });
-        return button;
+        return group;
+      }
+
+      function recordGrid(container, rows) {
+        const grid = document.createElement('dl');
+        grid.className = 'record-grid';
+        rows.forEach(([label, value, full]) => {
+          const item = document.createElement('div');
+          if (full) item.className = 'record-grid-full';
+          const dt = document.createElement('dt');
+          dt.textContent = label;
+          const dd = document.createElement('dd');
+          dd.textContent = value || '-';
+          item.append(dt, dd);
+          grid.appendChild(item);
+        });
+        container.appendChild(grid);
+      }
+
+      function recordHead(title, sub, actions) {
+        const head = document.createElement('div');
+        head.className = 'record-head';
+        const info = document.createElement('div');
+        const heading = document.createElement('h3');
+        heading.className = 'record-title';
+        heading.textContent = title;
+        const subtitle = document.createElement('p');
+        subtitle.className = 'record-sub';
+        subtitle.textContent = sub;
+        info.append(heading, subtitle);
+        const action = document.createElement('div');
+        action.className = 'record-action';
+        (Array.isArray(actions) ? actions : [actions]).forEach((node) => action.appendChild(node));
+        head.append(info, action);
+        return head;
       }
 
       function renderLeads() {
         const leads = readStore(LEADS_KEY);
-        const body = document.getElementById('requests-body');
+        const list = document.getElementById('requests-list');
         const empty = document.getElementById('empty-state');
-        body.innerHTML = '';
-        empty.hidden = leads.length > 0;
+        list.innerHTML = '';
+        const filtered = leadFilter === 'all'
+          ? leads
+          : leads.filter((lead) => (lead.status || 'nuevo') === leadFilter);
+        empty.hidden = filtered.length > 0;
+        empty.textContent = leadFilter === 'all'
+          ? 'Aún no hay solicitudes registradas.'
+          : 'No hay clientes en este estado.';
 
-        leads.slice().reverse().forEach((lead) => {
-          const row = document.createElement('tr');
-          [
+        filtered.slice().reverse().forEach((lead) => {
+          const card = document.createElement('article');
+          card.className = 'record';
+
+          const cameras = parseInt(String(lead.cameras || '0').replace(/\D/g, '') || '0', 10);
+          const impl = findImplementation(cameras);
+
+          const implButton = document.createElement('button');
+          implButton.type = 'button';
+          implButton.className = 'btn btn-sm ' + (lead.implPaid ? 'impl-paid' : 'impl-pending');
+          implButton.textContent = 'Implementación ' + formatUf(impl.price) + ' · ' + (lead.implPaid ? 'Pagada' : 'Pendiente');
+          implButton.addEventListener('click', () => {
+            lead.implPaid = !lead.implPaid;
+            writeStore(LEADS_KEY, leads);
+            renderLeads();
+          });
+
+          const pdfButton = document.createElement('button');
+          pdfButton.type = 'button';
+          pdfButton.className = 'btn btn-sm btn-ghost';
+          pdfButton.textContent = 'PDF implementación';
+          pdfButton.addEventListener('click', () => {
+            showImplDetail(lead);
+            setTimeout(() => window.print(), 150);
+          });
+
+          card.appendChild(recordHead(
+            lead.company || 'Sin empresa',
+            (lead.rut || 'Sin RUT') + ' · ' + (lead.solution || 'Sin solución'),
+            makeStatusButton(lead, leads, LEADS_KEY, showLeadDetail)
+          ));
+          recordGrid(card, [
             ['Fecha', lead.date],
-            ['Empresa', lead.company],
-            ['RUT', lead.rut],
             ['Contacto', lead.manager],
             ['Correo', lead.email],
             ['Teléfono', lead.phone],
             ['Cámaras', lead.cameras],
             ['Operadores', lead.operators],
-            ['Sitios', lead.sites],
-            ['Solución', lead.solution],
-          ].forEach(([label, value]) => {
-            const cell = document.createElement('td');
-            cell.dataset.label = label;
-            cell.textContent = value || '-';
-            row.appendChild(cell);
-          });
-          const statusCell = document.createElement('td');
-          statusCell.dataset.label = 'Estado';
-          statusCell.appendChild(makeStatusButton(lead, leads, LEADS_KEY));
-          row.appendChild(statusCell);
-          body.appendChild(row);
+
+          ]);
+
+          const quoteButton = document.createElement('button');
+          quoteButton.type = 'button';
+          quoteButton.className = 'btn btn-sm';
+          quoteButton.textContent = 'Cotización';
+          quoteButton.addEventListener('click', () => showLeadDetail(lead));
+
+          if ((lead.status || 'nuevo') === 'proceso') {
+            const foot = document.createElement('div');
+            foot.className = 'record-foot';
+            foot.append(quoteButton, implButton, pdfButton);
+            card.appendChild(foot);
+          }
+
+          list.appendChild(card);
         });
       }
 
       function renderClientRequests() {
         const query = (document.getElementById('client-search').value || '').trim().toLowerCase();
         const all = readStore(CLIENT_KEY);
-        const list = query
+        let list = query
           ? all.filter((item) => (item.client || '').toLowerCase().includes(query))
           : all;
-        const body = document.getElementById('client-body');
+        if (clientFilter !== 'all') {
+          list = list.filter((item) => (item.status || 'nuevo') === clientFilter);
+        }
+        const container = document.getElementById('client-list');
         const empty = document.getElementById('client-empty');
-        body.innerHTML = '';
+        container.innerHTML = '';
         empty.hidden = list.length > 0;
+        empty.textContent = clientFilter === 'all'
+          ? 'Aún no hay solicitudes de clientes.'
+          : 'No hay solicitudes en este estado.';
 
         list.slice().reverse().forEach((item) => {
           const detail = item.type === 'grabacion'
@@ -320,30 +773,1281 @@
               ? 'Grabación: desde ' + formatDateTime(item.from) + ' hasta ' + formatDateTime(item.to)
               : 'Grabación: ' + formatDateTime(item.eventAt))
             : 'Aumento: ' + (item.cameras || '0') + ' cámara(s)';
-          const row = document.createElement('tr');
-          [
-            ['Fecha', item.date],
-            ['Cliente', item.client],
-            ['Tipo', item.typeLabel],
-            ['Detalle', detail],
-            ['Mensaje', item.message],
-          ].forEach(([label, value]) => {
-            const cell = document.createElement('td');
-            cell.dataset.label = label;
-            cell.textContent = value || '-';
-            row.appendChild(cell);
-          });
-          const statusCell = document.createElement('td');
-          statusCell.dataset.label = 'Estado';
-          statusCell.appendChild(makeStatusButton(item, all, CLIENT_KEY));
-          row.appendChild(statusCell);
-          body.appendChild(row);
+          const card = document.createElement('article');
+          card.className = 'record';
+          card.appendChild(recordHead(
+            item.client || 'Sin cliente',
+            (item.typeLabel || '') + ' · ' + (item.date || ''),
+            makeStatusButton(item, all, CLIENT_KEY)
+          ));
+          recordGrid(card, [
+            ['Detalle', detail, true],
+            ['Mensaje', item.message, true],
+          ]);
+          container.appendChild(card);
         });
       }
 
+      function readPrices() {
+        const stored = readStore(PRICE_KEY);
+        if (Array.isArray(stored) && stored.length) return stored;
+        return DEFAULT_PRICES.map((item) => ({ qty: item.qty, price: item.price }));
+      }
+
+      function readImplementation() {
+        const stored = readStore(IMPL_KEY);
+        if (Array.isArray(stored) && stored.length) return stored;
+        return DEFAULT_IMPLEMENTATION.map((item) => ({ qty: item.qty, price: item.price }));
+      }
+
+      function renderImplementation() {
+        const body = document.getElementById('impl-body');
+        body.innerHTML = '';
+        implTiers.forEach((row, index) => {
+          const tr = document.createElement('tr');
+
+          const qtyCell = document.createElement('td');
+          const qtyInput = document.createElement('input');
+          qtyInput.type = 'text';
+          qtyInput.className = 'price-input';
+          qtyInput.placeholder = 'Ej: 1 a 5';
+          qtyInput.value = row.qty;
+          qtyInput.addEventListener('input', () => { row.qty = qtyInput.value; });
+          qtyCell.appendChild(qtyInput);
+
+          const priceCell = document.createElement('td');
+          const priceInput = document.createElement('input');
+          priceInput.type = 'text';
+          priceInput.inputMode = 'decimal';
+          priceInput.className = 'price-input';
+          priceInput.placeholder = 'UF';
+          priceInput.value = row.price;
+          priceInput.addEventListener('input', () => {
+            priceInput.value = priceInput.value.replace(/[^0-9,]/g, '');
+            row.price = priceInput.value;
+          });
+          priceCell.appendChild(priceInput);
+
+          const delCell = document.createElement('td');
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'price-del';
+          delBtn.textContent = '\u2715';
+          delBtn.setAttribute('aria-label', 'Eliminar fila');
+          delBtn.addEventListener('click', () => {
+            implTiers.splice(index, 1);
+            renderImplementation();
+          });
+          delCell.appendChild(delBtn);
+
+          tr.append(qtyCell, priceCell, delCell);
+          body.appendChild(tr);
+        });
+      }
+
+      function findImplementation(cameras) {
+        for (const row of implTiers) {
+          const range = parseRange(row.qty);
+          if (range && cameras >= range.min && cameras <= range.max) {
+            return { label: row.qty, price: parseUf(row.price) };
+          }
+        }
+        return { label: '', price: 0 };
+      }
+
+      function renderPrices() {
+        const body = document.getElementById('price-body');
+        body.innerHTML = '';
+        prices.forEach((row, index) => {
+          const tr = document.createElement('tr');
+
+          const qtyCell = document.createElement('td');
+          const qtyInput = document.createElement('input');
+          qtyInput.type = 'text';
+          qtyInput.className = 'price-input';
+          qtyInput.placeholder = 'Ej: 1 a 10';
+          qtyInput.value = row.qty;
+          qtyInput.addEventListener('input', () => { row.qty = qtyInput.value; });
+          qtyCell.appendChild(qtyInput);
+
+          const priceCell = document.createElement('td');
+          const priceInput = document.createElement('input');
+          priceInput.type = 'text';
+          priceInput.inputMode = 'decimal';
+          priceInput.className = 'price-input';
+          priceInput.placeholder = 'UF';
+          priceInput.value = row.price;
+          priceInput.addEventListener('input', () => {
+            priceInput.value = priceInput.value.replace(/[^0-9,]/g, '');
+            row.price = priceInput.value;
+          });
+          priceCell.appendChild(priceInput);
+
+          const delCell = document.createElement('td');
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'price-del';
+          delBtn.textContent = '\u2715';
+          delBtn.setAttribute('aria-label', 'Eliminar fila');
+          delBtn.addEventListener('click', () => {
+            prices.splice(index, 1);
+            renderPrices();
+          });
+          delCell.appendChild(delBtn);
+
+          tr.append(qtyCell, priceCell, delCell);
+          body.appendChild(tr);
+        });
+      }
+
+      function parseRange(text) {
+        const value = String(text || '').toLowerCase();
+        const numbers = value.match(/\d+/g);
+        if (!numbers) return null;
+        if (/m[áa]s|\+/.test(value)) return { min: parseInt(numbers[0], 10), max: Infinity };
+        if (numbers.length >= 2) return { min: parseInt(numbers[0], 10), max: parseInt(numbers[1], 10) };
+        return { min: parseInt(numbers[0], 10), max: parseInt(numbers[0], 10) };
+      }
+
+      function findTier(cameras) {
+        for (const row of prices) {
+          const range = parseRange(row.qty);
+          if (range && cameras >= range.min && cameras <= range.max) {
+            return { label: row.qty, price: parseUf(row.price) };
+          }
+        }
+        return null;
+      }
+
+      function detailRow(label, value) {
+        const row = document.createElement('div');
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.textContent = value || '-';
+        row.append(dt, dd);
+        return row;
+      }
+
+      function closeDetail() {
+        document.getElementById('detail-modal').hidden = true;
+      }
+
+      function quoteNumber(id) {
+        return parseInt((document.getElementById(id).value || '').replace(/[^0-9]/g, '') || '0', 10);
+      }
+
+      function quoteUf(id) {
+        return parseUf(document.getElementById(id).value);
+      }
+
+      function updateQuote() {
+        const cameras = parseInt((document.getElementById('q-cameras').textContent || '0').replace(/\D/g, '') || '0', 10);
+        const netPerUf = quoteUf('q-net-per');
+        const ivaRate = quoteNumber('q-iva-rate');
+        const netUf = cameras * netPerUf;
+        const ivaUf = netUf * ivaRate / 100;
+        const totalUf = netUf + ivaUf;
+        const discountUf = totalUf * 0.3;
+        const promoUf = totalUf - discountUf;
+        document.getElementById('q-net').textContent = formatUf(netUf);
+        document.getElementById('q-iva-amount').textContent = formatUf(ivaUf);
+        document.getElementById('q-total').textContent = formatUf(totalUf);
+        document.getElementById('q-grand').textContent = formatUf(totalUf);
+        document.getElementById('q-discount').textContent = '-' + formatUf(discountUf);
+        document.getElementById('q-promo').textContent = formatUf(promoUf);
+      }
+
+      function showLeadDetail(lead) {
+        const cameras = parseInt(String(lead.cameras || '0').replace(/\D/g, '') || '0', 10);
+        const tier = findTier(cameras);
+        const netPer = tier ? tier.price : 0;
+
+        document.getElementById('detail-title').textContent = 'Cotización';
+        document.getElementById('detail-mail').hidden = false;
+        const body = document.getElementById('detail-body');
+        body.innerHTML = '';
+
+        const head = document.createElement('div');
+        head.className = 'quote-head';
+        const logo = document.createElement('img');
+        logo.className = 'quote-logo';
+        logo.src = 'a2791a37-6fe2-413d-9f5a-526532134dcc.jpg';
+        logo.alt = 'NEO Seguridad';
+        const headInfo = document.createElement('div');
+        headInfo.className = 'quote-head-info';
+        const title = document.createElement('h3');
+        title.textContent = 'Cotización';
+        const subtitle = document.createElement('p');
+        subtitle.textContent = 'NEO Seguridad · Seguridad que se anticipa';
+        const dateLine = document.createElement('p');
+        dateLine.textContent = 'Fecha: ' + (lead.date || '');
+        headInfo.append(title, subtitle, dateLine);
+        head.append(logo, headInfo);
+        body.appendChild(head);
+
+        const clientTitle = document.createElement('h4');
+        clientTitle.className = 'quote-section';
+        clientTitle.textContent = 'Datos del cliente';
+        body.appendChild(clientTitle);
+
+        const clientList = document.createElement('dl');
+        clientList.className = 'detail-list';
+        [
+          ['Empresa', lead.company],
+          ['RUT', lead.rut],
+          ['Contacto', lead.manager],
+          ['Correo', lead.email],
+          ['Teléfono', lead.phone],
+          ['Solución', lead.solution],
+        ].forEach(([label, value]) => clientList.appendChild(detailRow(label, value)));
+        body.appendChild(clientList);
+
+        const detailTitle = document.createElement('h4');
+        detailTitle.className = 'quote-section';
+        detailTitle.textContent = 'Detalle';
+        body.appendChild(detailTitle);
+
+        const table = document.createElement('table');
+        table.className = 'quote-table';
+        const tbody = document.createElement('tbody');
+        const addRow = (label, valueNode, className) => {
+          const tr = document.createElement('tr');
+          if (className) tr.className = className;
+          const th = document.createElement('th');
+          th.textContent = label;
+          const td = document.createElement('td');
+          if (typeof valueNode === 'string') td.textContent = valueNode;
+          else td.appendChild(valueNode);
+          tr.append(th, td);
+          tbody.appendChild(tr);
+        };
+
+        const camerasCell = document.createElement('span');
+        camerasCell.id = 'q-cameras';
+        camerasCell.textContent = String(cameras);
+        addRow('Cantidad de cámaras', camerasCell);
+
+        const netPerInput = document.createElement('input');
+        netPerInput.id = 'q-net-per';
+        netPerInput.className = 'quote-input';
+        netPerInput.type = 'text';
+        netPerInput.inputMode = 'decimal';
+        netPerInput.value = String(netPer).replace('.', ',');
+        addRow('Precio neto por cámara (UF)', netPerInput);
+
+        const netSpan = document.createElement('span');
+        netSpan.id = 'q-net';
+        addRow('Neto', netSpan);
+
+        const ivaInput = document.createElement('input');
+        ivaInput.id = 'q-iva-rate';
+        ivaInput.className = 'quote-input';
+        ivaInput.type = 'text';
+        ivaInput.inputMode = 'numeric';
+        ivaInput.value = '19';
+        addRow('IVA (%)', ivaInput);
+
+        const ivaSpan = document.createElement('span');
+        ivaSpan.id = 'q-iva-amount';
+        addRow('IVA', ivaSpan);
+
+        const totalSpan = document.createElement('span');
+        totalSpan.id = 'q-total';
+        addRow('Neto + IVA', totalSpan);
+
+        const grandSpan = document.createElement('span');
+        grandSpan.id = 'q-grand';
+        addRow('Total de la factura', grandSpan, 'quote-total');
+
+        const discountSpan = document.createElement('span');
+        discountSpan.id = 'q-discount';
+        addRow('Descuento primeros 2 meses (30%)', discountSpan);
+
+        const promoSpan = document.createElement('span');
+        promoSpan.id = 'q-promo';
+        addRow('Total primeros 2 meses (70%)', promoSpan, 'quote-total');
+
+        table.appendChild(tbody);
+        body.appendChild(table);
+
+        [netPerInput, ivaInput].forEach((input) => {
+          input.addEventListener('input', () => {
+            input.value = input.value.replace(input === netPerInput ? /[^0-9,]/g : /[^0-9]/g, '');
+            updateQuote();
+          });
+        });
+
+        updateQuote();
+
+        document.getElementById('detail-mail').onclick = () => {
+          const netPerUf = quoteUf('q-net-per');
+          const ivaRate = quoteNumber('q-iva-rate');
+          const netUf = cameras * netPerUf;
+          const ivaUf = netUf * ivaRate / 100;
+          const totalUf = netUf + ivaUf;
+          const mailBody = [
+            'Empresa: ' + (lead.company || '-'),
+            'RUT: ' + (lead.rut || '-'),
+            'Contacto: ' + (lead.manager || '-'),
+            'Correo: ' + (lead.email || '-'),
+            'Teléfono: ' + (lead.phone || '-'),
+            '',
+            'Cantidad de cámaras: ' + cameras,
+            'Precio neto por cámara: ' + formatUf(netPerUf),
+            'Neto: ' + formatUf(netUf),
+            'IVA: ' + ivaRate + '% = ' + formatUf(ivaUf),
+            'Neto + IVA: ' + formatUf(totalUf),
+            'Total de la factura: ' + formatUf(totalUf),
+            'Descuento primeros 2 meses (30%): -' + formatUf(totalUf * 0.3),
+            'Total primeros 2 meses (70%): ' + formatUf(totalUf * 0.7),
+          ].join('\n');
+          window.location.href = 'mailto:' + encodeURIComponent(lead.email || '') +
+            '?subject=' + encodeURIComponent('Cotización ' + (lead.company || '')) +
+            '&body=' + encodeURIComponent(mailBody);
+        };
+
+        document.getElementById('detail-modal').hidden = false;
+      }
+
+      function showImplDetail(lead) {
+        const cameras = parseInt(String(lead.cameras || '0').replace(/\D/g, '') || '0', 10);
+        const impl = findImplementation(cameras);
+        const paid = !!lead.implPaid;
+
+        document.getElementById('detail-title').textContent = 'Implementación';
+        document.getElementById('detail-mail').hidden = false;
+        const body = document.getElementById('detail-body');
+        body.innerHTML = '';
+
+        const head = document.createElement('div');
+        head.className = 'quote-head';
+        const logo = document.createElement('img');
+        logo.className = 'quote-logo';
+        logo.src = 'a2791a37-6fe2-413d-9f5a-526532134dcc.jpg';
+        logo.alt = 'NEO Seguridad';
+        const headInfo = document.createElement('div');
+        headInfo.className = 'quote-head-info';
+        const title = document.createElement('h3');
+        title.textContent = 'Implementación';
+        const subtitle = document.createElement('p');
+        subtitle.textContent = 'NEO Seguridad · Seguridad que se anticipa';
+        const dateLine = document.createElement('p');
+        dateLine.textContent = 'Fecha: ' + (lead.date || '');
+        headInfo.append(title, subtitle, dateLine);
+        head.append(logo, headInfo);
+        body.appendChild(head);
+
+        const clientTitle = document.createElement('h4');
+        clientTitle.className = 'quote-section';
+        clientTitle.textContent = 'Datos del cliente';
+        body.appendChild(clientTitle);
+
+        const clientList = document.createElement('dl');
+        clientList.className = 'detail-list';
+        [
+          ['Empresa', lead.company],
+          ['RUT', lead.rut],
+          ['Contacto', lead.manager],
+          ['Correo', lead.email],
+          ['Teléfono', lead.phone],
+          ['Solución', lead.solution],
+        ].forEach(([label, value]) => clientList.appendChild(detailRow(label, value)));
+        body.appendChild(clientList);
+
+        const detailTitle = document.createElement('h4');
+        detailTitle.className = 'quote-section';
+        detailTitle.textContent = 'Detalle de implementación';
+        body.appendChild(detailTitle);
+
+        const table = document.createElement('table');
+        table.className = 'quote-table';
+        const tbody = document.createElement('tbody');
+        const addRow = (label, value, className) => {
+          const tr = document.createElement('tr');
+          if (className) tr.className = className;
+          const th = document.createElement('th');
+          th.textContent = label;
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.append(th, td);
+          tbody.appendChild(tr);
+        };
+        addRow('Cantidad de cámaras', String(cameras));
+        addRow('Tramo', impl.label || '-');
+        addRow('Estado', paid ? 'Pagada' : 'Pendiente');
+        addRow('Implementación única', formatUf(impl.price), 'quote-total');
+        table.appendChild(tbody);
+        body.appendChild(table);
+
+        document.getElementById('detail-modal').hidden = false;
+      }
+
+      function readSalary() {
+        const stored = readStore(SALARY_KEY);
+        return Array.isArray(stored) ? stored : [];
+      }
+
+      function readSalaryParams() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(SALARY_PARAMS_KEY) || 'null');
+          return stored && typeof stored === 'object'
+            ? Object.assign({}, DEFAULT_SALARY_PARAMS, stored)
+            : Object.assign({}, DEFAULT_SALARY_PARAMS);
+        } catch (error) {
+          return Object.assign({}, DEFAULT_SALARY_PARAMS);
+        }
+      }
+
+      function computeOperator(op) {
+        const afpKey = salaryParams.afp || 'capital';
+        const comision = AFP_COMISIONES[afpKey] ? AFP_COMISIONES[afpKey].comision : 0;
+        const afpRate = 10 + comision;
+        const cesantia = parseUf(salaryParams.cesantia);
+        const jornada = parseUf(salaryParams.jornada) || 45;
+        const base = parseUf(op.base);
+        const otros = parseUf(op.otros);
+        const noImponibles = parseUf(op.noImponibles);
+        const horasExtra = parseUf(op.horasExtra);
+        const dias = (op.diasTrabajados === '' || op.diasTrabajados == null) ? 30 : parseUf(op.diasTrabajados);
+        const atraso = parseUf(op.horasAtraso);
+        const gratificacion = parseUf(op.gratificacion);
+        const valorHora = base > 0 && jornada > 0 ? base / 30 / (jornada / 6) : 0;
+        const baseProporcional = Math.round(base * Math.min(dias, 30) / 30);
+        const descuentoAtraso = Math.round(valorHora * atraso);
+        const pagoHorasExtra = Math.round(valorHora * 1.5 * horasExtra);
+        const imponibles = Math.max(0, baseProporcional - descuentoAtraso + otros + pagoHorasExtra + gratificacion);
+        const bruto = imponibles + noImponibles;
+        const descAfp = Math.round(imponibles * afpRate / 100);
+        let descSalud = Math.round(imponibles * 0.07);
+        if (salaryParams.salud === 'isapre') {
+          const plan = Math.round(parseUf(salaryParams.plan) * parseUf(salaryParams.uf));
+          descSalud = Math.max(descSalud, plan);
+        }
+        const descCesantia = Math.round(imponibles * cesantia / 100);
+        const descuentos = descAfp + descSalud + descCesantia;
+        return {
+          afpRate: afpRate,
+          descAfp: descAfp,
+          descSalud: descSalud,
+          descCesantia: descCesantia,
+          baseProporcional: baseProporcional,
+          descuentoAtraso: descuentoAtraso,
+          pagoHorasExtra: pagoHorasExtra,
+          gratificacion: gratificacion,
+          imponibles: imponibles,
+          noImponibles: noImponibles,
+          bruto: bruto,
+          descuentos: descuentos,
+          liquido: bruto - descuentos,
+        };
+      }
+
+      function renderSalaryParams() {
+        const afpSelect = document.getElementById('s-afp');
+        afpSelect.innerHTML = '';
+        Object.keys(AFP_COMISIONES).forEach((key) => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = AFP_COMISIONES[key].name + ' (10% + ' + String(AFP_COMISIONES[key].comision).replace('.', ',') + '%)';
+          afpSelect.appendChild(option);
+        });
+        afpSelect.value = salaryParams.afp || 'capital';
+        document.getElementById('s-salud').value = salaryParams.salud || 'fonasa';
+        document.getElementById('s-plan').value = salaryParams.plan || '0';
+        document.getElementById('s-uf').value = salaryParams.uf || '0';
+        document.getElementById('s-cesantia').value = salaryParams.cesantia;
+        document.getElementById('s-jornada').value = salaryParams.jornada;
+        document.getElementById('s-utm').value = salaryParams.utm;
+        const isapre = salaryParams.salud === 'isapre';
+        document.getElementById('s-plan-field').hidden = !isapre;
+        document.getElementById('s-uf-field').hidden = !isapre;
+      }
+
+      function renderSalaryList() {
+        const list = document.getElementById('salary-list');
+        const empty = document.getElementById('salary-empty');
+        list.innerHTML = '';
+        empty.hidden = salaryOperators.length > 0;
+
+        salaryOperators.forEach((op, index) => {
+          const card = document.createElement('article');
+          card.className = 'record';
+
+          const delButton = document.createElement('button');
+          delButton.type = 'button';
+          delButton.className = 'btn btn-sm btn-ghost';
+          delButton.textContent = 'Eliminar';
+          delButton.addEventListener('click', () => {
+            salaryOperators.splice(index, 1);
+            writeStore(SALARY_KEY, salaryOperators);
+            renderSalaryList();
+          });
+
+          card.appendChild(recordHead(
+            op.name || 'Trabajador',
+            (op.cargo ? op.cargo + ' · ' : '') +
+              (AFP_COMISIONES[salaryParams.afp] ? AFP_COMISIONES[salaryParams.afp].name : '') +
+              ' · ' + (salaryParams.salud === 'isapre' ? 'Isapre' : 'Fonasa'),
+            delButton
+          ));
+
+          const fields = document.createElement('div');
+          fields.className = 'salary-fields';
+
+          const grid = document.createElement('dl');
+          grid.className = 'record-grid';
+          const cell = (label, full) => {
+            const div = document.createElement('div');
+            if (full) div.className = 'record-grid-full';
+            const dt = document.createElement('dt');
+            dt.textContent = label;
+            const dd = document.createElement('dd');
+            div.append(dt, dd);
+            grid.appendChild(div);
+            return dd;
+          };
+          const ddBase = cell('Sueldo base');
+          const ddProp = cell('Sueldo proporcional');
+          const ddOtros = cell('Otros imponibles');
+          const ddNoImp = cell('No imponibles');
+          const ddAtraso = cell('Descuento atrasos');
+          const ddHE = cell('Pago horas extras');
+          const ddGrat = cell('Gratificación');
+          const ddImponibles = cell('Haberes imponibles');
+          const ddBruto = cell('Total bruto');
+          const ddDesc = cell('Descuentos legales');
+          const ddLiq = cell('Sueldo líquido', true);
+
+          const addField = (label, key, fallback) => {
+            const field = document.createElement('div');
+            field.className = 'field';
+            const lbl = document.createElement('label');
+            lbl.textContent = label;
+            const input = document.createElement('input');
+            input.className = 'price-input';
+            input.type = 'text';
+            input.inputMode = 'numeric';
+            input.placeholder = '0';
+            input.value = (op[key] === '' || op[key] == null) ? fallback : op[key];
+            input.addEventListener('input', () => {
+              input.value = input.value.replace(/[^0-9]/g, '');
+              op[key] = input.value;
+              writeStore(SALARY_KEY, salaryOperators);
+              update();
+            });
+            field.append(lbl, input);
+            fields.appendChild(field);
+          };
+          addField('Días trabajados', 'diasTrabajados', '30');
+          addField('Atrasos (horas)', 'horasAtraso', '');
+          addField('Horas extras', 'horasExtra', '');
+          addField('Gratificación (CLP)', 'gratificacion', '');
+
+          card.append(fields, grid);
+
+          const update = () => {
+            const result = computeOperator(op);
+            ddBase.textContent = formatClp(parseUf(op.base));
+            ddProp.textContent = formatClp(result.baseProporcional);
+            ddOtros.textContent = formatClp(parseUf(op.otros));
+            ddNoImp.textContent = formatClp(parseUf(op.noImponibles));
+            ddAtraso.textContent = '-' + formatClp(result.descuentoAtraso);
+            ddHE.textContent = formatClp(result.pagoHorasExtra);
+            ddGrat.textContent = formatClp(result.gratificacion);
+            ddImponibles.textContent = formatClp(result.imponibles);
+            ddBruto.textContent = formatClp(result.bruto);
+            ddDesc.textContent = formatClp(result.descuentos);
+            ddLiq.textContent = formatClp(result.liquido);
+          };
+          update();
+
+          const foot = document.createElement('div');
+          foot.className = 'record-foot';
+          const pdfButton = document.createElement('button');
+          pdfButton.type = 'button';
+          pdfButton.className = 'btn btn-sm';
+          pdfButton.textContent = 'PDF liquidación';
+          pdfButton.addEventListener('click', () => {
+            showLiquidation(op);
+            setTimeout(() => window.print(), 150);
+          });
+          foot.appendChild(pdfButton);
+          card.appendChild(foot);
+
+          list.appendChild(card);
+        });
+
+        const totalsEl = document.getElementById('salary-totals');
+        totalsEl.innerHTML = '';
+        if (!salaryOperators.length) {
+          totalsEl.hidden = true;
+          return;
+        }
+        let sumImponibles = 0;
+        let sumNoImponibles = 0;
+        let sumBruto = 0;
+        let sumDescuentos = 0;
+        let sumLiquido = 0;
+        salaryOperators.forEach((op) => {
+          const r = computeOperator(op);
+          sumImponibles += r.imponibles;
+          sumNoImponibles += r.noImponibles;
+          sumBruto += r.bruto;
+          sumDescuentos += r.descuentos;
+          sumLiquido += r.liquido;
+        });
+        const totalsGrid = document.createElement('dl');
+        totalsGrid.className = 'record-grid';
+        [
+          ['Operadores', String(salaryOperators.length)],
+          ['Total imponibles', formatClp(sumImponibles)],
+          ['Total no imponibles', formatClp(sumNoImponibles)],
+          ['Total bruto', formatClp(sumBruto)],
+          ['Total descuentos', formatClp(sumDescuentos)],
+          ['Total líquido', formatClp(sumLiquido)],
+        ].forEach(([label, value]) => {
+          const div = document.createElement('div');
+          const dt = document.createElement('dt');
+          dt.textContent = label;
+          const dd = document.createElement('dd');
+          dd.textContent = value;
+          div.append(dt, dd);
+          totalsGrid.appendChild(div);
+        });
+        totalsEl.appendChild(totalsGrid);
+        totalsEl.hidden = false;
+      }
+
+      function buildLiquidation(op) {
+        const result = computeOperator(op);
+        const afpKey = salaryParams.afp || 'capital';
+        const afpInfo = AFP_COMISIONES[afpKey];
+        const afpName = afpInfo ? afpInfo.name : '-';
+        const comision = afpInfo ? String(afpInfo.comision).replace('.', ',') : '0';
+        const saludLabel = salaryParams.salud === 'isapre' ? 'Isapre' : 'Fonasa';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'liquidation';
+
+        const head = document.createElement('div');
+        head.className = 'quote-head';
+        const logo = document.createElement('img');
+        logo.className = 'quote-logo';
+        logo.src = 'a2791a37-6fe2-413d-9f5a-526532134dcc.jpg';
+        logo.alt = 'NEO Seguridad';
+        const headInfo = document.createElement('div');
+        headInfo.className = 'quote-head-info';
+        const title = document.createElement('h3');
+        title.textContent = 'Liquidación de sueldo';
+        const subtitle = document.createElement('p');
+        subtitle.textContent = 'NEO Seguridad · Seguridad que se anticipa';
+        const dateLine = document.createElement('p');
+        dateLine.textContent = 'Operador: ' + (op.name || '-');
+        headInfo.append(title, subtitle, dateLine);
+        head.append(logo, headInfo);
+        wrap.appendChild(head);
+
+        const dataTitle = document.createElement('h4');
+        dataTitle.className = 'quote-section';
+        dataTitle.textContent = 'Datos';
+        wrap.appendChild(dataTitle);
+        const dataList = document.createElement('dl');
+        dataList.className = 'detail-list';
+        [
+          ['Trabajador', op.name || '-'],
+          ['Cargo', op.cargo || '-'],
+          ['AFP', afpName + ' (10% + ' + comision + '%)'],
+          ['Salud', saludLabel],
+          ['Jornada', (salaryParams.jornada || '0') + ' horas'],
+          ['Días trabajados', op.diasTrabajados || '30'],
+          ['Atrasos (horas)', op.horasAtraso || '0'],
+          ['Horas extras', op.horasExtra || '0'],
+        ].forEach(([label, value]) => dataList.appendChild(detailRow(label, value)));
+        wrap.appendChild(dataList);
+
+        const detTitle = document.createElement('h4');
+        detTitle.className = 'quote-section';
+        detTitle.textContent = 'Haberes y descuentos';
+        wrap.appendChild(detTitle);
+
+        const table = document.createElement('table');
+        table.className = 'quote-table';
+        const tbody = document.createElement('tbody');
+        const addRow = (label, value, cls) => {
+          const tr = document.createElement('tr');
+          if (cls) tr.className = cls;
+          const th = document.createElement('th');
+          th.textContent = label;
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.append(th, td);
+          tbody.appendChild(tr);
+        };
+        addRow('Sueldo base (imponible)', formatClp(parseUf(op.base)));
+        addRow('Sueldo proporcional (' + (op.diasTrabajados || '30') + ' días)', formatClp(result.baseProporcional));
+        addRow('Otros imponibles', formatClp(parseUf(op.otros)));
+        addRow('Horas extras', formatClp(result.pagoHorasExtra));
+        addRow('Gratificación', formatClp(result.gratificacion));
+        addRow('Descuento atrasos', '-' + formatClp(result.descuentoAtraso));
+        addRow('Total haberes imponibles', formatClp(result.imponibles));
+        addRow('Haberes no imponibles', formatClp(result.noImponibles));
+        addRow('Total bruto', formatClp(result.bruto), 'quote-total');
+        addRow('Descuento AFP (' + afpName + ')', '-' + formatClp(result.descAfp));
+        addRow('Descuento Salud (' + saludLabel + ')', '-' + formatClp(result.descSalud));
+        addRow('Seguro cesantía', '-' + formatClp(result.descCesantia));
+        addRow('Total descuentos', '-' + formatClp(result.descuentos));
+        addRow('Sueldo líquido', formatClp(result.liquido), 'quote-total');
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+
+        return wrap;
+      }
+
+      function showLiquidation(op) {
+        document.getElementById('detail-title').textContent = 'Liquidación de sueldo';
+        document.getElementById('detail-mail').hidden = true;
+        const body = document.getElementById('detail-body');
+        body.innerHTML = '';
+        body.appendChild(buildLiquidation(op));
+        document.getElementById('detail-modal').hidden = false;
+      }
+
+      function printAllLiquidations() {
+        if (!salaryOperators.length) return;
+        document.getElementById('detail-title').textContent = 'Liquidaciones de sueldo';
+        document.getElementById('detail-mail').hidden = true;
+        const body = document.getElementById('detail-body');
+        body.innerHTML = '';
+        salaryOperators.forEach((op, index) => {
+          const doc = buildLiquidation(op);
+          if (index > 0) doc.classList.add('liquidation-break');
+          body.appendChild(doc);
+        });
+        document.getElementById('detail-modal').hidden = false;
+        setTimeout(() => window.print(), 150);
+      }
+
+      function renderSalary() {
+        renderSalaryParams();
+        renderSalaryList();
+      }
+
+      function dateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+      }
+
+      function readAgenda() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(WEEK_KEY) || '{}');
+          return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function saveAgenda() {
+        writeStore(WEEK_KEY, agendaData);
+      }
+
+      function tasksFor(date) {
+        const list = agendaData[dateKey(date)];
+        return Array.isArray(list) ? list : [];
+      }
+
+      function ensureTasks(date) {
+        const key = dateKey(date);
+        if (!Array.isArray(agendaData[key])) agendaData[key] = [];
+        return agendaData[key];
+      }
+
+      function isRealTask(task) {
+        return Boolean(task && (task.client || task.text));
+      }
+
+      function startOfWeek(date) {
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d;
+      }
+
+      function setAgendaViewButtons(view) {
+        document.querySelectorAll('[data-agenda-view]').forEach((btn) => {
+          btn.classList.toggle('is-active', btn.dataset.agendaView === view);
+        });
+      }
+
+      function updateClock() {
+        const now = new Date();
+        const hour = now.getHours();
+        const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+        const greetingEl = document.getElementById('dash-greeting');
+        const dateEl = document.getElementById('dash-date');
+        const clockEl = document.getElementById('dash-clock');
+        if (greetingEl) greetingEl.textContent = greeting;
+        if (dateEl) dateEl.textContent = now.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        if (clockEl) clockEl.textContent = 'Hora actual: ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      function daySummary(date) {
+        const tasks = tasksFor(date)
+          .filter(isRealTask)
+          .sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+        const fecha = date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (!tasks.length) return 'El ' + fecha + ' no tienes reuniones agendadas.';
+        const parts = tasks.map((task) => {
+          const hora = task.time || 'sin hora';
+          const cliente = task.client || 'sin cliente';
+          const tema = task.text ? ' (' + task.text + ')' : '';
+          return hora + ' con ' + cliente + tema;
+        });
+        return 'El ' + fecha + ' tienes ' + tasks.length + ' reunión' + (tasks.length === 1 ? '' : 'es') + ': ' + parts.join('; ') + '.';
+      }
+
+      function renderSummary() {
+        const el = document.getElementById('summary-text');
+        if (!el) return;
+        el.textContent = daySummary(agendaDate);
+      }
+
+      function speakSummary() {
+        const el = document.getElementById('summary-text');
+        if (!el || !('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(el.textContent);
+        utterance.lang = 'es-CL';
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function renderDashboard() {
+        updateClock();
+        const workers = salaryOperators.length;
+        const leadsList = readStore(LEADS_KEY);
+        const leads = leadsList.filter((lead) => (lead.status || 'nuevo') !== 'atendido').length;
+        const leadsProceso = leadsList.filter((lead) => (lead.status || 'nuevo') === 'proceso').length;
+        const clients = readStore(CLIENT_KEY).filter((item) => (item.status || 'nuevo') !== 'atendido').length;
+        document.getElementById('stat-workers').textContent = workers;
+        document.getElementById('stat-leads').textContent = leads;
+        document.getElementById('stat-leads-proceso').textContent = leadsProceso;
+        document.getElementById('stat-clients').textContent = clients;
+
+        const chart = document.getElementById('dash-chart');
+        chart.innerHTML = '';
+        const max = Math.max(workers, leads, clients, 1);
+        [
+          ['Trabajadores', workers],
+          ['Clientes potenciales', leads],
+          ['Solicitudes de clientes', clients],
+        ].forEach(([label, value]) => {
+          const row = document.createElement('div');
+          row.className = 'bar';
+          const name = document.createElement('span');
+          name.className = 'bar-label';
+          name.textContent = label;
+          const track = document.createElement('div');
+          track.className = 'bar-track';
+          const fill = document.createElement('div');
+          fill.className = 'bar-fill';
+          fill.style.width = Math.round((value / max) * 100) + '%';
+          track.appendChild(fill);
+          const count = document.createElement('span');
+          count.className = 'bar-value';
+          count.textContent = value;
+          row.append(name, track, count);
+          chart.appendChild(row);
+        });
+      }
+
+      function buildDayCard(date, compact) {
+        const tasks = tasksFor(date);
+        const card = document.createElement('div');
+        card.className = 'agenda-day';
+
+        const head = document.createElement('div');
+        head.className = 'agenda-day-head';
+        head.textContent = date.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'short' });
+        card.appendChild(head);
+
+        if (compact) {
+          const summary = document.createElement('div');
+          summary.className = 'agenda-summary-list';
+          const real = tasks.filter(isRealTask);
+          if (!real.length) {
+            const empty = document.createElement('p');
+            empty.className = 'agenda-summary-empty';
+            empty.textContent = 'Sin reuniones';
+            summary.appendChild(empty);
+          }
+          real.forEach((task) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'agenda-summary' + (COMPLEXITY[task.complexity] ? ' ' + COMPLEXITY[task.complexity].className : '');
+            const time = document.createElement('span');
+            time.className = 'agenda-summary-time';
+            time.textContent = task.time || '--:--';
+            const client = document.createElement('span');
+            client.className = 'agenda-summary-client';
+            client.textContent = task.client || 'Sin cliente';
+            row.append(time, client);
+            row.addEventListener('click', () => {
+              agendaDate = date;
+              agendaView = 'dia';
+              setAgendaViewButtons('dia');
+              renderAgenda();
+            });
+            summary.appendChild(row);
+          });
+          card.appendChild(summary);
+          return card;
+        }
+
+        const list = document.createElement('div');
+        list.className = 'agenda-tasks';
+        tasks.forEach((task, taskIndex) => {
+          const row = document.createElement('div');
+          row.className = 'agenda-task';
+
+          const time = document.createElement('select');
+          time.className = 'price-input agenda-time';
+          const timeEmpty = document.createElement('option');
+          timeEmpty.value = '';
+          timeEmpty.textContent = 'Hora';
+          time.appendChild(timeEmpty);
+          const takenTimes = new Set(tasks.filter((t, j) => j !== taskIndex && t.time).map((t) => t.time));
+          AGENDA_SLOTS.forEach((slot) => {
+            const option = document.createElement('option');
+            option.value = slot.value;
+            option.textContent = takenTimes.has(slot.value) ? slot.label + ' (ocupado)' : slot.label;
+            option.disabled = takenTimes.has(slot.value);
+            time.appendChild(option);
+          });
+          time.value = task.time || '';
+          time.addEventListener('change', () => { task.time = time.value; saveAgenda(); });
+
+          const client = document.createElement('input');
+          client.className = 'price-input';
+          client.type = 'text';
+          client.placeholder = 'Cliente';
+          client.setAttribute('list', 'agenda-clients');
+          client.value = task.client || '';
+          client.addEventListener('input', () => { task.client = client.value; saveAgenda(); });
+
+          const text = document.createElement('input');
+          text.className = 'price-input';
+          text.type = 'text';
+          text.placeholder = 'Tema / reunión';
+          text.value = task.text || '';
+          text.addEventListener('input', () => { task.text = text.value; saveAgenda(); });
+
+          const complexity = document.createElement('select');
+          complexity.className = 'price-input agenda-complexity' + (COMPLEXITY[task.complexity] ? ' ' + COMPLEXITY[task.complexity].className : '');
+          const complexityEmpty = document.createElement('option');
+          complexityEmpty.value = '';
+          complexityEmpty.textContent = 'Complejidad';
+          complexity.appendChild(complexityEmpty);
+          Object.keys(COMPLEXITY).forEach((key) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = COMPLEXITY[key].label;
+            complexity.appendChild(option);
+          });
+          complexity.value = task.complexity || '';
+          complexity.addEventListener('change', () => {
+            task.complexity = complexity.value;
+            saveAgenda();
+            renderAgenda();
+          });
+
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'price-del';
+          remove.textContent = '\u2715';
+          remove.setAttribute('aria-label', 'Eliminar reunión');
+          remove.addEventListener('click', () => {
+            tasks.splice(taskIndex, 1);
+            saveAgenda();
+            renderAgenda();
+          });
+
+          row.append(time, client, text, complexity, remove);
+          list.appendChild(row);
+        });
+        card.appendChild(list);
+
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'btn btn-sm btn-ghost agenda-add';
+        add.textContent = '+ Agregar reunión';
+        add.addEventListener('click', () => {
+          ensureTasks(date).push({ time: '', client: '', text: '', complexity: '' });
+          saveAgenda();
+          renderAgenda();
+        });
+        card.appendChild(add);
+
+        return card;
+      }
+
+      function renderAgendaDay(container) {
+        const nav = document.createElement('div');
+        nav.className = 'agenda-nav';
+        const prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'btn btn-sm btn-ghost';
+        prev.textContent = '\u2190';
+        prev.setAttribute('aria-label', 'Día anterior');
+        prev.addEventListener('click', () => {
+          agendaDate = new Date(agendaDate.getFullYear(), agendaDate.getMonth(), agendaDate.getDate() - 1);
+          renderAgenda();
+        });
+        const title = document.createElement('span');
+        title.className = 'agenda-nav-title';
+        title.textContent = agendaDate.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'btn btn-sm btn-ghost';
+        next.textContent = '\u2192';
+        next.setAttribute('aria-label', 'Día siguiente');
+        next.addEventListener('click', () => {
+          agendaDate = new Date(agendaDate.getFullYear(), agendaDate.getMonth(), agendaDate.getDate() + 1);
+          renderAgenda();
+        });
+        nav.append(prev, title, next);
+        container.appendChild(nav);
+
+        const card = buildDayCard(agendaDate, false);
+        card.classList.add('agenda-day-wide');
+        container.appendChild(card);
+      }
+
+      function renderAgendaWeek(container) {
+        const monday = startOfWeek(agendaDate);
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+          container.appendChild(buildDayCard(date, true));
+        }
+      }
+
+      function renderAgendaMonth(container) {
+        const year = agendaDate.getFullYear();
+        const month = agendaDate.getMonth();
+        const startOffset = (new Date(year, month, 1).getDay() + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const head = document.createElement('div');
+        head.className = 'agenda-month-head';
+        head.textContent = agendaDate.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+        container.appendChild(head);
+
+        const grid = document.createElement('div');
+        grid.className = 'agenda-month';
+        ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].forEach((label) => {
+          const wd = document.createElement('div');
+          wd.className = 'agenda-month-wd';
+          wd.textContent = label;
+          grid.appendChild(wd);
+        });
+        for (let i = 0; i < startOffset; i++) {
+          grid.appendChild(document.createElement('div'));
+        }
+        const todayKey = dateKey(new Date());
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, month, day);
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'agenda-month-day';
+          cell.textContent = String(day);
+          if (dateKey(date) === todayKey) cell.classList.add('is-today');
+          const count = tasksFor(date).filter(isRealTask).length;
+          if (count > 0) {
+            cell.classList.add('busy-' + (count <= 2 ? 1 : count === 3 ? 2 : 3));
+          }
+          cell.addEventListener('click', () => {
+            agendaDate = date;
+            agendaView = 'dia';
+            setAgendaViewButtons('dia');
+            renderAgenda();
+          });
+          grid.appendChild(cell);
+        }
+        container.appendChild(grid);
+
+        const legend = document.createElement('div');
+        legend.className = 'agenda-legend';
+        [
+          ['level-0', 'Libre'],
+          ['level-1', 'Pocas'],
+          ['level-2', 'Ocupado'],
+          ['level-3', 'Muy ocupado'],
+        ].forEach(([cls, label]) => {
+          const item = document.createElement('span');
+          item.className = 'legend-item';
+          const dot = document.createElement('span');
+          dot.className = 'legend-dot ' + cls;
+          const text = document.createElement('span');
+          text.textContent = label;
+          item.append(dot, text);
+          legend.appendChild(item);
+        });
+        container.appendChild(legend);
+      }
+
+      function renderAgenda() {
+        const container = document.getElementById('week-schedule');
+        container.className = 'week view-' + agendaView;
+        container.innerHTML = '';
+
+        const datalist = document.getElementById('agenda-clients');
+        datalist.innerHTML = '';
+        readStore(LEADS_KEY).forEach((lead) => {
+          if (!lead.company) return;
+          const option = document.createElement('option');
+          option.value = lead.company;
+          datalist.appendChild(option);
+        });
+
+        if (agendaView === 'dia') {
+          renderAgendaDay(container);
+        } else if (agendaView === 'mes') {
+          renderAgendaMonth(container);
+        } else {
+          renderAgendaWeek(container);
+        }
+
+        renderSummary();
+      }
+
       function renderAll() {
+        renderDashboard();
+        renderSummary();
+        renderAgenda();
         renderLeads();
         renderClientRequests();
+        renderPrices();
+        renderImplementation();
+        renderCalcExpenses();
+        updateCalc();
+        updateMonthly();
+        renderSalary();
+        document.getElementById('uf-value').value = String(ufValue);
+      }
+
+      let calcExpenses = [{ concept: 'Instalación', amount: '' }];
+
+      function formatClp(value) {
+        return '$' + (value || 0).toLocaleString('es-CL');
+      }
+
+      function readUf() {
+        try {
+          const stored = parseInt(localStorage.getItem(UF_KEY) || '', 10);
+          return stored > 0 ? stored : 39000;
+        } catch (error) {
+          return 39000;
+        }
+      }
+
+      function parseUf(value) {
+        const clean = String(value == null ? '' : value).replace(/[^0-9,]/g, '').replace(',', '.');
+        const number = parseFloat(clean);
+        return isNaN(number) ? 0 : number;
+      }
+
+      function formatUf(value) {
+        const number = Number(value) || 0;
+        return number.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' UF';
+      }
+
+      function calcNumber(id) {
+        return parseInt((document.getElementById(id).value || '').replace(/[^0-9]/g, '') || '0', 10);
+      }
+
+      function renderCalcExpenses() {
+        const list = document.getElementById('calc-expense-list');
+        list.innerHTML = '';
+        calcExpenses.forEach((expense, index) => {
+          const row = document.createElement('div');
+          row.className = 'calc-expense';
+
+          const concept = document.createElement('input');
+          concept.type = 'text';
+          concept.className = 'price-input';
+          concept.placeholder = 'Concepto';
+          concept.value = expense.concept;
+          concept.addEventListener('input', () => { expense.concept = concept.value; });
+
+          const amount = document.createElement('input');
+          amount.type = 'text';
+          amount.inputMode = 'numeric';
+          amount.className = 'price-input';
+          amount.placeholder = 'Monto';
+          amount.value = expense.amount;
+          amount.addEventListener('input', () => {
+            amount.value = amount.value.replace(/[^0-9]/g, '');
+            expense.amount = amount.value;
+            updateCalc();
+          });
+
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'price-del';
+          remove.textContent = '\u2715';
+          remove.setAttribute('aria-label', 'Eliminar gasto');
+          remove.addEventListener('click', () => {
+            calcExpenses.splice(index, 1);
+            renderCalcExpenses();
+            updateCalc();
+          });
+
+          row.append(concept, amount, remove);
+          list.appendChild(row);
+        });
+      }
+
+      function calcTotals() {
+        const cameras = calcNumber('calc-cameras');
+        const costPer = calcNumber('calc-cost');
+        const margin = calcNumber('calc-margin');
+        const costCameras = cameras * costPer;
+        const costExpenses = calcExpenses.reduce((sum, item) => sum + (parseInt(item.amount || '0', 10) || 0), 0);
+        const total = costCameras + costExpenses;
+        const price = Math.round(total * (1 + margin / 100));
+        const pricePer = cameras > 0 ? Math.round(price / cameras) : 0;
+        return { cameras, costCameras, costExpenses, total, price, pricePer };
+      }
+
+      function updateCalc() {
+        const data = calcTotals();
+        document.getElementById('calc-cost-cameras').textContent = formatClp(data.costCameras);
+        document.getElementById('calc-cost-expenses').textContent = formatClp(data.costExpenses);
+        document.getElementById('calc-cost-total').textContent = formatClp(data.total);
+        document.getElementById('calc-price').textContent = formatClp(data.price);
+        document.getElementById('calc-price-camera').textContent = formatClp(data.pricePer);
+      }
+
+      function updateMonthly() {
+        const operators = calcNumber('m-ops');
+        const salary = calcNumber('m-salary');
+        const cameras = calcNumber('m-cameras');
+        const integration = calcNumber('m-integration');
+        const other = calcNumber('m-other');
+        const ivaRate = calcNumber('m-iva');
+        const salaries = operators * salary;
+        const integrationTotal = cameras * integration;
+        const subtotal = salaries + integrationTotal + other;
+        const iva = Math.round(subtotal * (ivaRate / 100));
+        const total = subtotal + iva;
+        document.getElementById('m-out-salary').textContent = formatClp(salaries);
+        document.getElementById('m-out-integration').textContent = formatClp(integrationTotal);
+        document.getElementById('m-out-other').textContent = formatClp(other);
+        document.getElementById('m-out-subtotal').textContent = formatClp(subtotal);
+        document.getElementById('m-out-iva').textContent = formatClp(iva);
+        document.getElementById('m-out-total').textContent = formatClp(total);
+        document.getElementById('m-out-discount').textContent = '-' + formatClp(Math.round(total * 0.3));
+        document.getElementById('m-out-promo').textContent = formatClp(Math.round(total * 0.7));
       }
 
       function showView(view) {
@@ -496,6 +2200,242 @@
 
       document.getElementById('client-search').addEventListener('input', renderClientRequests);
 
+      document.querySelectorAll('.admin-nav-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          document.querySelectorAll('.admin-nav-btn').forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+          });
+          document.querySelectorAll('.admin-panel').forEach((panel) => {
+            panel.hidden = panel.dataset.adminPanel !== button.dataset.admin;
+          });
+        });
+      });
+
+      document.querySelectorAll('.filter-chip[data-filter]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          leadFilter = chip.dataset.filter;
+          document.querySelectorAll('.filter-chip[data-filter]').forEach((item) => {
+            item.classList.toggle('is-active', item === chip);
+          });
+          renderLeads();
+        });
+      });
+
+      document.querySelectorAll('.filter-chip[data-client-filter]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          clientFilter = chip.dataset.clientFilter;
+          document.querySelectorAll('.filter-chip[data-client-filter]').forEach((item) => {
+            item.classList.toggle('is-active', item === chip);
+          });
+          renderClientRequests();
+        });
+      });
+
+      document.querySelectorAll('[data-agenda-view]').forEach((button) => {
+        button.addEventListener('click', () => {
+          agendaView = button.dataset.agendaView;
+          document.querySelectorAll('[data-agenda-view]').forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+          });
+          renderAgenda();
+        });
+      });
+
+      document.getElementById('summary-listen').addEventListener('click', speakSummary);
+
+      document.getElementById('price-add').addEventListener('click', () => {
+        prices.push({ qty: '', price: '' });
+        renderPrices();
+      });
+
+      document.getElementById('price-save').addEventListener('click', () => {
+        writeStore(PRICE_KEY, prices);
+        const status = document.getElementById('price-status');
+        status.textContent = 'Precios guardados correctamente.';
+        status.hidden = false;
+      });
+
+      document.getElementById('impl-add').addEventListener('click', () => {
+        implTiers.push({ qty: '', price: '' });
+        renderImplementation();
+      });
+
+      document.getElementById('impl-save').addEventListener('click', () => {
+        writeStore(IMPL_KEY, implTiers);
+        const status = document.getElementById('impl-status');
+        status.textContent = 'Implementación guardada correctamente.';
+        status.hidden = false;
+      });
+
+      const ufField = document.getElementById('uf-value');
+      ufField.value = String(ufValue);
+      ufField.addEventListener('input', () => {
+        ufField.value = ufField.value.replace(/[^0-9]/g, '');
+        ufValue = parseInt(ufField.value || '0', 10) || 0;
+        writeStore(UF_KEY, ufValue);
+      });
+
+      document.getElementById('uf-refresh').addEventListener('click', () => {
+        const status = document.getElementById('uf-status');
+        status.textContent = 'Consultando la UF...';
+        fetch('https://mindicador.cl/api/uf')
+          .then((response) => response.json())
+          .then((data) => {
+            const first = data && data.serie && data.serie[0];
+            const value = first && first.valor;
+            if (value) {
+              ufValue = Math.round(value);
+              ufField.value = String(ufValue);
+              writeStore(UF_KEY, ufValue);
+              const fecha = first.fecha ? String(first.fecha).slice(0, 10) : '';
+              status.textContent = 'UF chilena actualizada: ' + formatClp(ufValue) + (fecha ? ' (' + fecha + ')' : '');
+            } else {
+              status.textContent = 'No se pudo obtener la UF. Ingresa el valor manualmente.';
+            }
+          })
+          .catch(() => {
+            status.textContent = 'No se pudo conectar con el servicio de UF. Ingresa el valor manualmente.';
+          });
+      });
+
+      ['s-cesantia', 's-jornada', 's-utm', 's-plan', 's-uf'].forEach((id) => {
+        const field = id.replace('s-', '');
+        document.getElementById(id).addEventListener('input', (event) => {
+          event.target.value = event.target.value.replace(id === 's-plan' ? /[^0-9.,]/g : /[^0-9]/g, '');
+          salaryParams[field] = event.target.value;
+          writeStore(SALARY_PARAMS_KEY, salaryParams);
+          renderSalaryList();
+        });
+      });
+
+      document.getElementById('s-afp').addEventListener('change', (event) => {
+        salaryParams.afp = event.target.value;
+        writeStore(SALARY_PARAMS_KEY, salaryParams);
+        renderSalaryList();
+      });
+
+      document.getElementById('s-salud').addEventListener('change', (event) => {
+        salaryParams.salud = event.target.value;
+        writeStore(SALARY_PARAMS_KEY, salaryParams);
+        renderSalaryParams();
+        renderSalaryList();
+      });
+
+      const salaryForm = {
+        name: document.getElementById('op-name'),
+        cargo: document.getElementById('op-cargo'),
+        base: document.getElementById('op-base'),
+        otros: document.getElementById('op-otros'),
+        noImponibles: document.getElementById('op-noimp'),
+        grat: document.getElementById('op-grat'),
+        liquid: document.getElementById('op-liquid'),
+      };
+      ['base', 'otros', 'noImponibles', 'grat', 'liquid'].forEach((field) => {
+        salaryForm[field].addEventListener('input', () => {
+          salaryForm[field].value = salaryForm[field].value.replace(/[^0-9]/g, '');
+        });
+      });
+      salaryForm.liquid.addEventListener('input', () => {
+        const liquid = parseUf(salaryForm.liquid.value);
+        const noImponibles = parseUf(salaryForm.noImponibles.value);
+        const otros = parseUf(salaryForm.otros.value);
+        const afpKey = salaryParams.afp || 'capital';
+        const comision = AFP_COMISIONES[afpKey] ? AFP_COMISIONES[afpKey].comision : 0;
+        const rate = (10 + comision + 7 + parseUf(salaryParams.cesantia)) / 100;
+        const imponible = rate < 1 ? (liquid - noImponibles) / (1 - rate) : 0;
+        const base = Math.max(0, Math.round((imponible - otros) / 1.25));
+        const grat = Math.round(base * 0.25);
+        salaryForm.base.value = liquid > 0 ? String(base) : '';
+        salaryForm.grat.value = liquid > 0 ? String(grat) : '';
+      });
+
+      document.getElementById('salary-print-all').addEventListener('click', printAllLiquidations);
+
+      document.getElementById('salary-add').addEventListener('click', () => {
+        const operator = {
+          name: salaryForm.name.value.trim(),
+          cargo: salaryForm.cargo.value.trim(),
+          base: salaryForm.base.value.trim(),
+          otros: salaryForm.otros.value.trim(),
+          noImponibles: salaryForm.noImponibles.value.trim(),
+          diasTrabajados: '30',
+          horasAtraso: '',
+          horasExtra: '',
+          gratificacion: salaryForm.grat.value.trim(),
+        };
+        if (!operator.name && !operator.base) {
+          const status = document.getElementById('salary-status');
+          status.textContent = 'Ingresa al menos el nombre o el sueldo base.';
+          return;
+        }
+        salaryOperators.push(operator);
+        writeStore(SALARY_KEY, salaryOperators);
+        Object.keys(salaryForm).forEach((field) => { salaryForm[field].value = ''; });
+        const status = document.getElementById('salary-status');
+        status.textContent = 'Operador agregado.';
+        renderSalaryList();
+      });
+
+      document.getElementById('s-update').addEventListener('click', () => {
+        const status = document.getElementById('s-status');
+        status.textContent = 'Consultando UF/UTM...';
+        fetch('https://mindicador.cl/api')
+          .then((response) => response.json())
+          .then((data) => {
+            const uf = data && data.uf && data.uf.valor;
+            const utm = data && data.utm && data.utm.valor;
+            if (uf) salaryParams.uf = String(Math.round(uf));
+            if (utm) salaryParams.utm = String(Math.round(utm));
+            writeStore(SALARY_PARAMS_KEY, salaryParams);
+            renderSalaryParams();
+            renderSalaryList();
+            status.textContent = 'UF: ' + formatClp(Math.round(uf || 0)) + ' · UTM: ' + formatClp(Math.round(utm || 0));
+          })
+          .catch(() => {
+            status.textContent = 'No se pudo conectar. Ingresa los valores manualmente.';
+          });
+      });
+
+      ['calc-cameras', 'calc-cost', 'calc-margin'].forEach((id) => {
+        document.getElementById(id).addEventListener('input', (event) => {
+          event.target.value = event.target.value.replace(/[^0-9]/g, '');
+          updateCalc();
+        });
+      });
+
+      document.getElementById('calc-expense-add').addEventListener('click', () => {
+        calcExpenses.push({ concept: '', amount: '' });
+        renderCalcExpenses();
+      });
+
+      document.getElementById('calc-to-price').addEventListener('click', () => {
+        const data = calcTotals();
+        const priceUf = ufValue > 0 ? (data.price / ufValue) : 0;
+        const priceLabel = priceUf.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        prices.push({ qty: data.cameras > 0 ? data.cameras + ' cámaras' : '', price: priceLabel });
+        renderPrices();
+        const status = document.getElementById('price-status');
+        status.textContent = 'Precio agregado a la tabla (' + priceLabel + ' UF). Recuerda guardar.';
+        status.hidden = false;
+      });
+
+      ['m-ops', 'm-salary', 'm-cameras', 'm-integration', 'm-other', 'm-iva'].forEach((id) => {
+        document.getElementById(id).addEventListener('input', (event) => {
+          event.target.value = event.target.value.replace(/[^0-9]/g, '');
+          updateMonthly();
+        });
+      });
+
+      document.getElementById('detail-close').addEventListener('click', closeDetail);
+      document.getElementById('detail-ok').addEventListener('click', closeDetail);
+      document.getElementById('detail-print').addEventListener('click', () => window.print());
+      document.getElementById('detail-modal').addEventListener('click', (event) => {
+        if (event.target.id === 'detail-modal') closeDetail();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeDetail();
+      });
+
       document.querySelectorAll('.tab').forEach((tab) => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.tab').forEach((item) => {
@@ -568,6 +2508,8 @@
         status.textContent = 'Datos actualizados correctamente.';
         status.hidden = false;
       });
+
+      setInterval(updateClock, 1000);
 
       const activeSession = session.get(SESSION_KEY);
       if (activeSession === 'admin' || activeSession === 'cliente') {

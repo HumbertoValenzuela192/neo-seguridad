@@ -24,12 +24,40 @@ function getLanIp() {
   return "127.0.0.1";
 }
 
-createServer((request, response) => {
-  const file = files[new URL(request.url, "http://localhost").pathname];
-  if (!file || !existsSync(join(__dirname, file[0]))) return response.writeHead(404).end("Not found");
-  response.writeHead(200, { "Content-Type": file[1], "Cache-Control": "no-store" });
-  createReadStream(join(__dirname, file[0])).pipe(response);
-}).listen(5173, "0.0.0.0", () => {
+const server = createServer((request, response) => {
+  try {
+    const pathname = new URL(request.url, "http://localhost").pathname;
+    const file = files[pathname];
+    if (!file || !existsSync(join(__dirname, file[0]))) {
+      response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Not found");
+      return;
+    }
+    response.writeHead(200, { "Content-Type": file[1], "Cache-Control": "no-store" });
+    const stream = createReadStream(join(__dirname, file[0]));
+    stream.on("error", () => {
+      if (!response.headersSent) response.writeHead(500);
+      response.end();
+    });
+    stream.pipe(response);
+  } catch (error) {
+    if (!response.headersSent) response.writeHead(500);
+    response.end("Server error");
+  }
+});
+
+server.on("error", (error) => {
+  console.error("Server error:", error.message);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error.message);
+});
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled rejection:", error);
+});
+
+server.listen(5173, "0.0.0.0", () => {
   console.log("Local:  http://127.0.0.1:5173");
   console.log("Celular: http://" + getLanIp() + ":5173");
 });

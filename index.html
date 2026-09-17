@@ -38,6 +38,10 @@
             <a href="#proceso">Cómo protegemos</a>
             <a href="#contacto">Contacto</a>
           </nav>
+          <span class="country-badge" id="country-badge" hidden>
+            <img class="country-flag" id="country-flag" alt="" width="20" height="15" />
+            <span id="country-name"></span>
+          </span>
           <a class="btn portal-btn" href="admin.html">Portal</a>
           <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menú">
             <span class="nav-toggle-bar"></span>
@@ -236,10 +240,6 @@
             <input id="operators" type="text" name="operators" inputmode="numeric" pattern="[0-9]*" data-numeric required />
           </div>
           <div class="field">
-            <label for="sites">Cantidad de sitios</label>
-            <input id="sites" type="text" name="sites" inputmode="numeric" pattern="[0-9]*" data-numeric required />
-          </div>
-          <div class="field">
             <label for="solution">Solución</label>
             <select id="solution" name="solution" required>
               <option value="">Selecciona una opción</option>
@@ -262,6 +262,35 @@
 
     <script>
       document.getElementById('year').textContent = new Date().getFullYear();
+
+      (function showCountry() {
+        const badge = document.getElementById('country-badge');
+        if (!badge) return;
+        const sources = [
+          ['https://ipwho.is/', (d) => d && d.success !== false && { name: d.country, code: d.country_code }],
+          ['https://get.geojs.io/v1/ip/country.json', (d) => d && { name: d.name || d.country, code: d.country }],
+          ['https://api.country.is/', (d) => d && { name: d.country, code: d.country }],
+        ];
+        const tryNext = (index) => {
+          if (index >= sources.length) return;
+          fetch(sources[index][0])
+            .then((response) => response.json())
+            .then((data) => {
+              const info = sources[index][1](data);
+              if (info && info.code) {
+                document.getElementById('country-name').textContent = info.name || info.code;
+                const flag = document.getElementById('country-flag');
+                flag.src = 'https://flagcdn.com/w20/' + String(info.code).toLowerCase() + '.png';
+                flag.alt = info.name || info.code;
+                badge.hidden = false;
+              } else {
+                tryNext(index + 1);
+              }
+            })
+            .catch(() => tryNext(index + 1));
+        };
+        tryNext(0);
+      })();
 
       const navToggle = document.querySelector('.nav-toggle');
       const nav = document.getElementById('primary-nav');
@@ -330,7 +359,6 @@
           phone: document.getElementById('phone').value.trim(),
           cameras: document.getElementById('cameras').value.trim(),
           operators: document.getElementById('operators').value.trim(),
-          sites: document.getElementById('sites').value.trim(),
           solution: document.getElementById('solution').value,
           status: 'nuevo',
         };

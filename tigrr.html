@@ -21,6 +21,10 @@
             <a href="#video">Video</a>
             <a href="index.html#contacto">Contacto</a>
           </nav>
+          <span class="country-badge" id="country-badge" hidden>
+            <img class="country-flag" id="country-flag" alt="" width="20" height="15" />
+            <span id="country-name"></span>
+          </span>
           <a class="btn portal-btn" href="index.html#contacto">Contáctanos</a>
           <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menú">
             <span class="nav-toggle-bar"></span>
@@ -303,6 +307,35 @@
 
     <script>
       document.getElementById('year').textContent = new Date().getFullYear();
+
+      (function showCountry() {
+        const badge = document.getElementById('country-badge');
+        if (!badge) return;
+        const sources = [
+          ['https://ipwho.is/', (d) => d && d.success !== false && { name: d.country, code: d.country_code }],
+          ['https://get.geojs.io/v1/ip/country.json', (d) => d && { name: d.name || d.country, code: d.country }],
+          ['https://api.country.is/', (d) => d && { name: d.country, code: d.country }],
+        ];
+        const tryNext = (index) => {
+          if (index >= sources.length) return;
+          fetch(sources[index][0])
+            .then((response) => response.json())
+            .then((data) => {
+              const info = sources[index][1](data);
+              if (info && info.code) {
+                document.getElementById('country-name').textContent = info.name || info.code;
+                const flag = document.getElementById('country-flag');
+                flag.src = 'https://flagcdn.com/w20/' + String(info.code).toLowerCase() + '.png';
+                flag.alt = info.name || info.code;
+                badge.hidden = false;
+              } else {
+                tryNext(index + 1);
+              }
+            })
+            .catch(() => tryNext(index + 1));
+        };
+        tryNext(0);
+      })();
 
       const navToggle = document.querySelector('.nav-toggle');
       const nav = document.getElementById('primary-nav');
