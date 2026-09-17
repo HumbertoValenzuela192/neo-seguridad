@@ -236,10 +236,6 @@
             <input id="cameras" type="text" name="cameras" inputmode="numeric" pattern="[0-9]*" data-numeric required />
           </div>
           <div class="field">
-            <label for="operators">Cantidad de operadores</label>
-            <input id="operators" type="text" name="operators" inputmode="numeric" pattern="[0-9]*" data-numeric required />
-          </div>
-          <div class="field">
             <label for="solution">Solución</label>
             <select id="solution" name="solution" required>
               <option value="">Selecciona una opción</option>
@@ -247,6 +243,10 @@
               <option value="Monitoreo 24/7">Monitoreo 24/7</option>
               <option value="Ambos">Ambos</option>
             </select>
+          </div>
+          <div class="field" id="operators-field" hidden>
+            <label for="operators">Cantidad de operadores</label>
+            <input id="operators" type="text" name="operators" inputmode="numeric" pattern="[0-9]*" data-numeric />
           </div>
           <button class="btn" type="submit">Solicitar evaluación</button>
           <p id="form-status" class="form-status" role="status" aria-live="polite" hidden></p>
@@ -311,6 +311,18 @@
           input.value = input.value.replace(/\D/g, '');
         });
       });
+
+      const solutionSelect = document.getElementById('solution');
+      const operatorsField = document.getElementById('operators-field');
+      const operatorsInput = document.getElementById('operators');
+      function toggleOperators() {
+        const show = solutionSelect.value === 'TIGRR';
+        operatorsField.hidden = !show;
+        operatorsInput.required = show;
+        if (!show) operatorsInput.value = '';
+      }
+      solutionSelect.addEventListener('change', toggleOperators);
+      toggleOperators();
 
       const contactForm = document.getElementById('contact-form');
       const formStatus = document.getElementById('form-status');
