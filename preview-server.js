@@ -12,6 +12,7 @@ const files = {
   "/tigrr.css": ["tigrr.css", "text/css; charset=utf-8"],
   "/a2791a37-6fe2-413d-9f5a-526532134dcc.jpg": ["a2791a37-6fe2-413d-9f5a-526532134dcc.jpg", "image/jpeg"],
   "/neo-globo.png": ["neo-globo.png", "image/png"],
+  "/neo-globo-icon.png": ["neo-globo-icon.png", "image/png"],
   "/tigrr.png": ["tigrr.png", "image/png"],
 };
 
