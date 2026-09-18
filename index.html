@@ -28,6 +28,16 @@
     <link rel="preconnect" href="https://flagcdn.com" crossorigin />
   </head>
   <body>
+    <div class="intro" id="intro" aria-hidden="true">
+      <div class="intro-inner">
+        <img class="intro-mark" src="neo-globo-icon.png" alt="" width="72" height="72" />
+        <svg class="intro-svg" viewBox="0 0 620 120" role="img" aria-label="NEO Seguridad">
+          <text class="intro-word intro-word-stroke" x="310" y="82" text-anchor="middle">NEO SEGURIDAD</text>
+          <text class="intro-word intro-word-fill" x="310" y="82" text-anchor="middle"><tspan fill="#b2e7bd">NEO</tspan> SEGURIDAD</text>
+        </svg>
+      </div>
+    </div>
+    <noscript><style>#intro{display:none !important}</style></noscript>
     <a class="skip-link" href="#main">Saltar al contenido</a>
     <header class="site-header">
       <div class="container header-inner">
@@ -113,6 +123,7 @@
               <li>Protocolos personalizados.</li>
               <li>Soporte operacional permanente.</li>
             </ul>
+            <a class="btn solution-btn" href="#contacto">Solicita una evaluación</a>
           </article>
           <article class="solution-card solution-tigrr">
             <span class="solution-tag">Ruta 2</span>
@@ -126,9 +137,6 @@
             </ul>
             <a class="btn solution-btn" href="tigrr.html">Conocer TIGRR</a>
           </article>
-        </div>
-        <div class="section-cta">
-          <a class="btn" href="#contacto">Solicita una evaluación</a>
         </div>
       </section>
 
@@ -760,6 +768,174 @@ void main() {
           gl.drawArrays(gl.TRIANGLES, 0, 3);
         }
         animationFrameId = raf(update);
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var cards = document.querySelectorAll('.layer-card');
+        if (!cards.length) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        var CHARS = '01NEO01TIGRR01ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789';
+        var FONT_SIZE = 13;
+        var TRAIL = 8;
+        var active = [];
+        var frameId = 0;
+
+        function Matrix(canvas) {
+          this.canvas = canvas;
+          this.ctx = canvas.getContext('2d');
+          if (!this.ctx) return;
+          this.grid = [];
+          this.drops = [];
+          this.speeds = [];
+          this.cols = 1;
+          this.rows = 1;
+          this.w = 0;
+          this.h = 0;
+          this.resize();
+        }
+
+        Matrix.prototype.resize = function () {
+          var rect = this.canvas.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          this.w = rect.width;
+          this.h = rect.height;
+          this.canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+          this.canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+          this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          this.cols = Math.max(1, Math.ceil(this.w / FONT_SIZE));
+          this.rows = Math.max(1, Math.ceil(this.h / FONT_SIZE));
+          this.grid = [];
+          this.drops = [];
+          this.speeds = [];
+          for (var i = 0; i < this.cols; i++) {
+            this.grid.push(new Array(this.rows + TRAIL));
+            this.drops.push(-Math.floor(Math.random() * this.rows));
+            this.speeds.push(0.012 + Math.random() * 0.045);
+          }
+        };
+
+        Matrix.prototype.charAt = function (i, row) {
+          var span = this.rows + TRAIL;
+          var idx = ((row % span) + span) % span;
+          var value = this.grid[i][idx];
+          if (value === undefined || Math.random() < 0.04) {
+            value = CHARS.charAt(Math.floor(Math.random() * CHARS.length));
+            this.grid[i][idx] = value;
+          }
+          return value;
+        };
+
+        Matrix.prototype.draw = function () {
+          var ctx = this.ctx;
+          ctx.clearRect(0, 0, this.w, this.h);
+          ctx.font = FONT_SIZE + 'px "Segoe UI", monospace';
+          ctx.textBaseline = 'top';
+          for (var i = 0; i < this.cols; i++) {
+            var x = i * FONT_SIZE;
+            var head = this.drops[i];
+            for (var t = 0; t < TRAIL; t++) {
+              var row = Math.floor(head) - t;
+              if (row < 0 || row * FONT_SIZE > this.h) continue;
+              ctx.shadowBlur = 0;
+              var alpha = t === 0 ? 0.9 : (1 - t / TRAIL) * 0.6;
+              ctx.fillStyle = t === 0 ? 'rgba(214, 246, 222, ' + alpha + ')' : 'rgba(127, 202, 145, ' + alpha + ')';
+              ctx.fillText(this.charAt(i, row), x, row * FONT_SIZE);
+            }
+            this.drops[i] += this.speeds[i];
+            if (this.drops[i] * FONT_SIZE > this.h + TRAIL * FONT_SIZE && Math.random() > 0.94) {
+              this.drops[i] = -Math.floor(Math.random() * this.rows * 0.5);
+            }
+          }
+        };
+
+        function tick() {
+          frameId = requestAnimationFrame(tick);
+          for (var i = 0; i < active.length; i++) active[i].draw();
+        }
+
+        function start(instance) {
+          if (active.indexOf(instance) === -1) active.push(instance);
+          if (!frameId) frameId = requestAnimationFrame(tick);
+        }
+
+        function stop(instance) {
+          var index = active.indexOf(instance);
+          if (index !== -1) active.splice(index, 1);
+          if (!active.length && frameId) {
+            cancelAnimationFrame(frameId);
+            frameId = 0;
+          }
+        }
+
+        function build(card) {
+          var canvas = document.createElement('canvas');
+          canvas.className = 'matrix-canvas';
+          canvas.setAttribute('aria-hidden', 'true');
+          card.insertBefore(canvas, card.firstChild);
+          var instance = new Matrix(canvas);
+          if (!instance.ctx) return;
+          card.addEventListener('mouseenter', function () {
+            instance.resize();
+            start(instance);
+          });
+          card.addEventListener('mouseleave', function () {
+            stop(instance);
+          });
+        }
+
+        for (var i = 0; i < cards.length; i++) build(cards[i]);
+
+        window.addEventListener('resize', function () {
+          for (var i = 0; i < active.length; i++) active[i].resize();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var intro = document.getElementById('intro');
+        if (!intro) return;
+
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          if (intro.parentNode) intro.parentNode.removeChild(intro);
+          return;
+        }
+
+        document.documentElement.classList.add('intro-active');
+
+        var strokeWord = intro.querySelector('.intro-word-stroke');
+        if (strokeWord && strokeWord.getComputedTextLength) {
+          var length = 0;
+          try {
+            length = strokeWord.getComputedTextLength() * 2.6;
+          } catch (error) {
+            length = 0;
+          }
+          if (!length || !isFinite(length)) length = 1200;
+          strokeWord.style.strokeDasharray = length + ' ' + length;
+          strokeWord.style.strokeDashoffset = length;
+        }
+
+        var finished = false;
+        function finish() {
+          if (finished) return;
+          finished = true;
+          intro.classList.add('is-done');
+          document.documentElement.classList.remove('intro-active');
+          window.setTimeout(function () {
+            if (intro.parentNode) intro.parentNode.removeChild(intro);
+          }, 700);
+        }
+
+        window.setTimeout(finish, 2400);
+        window.addEventListener('click', finish, { once: true });
+        window.addEventListener('keydown', finish, { once: true });
+        window.addEventListener('wheel', finish, { once: true, passive: true });
+        window.addEventListener('touchstart', finish, { once: true, passive: true });
       })();
     </script>
   </body>
