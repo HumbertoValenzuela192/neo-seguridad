@@ -12,6 +12,16 @@
     <link rel="preconnect" href="https://flagcdn.com" crossorigin />
   </head>
   <body>
+    <div class="intro" id="intro" aria-hidden="true">
+      <div class="intro-inner">
+        <img class="intro-mark intro-mark-tigrr" src="tigrr.png" alt="" width="84" height="84" />
+        <svg class="intro-svg" viewBox="0 0 620 120" role="img" aria-label="TIGRR">
+          <text class="intro-word intro-word-stroke" x="310" y="82" text-anchor="middle">TIGRR</text>
+          <text class="intro-word intro-word-fill" x="310" y="82" text-anchor="middle">TIGRR</text>
+        </svg>
+      </div>
+    </div>
+    <noscript><style>#intro{display:none !important}</style></noscript>
     <a class="skip-link" href="#main">Saltar al contenido</a>
     <header class="site-header">
       <div class="container header-inner">
@@ -343,6 +353,50 @@
           navToggle.setAttribute('aria-expanded', 'false');
         });
       });
+    </script>
+
+    <script>
+      (function () {
+        var intro = document.getElementById('intro');
+        if (!intro) return;
+
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          if (intro.parentNode) intro.parentNode.removeChild(intro);
+          return;
+        }
+
+        document.documentElement.classList.add('intro-active');
+
+        var strokeWord = intro.querySelector('.intro-word-stroke');
+        if (strokeWord && strokeWord.getComputedTextLength) {
+          var length = 0;
+          try {
+            length = strokeWord.getComputedTextLength() * 2.6;
+          } catch (error) {
+            length = 0;
+          }
+          if (!length || !isFinite(length)) length = 1200;
+          strokeWord.style.strokeDasharray = length + ' ' + length;
+          strokeWord.style.strokeDashoffset = length;
+        }
+
+        var finished = false;
+        function finish() {
+          if (finished) return;
+          finished = true;
+          intro.classList.add('is-done');
+          document.documentElement.classList.remove('intro-active');
+          window.setTimeout(function () {
+            if (intro.parentNode) intro.parentNode.removeChild(intro);
+          }, 700);
+        }
+
+        window.setTimeout(finish, 2400);
+        window.addEventListener('click', finish, { once: true });
+        window.addEventListener('keydown', finish, { once: true });
+        window.addEventListener('wheel', finish, { once: true, passive: true });
+        window.addEventListener('touchstart', finish, { once: true, passive: true });
+      })();
     </script>
   </body>
 </html>

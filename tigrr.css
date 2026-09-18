@@ -9,6 +9,10 @@
   --accent-bright: #f9c22e;
 }
 
+.intro-mark-tigrr { width: 84px; height: 84px; border-radius: 20px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
+.intro-word-stroke { stroke: #f2711c; }
+.intro-word-fill { fill: #fff7ee; }
+
 body::before {
   background:
     radial-gradient(circle at 78% 6%, rgba(242, 113, 28, 0.2), transparent 30rem),
