@@ -9,6 +9,8 @@ const files = {
   "/admin.html": ["admin.html", "text/html; charset=utf-8"],
   "/tigrr.html": ["tigrr.html", "text/html; charset=utf-8"],
   "/styles.css": ["styles.css", "text/css; charset=utf-8"],
+  "/theme-neo.css": ["theme-neo.css", "text/css; charset=utf-8"],
+  "/theme-tigrr.css": ["theme-tigrr.css", "text/css; charset=utf-8"],
   "/tigrr.css": ["tigrr.css", "text/css; charset=utf-8"],
   "/a2791a37-6fe2-413d-9f5a-526532134dcc.jpg": ["a2791a37-6fe2-413d-9f5a-526532134dcc.jpg", "image/jpeg"],
   "/neo-globo.png": ["neo-globo.png", "image/png"],

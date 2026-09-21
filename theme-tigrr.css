@@ -1,0 +1,27 @@
+:root {
+  --bg: #140f16;
+  --surface: #1e1620;
+  --surface-raised: #2a1f2e;
+  --ink: #fdf3e7;
+  --muted: #cbb8c6;
+  --line: #3b2c3e;
+  --accent: #f2711c;
+  --accent-bright: #f9c22e;
+  --bg-rgb: 20, 15, 22;
+  --surface-rgb: 30, 22, 32;
+  --accent-rgb: 242, 113, 28;
+  --accent-bright-rgb: 249, 194, 46;
+  --glow-rgb: 242, 113, 28;
+  color-scheme: dark;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 78% 6%, rgba(var(--accent-rgb), 0.2), transparent 30rem),
+    radial-gradient(circle at 12% 90%, rgba(109, 90, 110, 0.3), transparent 34rem);
+}
+
+.site-header { background: rgba(var(--bg-rgb), 0.9); border-bottom-color: rgba(var(--accent-rgb), 0.2); }
+
+.intro-mark-tigrr { width: 84px; height: 84px; border-radius: 20px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
+.logo-mark-tigrr { border-radius: 7px; }

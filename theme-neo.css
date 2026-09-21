@@ -1,0 +1,16 @@
+:root {
+  --bg: #111514;
+  --surface: #191f1d;
+  --surface-raised: #222a27;
+  --ink: #edf3ee;
+  --muted: #c3cec6;
+  --line: #35403b;
+  --accent: #7fca91;
+  --accent-bright: #b2e7bd;
+  --bg-rgb: 17, 21, 20;
+  --surface-rgb: 25, 31, 29;
+  --accent-rgb: 127, 202, 145;
+  --accent-bright-rgb: 178, 231, 189;
+  --glow-rgb: 69, 118, 80;
+  color-scheme: dark;
+}
