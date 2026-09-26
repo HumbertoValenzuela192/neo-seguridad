@@ -10,6 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23111514'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Arial,sans-serif'%20font-size='40'%20font-weight='800'%20text-anchor='middle'%20fill='%23b2e7bd'%3EN%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="theme-neo.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -47,6 +48,7 @@
             <button class="admin-nav-btn is-active" type="button" data-admin="inicio">Inicio</button>
             <button class="admin-nav-btn" type="button" data-admin="solicitudes">Clientes potenciales</button>
             <button class="admin-nav-btn" type="button" data-admin="clientes">Solicitudes de clientes</button>
+            <button class="admin-nav-btn" type="button" data-admin="cuentas">Cuentas del cliente</button>
             <button class="admin-nav-btn" type="button" data-admin="precios">Precios por cámaras</button>
             <button class="admin-nav-btn" type="button" data-admin="mensual">Cálculo mensual</button>
             <button class="admin-nav-btn" type="button" data-admin="sueldo">Sueldos</button>
@@ -154,6 +156,18 @@
               </div>
               <div id="client-list" class="record-list"></div>
               <p id="client-empty" class="empty-state">Aún no hay solicitudes de clientes.</p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="cuentas" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Accesos</p>
+                  <h1 class="portal-title">Cuentas del cliente</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Cuando una solicitud queda <strong>Ya atendido</strong>, asigna aquí un <strong>usuario</strong> y <strong>contraseña</strong>. El cliente deberá completar sus datos en el primer ingreso para habilitar el monitoreo.</p>
+              <div id="accounts-list" class="record-list"></div>
+              <p id="accounts-empty" class="empty-state">Aún no hay solicitudes completadas para crear cuentas.</p>
             </div>
 
             <div class="admin-panel" data-admin-panel="precios" hidden>
@@ -518,6 +532,80 @@
           </form>
         </div>
       </section>
+
+      <section id="onboarding-view" class="client-view section-block" hidden>
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Primer ingreso</p>
+            <h1 class="portal-title">Completa los datos de tu instalación</h1>
+            <p class="portal-subtitle">Es obligatorio para poder iniciar el monitoreo.</p>
+          </div>
+          <button id="onboarding-logout" class="btn btn-ghost" type="button">Cerrar sesión</button>
+        </div>
+
+        <form id="onboarding-form" class="contact-form" action="#">
+          <div class="field">
+            <label for="ob-installation">Nombre de la instalación</label>
+            <input id="ob-installation" type="text" autocomplete="organization" required />
+          </div>
+
+          <fieldset class="ob-section">
+            <legend>¿Contiene guardia?</legend>
+            <div class="ob-options">
+              <label class="ob-option"><input type="radio" name="ob-guard" value="si" /> Sí</label>
+              <label class="ob-option"><input type="radio" name="ob-guard" value="no" /> No</label>
+            </div>
+          </fieldset>
+
+          <div id="ob-guard-fields" hidden>
+            <fieldset class="ob-section">
+              <legend>Guardias de la instalación</legend>
+              <p class="ob-hint">Indica el nombre del guardia (puedes agregar más).</p>
+              <div id="ob-guard-list" class="ob-list"></div>
+              <button id="ob-guard-add" class="ob-add" type="button">+ Agregar guardia</button>
+            </fieldset>
+
+            <div class="field">
+              <label for="ob-supervisor-phone">Número telefónico del supervisor</label>
+              <input id="ob-supervisor-phone" type="tel" inputmode="tel" autocomplete="tel" />
+            </div>
+          </div>
+
+          <fieldset class="ob-section">
+            <legend>Orden de llamado en caso de intrusión</legend>
+            <p class="ob-hint">Debes indicar al menos el 1°, 2° y 3° (nombre y número telefónico). Puedes agregar más.</p>
+            <div id="ob-call-list" class="ob-list"></div>
+            <button id="ob-call-add" class="ob-add" type="button">+ Agregar orden de llamado</button>
+          </fieldset>
+
+          <fieldset class="ob-section">
+            <legend>Direcciones de ingreso</legend>
+            <p class="ob-hint">Agrega una o más direcciones de ingreso. Toca una para marcarla en el mapa.</p>
+            <div id="ob-address-list" class="ob-list"></div>
+            <button id="ob-address-add" class="ob-add" type="button">+ Agregar otra dirección de ingreso</button>
+          </fieldset>
+
+          <fieldset class="ob-section">
+            <legend>Ubicación en el mapa</legend>
+            <ol class="ob-steps">
+              <li>Toca una dirección de la lista para elegirla.</li>
+              <li>Escribe en el buscador y elige una sugerencia, o toca/arrastra el pin.</li>
+            </ol>
+            <div class="ob-map-search">
+              <input id="ob-map-search" type="search" placeholder="Ej: Av. Providencia 1234, Santiago" autocomplete="off" />
+              <button id="ob-map-search-btn" class="ob-add" type="button">Buscar</button>
+              <ul id="ob-map-suggestions" class="ob-suggestions" hidden></ul>
+            </div>
+            <div id="ob-map" class="ob-map"></div>
+            <p id="ob-map-status" class="ob-map-status">Escribe una dirección para ver sugerencias.</p>
+            <a id="ob-maps-link" class="maps-link" href="#" target="_blank" rel="noopener" hidden>Ver en Google Maps</a>
+          </fieldset>
+
+          <p class="onboarding-note">Si no completas estos datos, el monitoreo no podrá iniciarse.</p>
+          <button class="btn" type="submit">Guardar y continuar</button>
+          <p id="ob-error" class="login-error" role="alert" hidden></p>
+        </form>
+      </section>
     </main>
 
     <footer class="site-footer">
@@ -542,6 +630,7 @@
       </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
       const LEADS_KEY = 'neo_solicitudes';
       const CLIENT_KEY = 'neo_solicitudes_cliente';
@@ -567,6 +656,7 @@
       };
       const UF_KEY = 'neo_uf';
       const SESSION_KEY = 'neo_admin_session';
+      const ACCOUNTS_KEY = 'neo_cuentas_cliente';
       const ORDER = ['nuevo', 'proceso', 'atendido'];
       const CONTACT_NAMES = ['Administrador', 'Jefe de seguridad', 'Supervisor', 'Guardia principal', 'Central de monitoreo'];
       let contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
@@ -590,6 +680,10 @@
       let ufValue = readUf();
       let leadFilter = 'all';
       let clientFilter = 'all';
+      let obMap = null;
+      let obMarker = null;
+      let obAddresses = [{ address: '', lat: null, lng: null }];
+      let obActiveIndex = 0;
       const DEFAULT_SALARY_PARAMS = { afp: 'capital', salud: 'fonasa', plan: '0', uf: '0', cesantia: '0,6', jornada: '45', utm: '0' };
       const AFP_COMISIONES = {
         capital: { name: 'Capital', comision: 1.44 },
@@ -617,6 +711,7 @@
       const loginView = document.getElementById('login-view');
       const panelView = document.getElementById('panel-view');
       const clientView = document.getElementById('client-view');
+      const onboardingView = document.getElementById('onboarding-view');
       const loginForm = document.getElementById('login-form');
       const loginError = document.getElementById('login-error');
 
@@ -640,6 +735,39 @@
         } catch (error) {
           /* almacenamiento no disponible */
         }
+      }
+
+      function readAccounts() {
+        return readStore(ACCOUNTS_KEY);
+      }
+
+      function writeAccounts(list) {
+        writeStore(ACCOUNTS_KEY, list);
+      }
+
+      function clientSessionId() {
+        const value = session.get(SESSION_KEY) || '';
+        return value.indexOf('cliente:') === 0 ? value.slice('cliente:'.length) : '';
+      }
+
+      function getAccount(id) {
+        if (id == null || id === '') return null;
+        return readAccounts().find((account) => String(account.id) === String(id)) || null;
+      }
+
+      function normalizeCallOrder(value) {
+        const list = Array.isArray(value) ? value : [];
+        return list.map((item) => (item && typeof item === 'object')
+          ? { name: item.name || '', phone: item.phone || '' }
+          : { name: '', phone: '' });
+      }
+
+      function accountReady(account) {
+        if (!account || !account.onboarded || !account.installation || !account.address) return false;
+        const order = normalizeCallOrder(account.callOrder);
+        if (order.length < 3 || !order.every((entry) => entry.name && entry.phone)) return false;
+        if (account.hasGuard === 'si') return !!account.supervisorPhone;
+        return account.hasGuard === 'no';
       }
 
       function formatDateTime(value) {
@@ -811,6 +939,529 @@
             ['Mensaje', item.message, true],
           ]);
           container.appendChild(card);
+        });
+      }
+
+      function accountStatusNode(account) {
+        const wrap = document.createElement('div');
+        wrap.className = 'account-status';
+        const data = document.createElement('span');
+        const onboarded = !!(account && account.onboarded);
+        data.className = 'status-badge ' + (onboarded ? 'is-ok' : 'is-pending');
+        data.textContent = onboarded ? 'Datos completados' : 'Datos pendientes';
+        const monitor = document.createElement('span');
+        const ready = accountReady(account);
+        monitor.className = 'status-badge ' + (ready ? 'is-ok' : 'is-pending');
+        monitor.textContent = ready ? 'Monitoreo habilitado' : 'Monitoreo no iniciado';
+        wrap.append(data, monitor);
+        return wrap;
+      }
+
+      function buildAccountCard(source, account) {
+        const card = document.createElement('article');
+        card.className = 'record';
+
+        const title = (source && source.title) || (account && account.name) || 'Sin nombre';
+        const subtitle = source ? source.subtitle : 'Cuenta creada';
+        card.appendChild(recordHead(title, subtitle, account ? accountStatusNode(account) : []));
+
+        const form = document.createElement('div');
+        form.className = 'account-form';
+
+        const userField = document.createElement('div');
+        userField.className = 'field';
+        const userLabel = document.createElement('label');
+        userLabel.textContent = 'Usuario';
+        const userInput = document.createElement('input');
+        userInput.type = 'text';
+        userInput.autocomplete = 'off';
+        userInput.placeholder = 'usuario';
+        userInput.value = account ? account.user : '';
+        userField.append(userLabel, userInput);
+
+        const passField = document.createElement('div');
+        passField.className = 'field';
+        const passLabel = document.createElement('label');
+        passLabel.textContent = 'Contraseña';
+        const passInput = document.createElement('input');
+        passInput.type = 'text';
+        passInput.autocomplete = 'off';
+        passInput.placeholder = 'contraseña';
+        passInput.value = account ? account.pass : '';
+        passField.append(passLabel, passInput);
+
+        const msg = document.createElement('p');
+        msg.className = 'account-msg';
+        msg.setAttribute('role', 'status');
+        msg.setAttribute('aria-live', 'polite');
+
+        const actions = document.createElement('div');
+        actions.className = 'account-actions';
+
+        const save = document.createElement('button');
+        save.type = 'button';
+        save.className = 'btn btn-sm';
+        save.textContent = account ? 'Actualizar' : 'Crear cuenta';
+        save.addEventListener('click', () => {
+          const user = userInput.value.trim();
+          const pass = passInput.value;
+          if (!user || !pass) {
+            msg.textContent = 'Usuario y contraseña son obligatorios.';
+            msg.className = 'account-msg is-error';
+            return;
+          }
+          const all = readAccounts();
+          const duplicate = all.find((item) => item.user === user && (!account || String(item.id) !== String(account.id)));
+          if (duplicate) {
+            msg.textContent = 'Ese usuario ya está en uso.';
+            msg.className = 'account-msg is-error';
+            return;
+          }
+          if (account) {
+            const target = all.find((item) => String(item.id) === String(account.id));
+            if (target) {
+              target.user = user;
+              target.pass = pass;
+              if (source) target.name = source.title || '';
+            }
+          } else {
+            all.push({
+              id: Date.now(),
+              source: source ? source.kind : null,
+              sourceId: source ? source.id : null,
+              name: source ? (source.title || '') : '',
+              user: user,
+              pass: pass,
+              onboarded: false,
+              installation: '',
+              address: '',
+              hasGuard: '',
+              callOrder: [{ name: '', phone: '' }, { name: '', phone: '' }, { name: '', phone: '' }],
+              guards: [],
+              supervisorPhone: '',
+              createdAt: nowLabel(),
+            });
+          }
+          writeAccounts(all);
+          renderAccounts();
+        });
+        actions.appendChild(save);
+
+        if (account) {
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'btn btn-sm btn-ghost';
+          remove.textContent = 'Eliminar';
+          remove.addEventListener('click', () => {
+            writeAccounts(readAccounts().filter((item) => String(item.id) !== String(account.id)));
+            renderAccounts();
+          });
+          actions.appendChild(remove);
+        }
+
+        form.append(userField, passField, actions, msg);
+        card.appendChild(form);
+        return card;
+      }
+
+      function renderAccounts() {
+        const accounts = readAccounts();
+        const container = document.getElementById('accounts-list');
+        const empty = document.getElementById('accounts-empty');
+        container.innerHTML = '';
+
+        const sources = [];
+        readStore(LEADS_KEY)
+          .filter((lead) => (lead.status || 'nuevo') === 'atendido')
+          .reverse()
+          .forEach((lead) => sources.push({
+            kind: 'lead',
+            id: lead.id,
+            title: lead.company || 'Sin nombre',
+            subtitle: (lead.rut || 'Sin RUT') + ' · ' + (lead.solution || 'Sin solución'),
+          }));
+        readStore(CLIENT_KEY)
+          .filter((item) => (item.status || 'nuevo') === 'atendido')
+          .reverse()
+          .forEach((item) => sources.push({
+            kind: 'req',
+            id: item.id,
+            title: item.client || 'Sin nombre',
+            subtitle: (item.typeLabel || 'Solicitud') + ' · ' + (item.date || ''),
+          }));
+
+        const used = [];
+        sources.forEach((source) => {
+          const account = accounts.find((item) => item.source === source.kind && String(item.sourceId) === String(source.id));
+          if (account) used.push(String(account.id));
+          container.appendChild(buildAccountCard(source, account));
+        });
+        accounts.slice().reverse().forEach((account) => {
+          if (used.indexOf(String(account.id)) !== -1) return;
+          container.appendChild(buildAccountCard(null, account));
+        });
+
+        empty.hidden = container.children.length > 0;
+      }
+
+      function addCallRow(name, phone) {
+        const list = document.getElementById('ob-call-list');
+        const row = document.createElement('div');
+        row.className = 'ob-row';
+        const index = document.createElement('span');
+        index.className = 'ob-row-index';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'ob-call-name';
+        nameInput.placeholder = 'Nombre';
+        nameInput.value = name || '';
+        const phoneInput = document.createElement('input');
+        phoneInput.type = 'tel';
+        phoneInput.inputMode = 'tel';
+        phoneInput.className = 'ob-call-phone';
+        phoneInput.placeholder = 'Número telefónico';
+        phoneInput.value = phone || '';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'ob-row-remove';
+        remove.textContent = '\u00d7';
+        remove.setAttribute('aria-label', 'Quitar orden de llamado');
+        remove.addEventListener('click', () => { row.remove(); refreshCallRows(); });
+        row.append(index, nameInput, phoneInput, remove);
+        list.appendChild(row);
+        refreshCallRows();
+      }
+
+      function refreshCallRows() {
+        const rows = document.querySelectorAll('#ob-call-list .ob-row');
+        rows.forEach((row, position) => {
+          row.querySelector('.ob-row-index').textContent = (position + 1) + '\u00b0';
+          row.querySelector('.ob-row-remove').hidden = rows.length <= 3;
+        });
+      }
+
+      function addGuardRow(name) {
+        const list = document.getElementById('ob-guard-list');
+        const row = document.createElement('div');
+        row.className = 'ob-row ob-row-guard';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'ob-guard-name';
+        input.placeholder = 'Nombre del guardia';
+        input.value = name || '';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'ob-row-remove';
+        remove.textContent = '\u00d7';
+        remove.setAttribute('aria-label', 'Quitar guardia');
+        remove.addEventListener('click', () => { row.remove(); refreshGuardRows(); });
+        row.append(input, remove);
+        list.appendChild(row);
+        refreshGuardRows();
+      }
+
+      function refreshGuardRows() {
+        const rows = document.querySelectorAll('#ob-guard-list .ob-row');
+        rows.forEach((row) => { row.querySelector('.ob-row-remove').hidden = rows.length <= 1; });
+      }
+
+      function setObMapStatus(text) {
+        const el = document.getElementById('ob-map-status');
+        if (el) el.textContent = text;
+      }
+
+      function obActiveItem() {
+        return obAddresses[obActiveIndex] || null;
+      }
+
+      function obRowAt(index) {
+        return document.querySelectorAll('#ob-address-list .ob-address-row')[index] || null;
+      }
+
+      function updateMapsLinkFromActive() {
+        const item = obActiveItem();
+        if (!item) return;
+        if (typeof item.lat === 'number' && typeof item.lng === 'number') {
+          setMapsLink('ob-maps-link', item.lat.toFixed(6) + ',' + item.lng.toFixed(6));
+        } else if (item.address) {
+          setMapsLink('ob-maps-link', item.address);
+        } else {
+          setMapsLink('ob-maps-link', '');
+        }
+      }
+
+      function applyActiveLocation(lat, lng) {
+        const item = obActiveItem();
+        if (item) {
+          item.lat = lat;
+          item.lng = lng;
+        }
+        const row = obRowAt(obActiveIndex);
+        const coords = row && row.querySelector('.ob-address-coords');
+        if (coords) coords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+        updateMapsLinkFromActive();
+        setObMapStatus('Dirección ' + (obActiveIndex + 1) + '° marcada: ' + lat.toFixed(6) + ', ' + lng.toFixed(6));
+      }
+
+      function renderAddressRows() {
+        const list = document.getElementById('ob-address-list');
+        if (!list) return;
+        list.innerHTML = '';
+        obAddresses.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'ob-row ob-address-row' + (index === obActiveIndex ? ' is-active' : '');
+          const badge = document.createElement('span');
+          badge.className = 'ob-row-index';
+          badge.textContent = (index + 1) + '°';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'ob-address-input';
+          input.placeholder = 'Dirección de ingreso';
+          input.value = item.address || '';
+          input.addEventListener('input', () => {
+            item.address = input.value;
+            updateMapsLinkFromActive();
+          });
+          input.addEventListener('focus', () => setActiveAddress(index));
+          const coords = document.createElement('span');
+          coords.className = 'ob-address-coords';
+          coords.textContent = typeof item.lat === 'number' ? (item.lat.toFixed(5) + ', ' + item.lng.toFixed(5)) : 'Sin ubicación';
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'ob-row-remove';
+          remove.textContent = '\u00d7';
+          remove.setAttribute('aria-label', 'Quitar dirección');
+          remove.hidden = obAddresses.length <= 1;
+          remove.addEventListener('click', (event) => {
+            event.stopPropagation();
+            obAddresses.splice(index, 1);
+            if (obActiveIndex > obAddresses.length - 1) obActiveIndex = obAddresses.length - 1;
+            if (obActiveIndex < 0) obActiveIndex = 0;
+            renderAddressRows();
+            focusActiveAddress();
+          });
+          row.addEventListener('click', (event) => {
+            if (event.target === input) return;
+            setActiveAddress(index);
+          });
+          row.append(badge, input, coords, remove);
+          list.appendChild(row);
+        });
+      }
+
+      function setActiveAddress(index) {
+        if (index < 0 || index >= obAddresses.length) return;
+        obActiveIndex = index;
+        document.querySelectorAll('#ob-address-list .ob-address-row').forEach((row, i) => {
+          row.classList.toggle('is-active', i === index);
+        });
+        focusActiveAddress();
+      }
+
+      function focusActiveAddress() {
+        const item = obActiveItem();
+        if (!obMap || !item) return;
+        if (typeof item.lat === 'number' && typeof item.lng === 'number') {
+          obMap.setView([item.lat, item.lng], 16);
+          obMarker.setLatLng([item.lat, item.lng]);
+          applyActiveLocation(item.lat, item.lng);
+        } else {
+          updateMapsLinkFromActive();
+          setObMapStatus('Dirección ' + (obActiveIndex + 1) + '°: busca una sugerencia o marca el punto en el mapa.');
+        }
+      }
+
+      function hideObSuggestions() {
+        const list = document.getElementById('ob-map-suggestions');
+        if (list) { list.hidden = true; list.innerHTML = ''; }
+      }
+
+      function placeObMarker(lat, lng, address, zoom) {
+        if (!obMap) return;
+        obMap.setView([lat, lng], zoom || 17);
+        obMarker.setLatLng([lat, lng]);
+        applyActiveLocation(lat, lng);
+        const item = obActiveItem();
+        if (address && item) {
+          item.address = address;
+          const row = obRowAt(obActiveIndex);
+          const input = row && row.querySelector('.ob-address-input');
+          if (input) input.value = address;
+          updateMapsLinkFromActive();
+        }
+      }
+
+      let obReverseSeq = 0;
+      function reverseGeocodeAddress(lat, lng) {
+        const index = obActiveIndex;
+        const seq = ++obReverseSeq;
+        setObMapStatus('Obteniendo la dirección del punto…');
+        fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=' + lat + '&lon=' + lng)
+          .then((response) => response.json())
+          .then((data) => {
+            if (seq !== obReverseSeq) return;
+            const address = data && data.display_name ? data.display_name : '';
+            const item = obAddresses[index];
+            if (address && item) {
+              item.address = address;
+              const row = obRowAt(index);
+              const input = row && row.querySelector('.ob-address-input');
+              if (input) input.value = address;
+              updateMapsLinkFromActive();
+            }
+            setObMapStatus('Dirección ' + (index + 1) + '° marcada: ' + lat.toFixed(6) + ', ' + lng.toFixed(6));
+          })
+          .catch(() => {
+            if (seq !== obReverseSeq) return;
+            setObMapStatus('Dirección ' + (index + 1) + '° marcada: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + ' (no se pudo obtener la dirección)');
+          });
+      }
+
+      function renderObSuggestions(items) {
+        const list = document.getElementById('ob-map-suggestions');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!items.length) { list.hidden = true; return; }
+        items.forEach((item) => {
+          const li = document.createElement('li');
+          li.textContent = item.display_name || '';
+          li.addEventListener('click', () => {
+            placeObMarker(parseFloat(item.lat), parseFloat(item.lon), item.display_name || '', 17);
+            hideObSuggestions();
+          });
+          list.appendChild(li);
+        });
+        list.hidden = false;
+      }
+
+      function searchObAddress() {
+        const input = document.getElementById('ob-map-search');
+        const value = input.value.trim();
+        if (!value) { setObMapStatus('Escribe una dirección para buscar.'); return; }
+        setObMapStatus('Buscando “' + value + '”…');
+        fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=' + encodeURIComponent(value))
+          .then((response) => response.json())
+          .then((data) => {
+            const items = Array.isArray(data) ? data : [];
+            if (!items.length) {
+              setObMapStatus('No encontramos esa dirección. Toca el mapa o arrastra el pin.');
+              hideObSuggestions();
+            } else if (items.length === 1) {
+              placeObMarker(parseFloat(items[0].lat), parseFloat(items[0].lon), items[0].display_name || '', 17);
+              hideObSuggestions();
+            } else {
+              renderObSuggestions(items);
+              setObMapStatus('Elige una de las sugerencias.');
+            }
+          })
+          .catch(() => setObMapStatus('No se pudo buscar. Toca el mapa o arrastra el pin.'));
+      }
+
+      let obSearchTimer = null;
+      function scheduleObSearch() {
+        window.clearTimeout(obSearchTimer);
+        const value = document.getElementById('ob-map-search').value.trim();
+        if (value.length < 4) { hideObSuggestions(); return; }
+        obSearchTimer = window.setTimeout(() => {
+          fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=' + encodeURIComponent(value))
+            .then((response) => response.json())
+            .then((data) => {
+              const items = Array.isArray(data) ? data : [];
+              if (items.length) {
+                renderObSuggestions(items);
+                setObMapStatus('Elige una sugerencia o presiona Buscar.');
+              } else {
+                hideObSuggestions();
+              }
+            })
+            .catch(() => hideObSuggestions());
+        }, 450);
+      }
+
+      function initObMap() {
+        const container = document.getElementById('ob-map');
+        if (!container) return;
+        if (typeof L === 'undefined') {
+          container.hidden = true;
+          setObMapStatus('No se pudo cargar el mapa (sin conexión). Puedes escribir las direcciones igual.');
+          return;
+        }
+        container.hidden = false;
+        const item = obActiveItem();
+        const hasPoint = item && typeof item.lat === 'number' && typeof item.lng === 'number';
+        const start = hasPoint ? [item.lat, item.lng] : [-33.4489, -70.6693];
+        if (!obMap) {
+          obMap = L.map(container, { scrollWheelZoom: true }).setView(start, hasPoint ? 16 : 6);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap',
+          }).addTo(obMap);
+          obMarker = L.marker(start, { draggable: true }).addTo(obMap);
+          obMarker.on('dragend', () => {
+            const pos = obMarker.getLatLng();
+            applyActiveLocation(pos.lat, pos.lng);
+            reverseGeocodeAddress(pos.lat, pos.lng);
+          });
+          obMap.on('click', (event) => {
+            obMarker.setLatLng(event.latlng);
+            applyActiveLocation(event.latlng.lat, event.latlng.lng);
+            reverseGeocodeAddress(event.latlng.lat, event.latlng.lng);
+            hideObSuggestions();
+          });
+        } else {
+          obMap.setView(start, hasPoint ? 16 : 6);
+          obMarker.setLatLng(start);
+          if (hasPoint) applyActiveLocation(start[0], start[1]);
+        }
+        window.setTimeout(() => obMap.invalidateSize(), 120);
+      }
+
+      function initOnboarding() {
+        const account = getAccount(clientSessionId());
+        if (!account) {
+          session.remove(SESSION_KEY);
+          showView('login');
+          return;
+        }
+        document.getElementById('ob-installation').value = account.installation || '';
+        document.getElementById('ob-call-list').innerHTML = '';
+        normalizeCallOrder(account.callOrder).forEach((entry) => addCallRow(entry.name, entry.phone));
+        while (document.querySelectorAll('#ob-call-list .ob-row').length < 3) addCallRow('', '');
+        document.getElementById('ob-guard-list').innerHTML = '';
+        const guards = Array.isArray(account.guards) ? account.guards : [];
+        if (guards.length) guards.forEach((name) => addGuardRow(name));
+        else addGuardRow('');
+        const saved = Array.isArray(account.addresses) ? account.addresses : [];
+        obAddresses = saved.length
+          ? saved.map((entry) => ({
+              address: entry.address || '',
+              lat: (typeof entry.lat === 'number' ? entry.lat : null),
+              lng: (typeof entry.lng === 'number' ? entry.lng : null),
+            }))
+          : [{
+              address: account.address || '',
+              lat: (typeof account.mapLat === 'number' ? account.mapLat : null),
+              lng: (typeof account.mapLng === 'number' ? account.mapLng : null),
+            }];
+        obActiveIndex = 0;
+        renderAddressRows();
+        document.getElementById('ob-supervisor-phone').value = account.supervisorPhone || '';
+        document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
+          radio.checked = account.hasGuard === radio.value;
+        });
+        document.getElementById('ob-error').hidden = true;
+        toggleGuardFields();
+        document.getElementById('ob-map-search').value = '';
+        updateMapsLinkFromActive();
+        initObMap();
+      }
+
+      function toggleGuardFields() {
+        const selected = document.querySelector('input[name="ob-guard"]:checked');
+        document.getElementById('ob-guard-fields').hidden = !(selected && selected.value === 'si');
+        document.querySelectorAll('#onboarding-form .ob-option').forEach((option) => {
+          const input = option.querySelector('input');
+          option.classList.toggle('is-selected', !!selected && input === selected);
         });
       }
 
@@ -2002,6 +2653,7 @@
         renderAgenda();
         renderLeads();
         renderClientRequests();
+        renderAccounts();
         renderPrices();
         renderImplementation();
         renderCalcExpenses();
@@ -2130,12 +2782,28 @@
         loginView.hidden = view !== 'login';
         panelView.hidden = view !== 'admin';
         clientView.hidden = view !== 'cliente';
+        onboardingView.hidden = view !== 'onboarding';
         if (view === 'admin') renderAll();
         if (view === 'cliente') initClientData();
+        if (view === 'onboarding') initOnboarding();
         if (view === 'login') {
           loginForm.reset();
           loginError.hidden = true;
         }
+      }
+
+      function showClientArea() {
+        const account = getAccount(clientSessionId());
+        if (!account) {
+          session.remove(SESSION_KEY);
+          showView('login');
+          return;
+        }
+        if (!accountReady(account)) {
+          showView('onboarding');
+          return;
+        }
+        showView('cliente');
       }
 
       function combineDateTime(dateId, timeId) {
@@ -2156,8 +2824,9 @@
         writeStore(CLIENT_KEY, all);
       }
 
-      function updateMapsLink(address) {
-        const link = document.getElementById('maps-link');
+      function setMapsLink(id, address) {
+        const link = document.getElementById(id);
+        if (!link) return;
         const value = (address || '').trim();
         if (value) {
           link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(value);
@@ -2165,6 +2834,10 @@
         } else {
           link.hidden = true;
         }
+      }
+
+      function updateMapsLink(address) {
+        setMapsLink('maps-link', address);
       }
 
       function moveContact(index, direction) {
@@ -2256,13 +2929,16 @@
         if (user === 'admin' && pass === 'admin123') {
           session.set(SESSION_KEY, 'admin');
           showView('admin');
-        } else if (user === 'cliente' && pass === 'cliente') {
-          session.set(SESSION_KEY, 'cliente');
-          showView('cliente');
-        } else {
-          loginError.textContent = 'Usuario o contraseña incorrectos.';
-          loginError.hidden = false;
+          return;
         }
+        const account = readAccounts().find((item) => item.user === user && item.pass === pass);
+        if (account) {
+          session.set(SESSION_KEY, 'cliente:' + account.id);
+          showClientArea();
+          return;
+        }
+        loginError.textContent = 'Usuario o contraseña incorrectos.';
+        loginError.hidden = false;
       });
 
       document.getElementById('logout').addEventListener('click', () => {
@@ -2270,6 +2946,10 @@
         showView('login');
       });
       document.getElementById('client-logout').addEventListener('click', () => {
+        session.remove(SESSION_KEY);
+        showView('login');
+      });
+      document.getElementById('onboarding-logout').addEventListener('click', () => {
         session.remove(SESSION_KEY);
         showView('login');
       });
@@ -2598,6 +3278,29 @@
         updateMapsLink(event.target.value);
       });
 
+      document.getElementById('ob-address-add').addEventListener('click', () => {
+        obAddresses.push({ address: '', lat: null, lng: null });
+        obActiveIndex = obAddresses.length - 1;
+        renderAddressRows();
+        const rows = document.querySelectorAll('#ob-address-list .ob-address-row');
+        const last = rows[rows.length - 1];
+        const input = last && last.querySelector('.ob-address-input');
+        if (input) input.focus();
+        setObMapStatus('Nueva dirección agregada. Búscala o marca el punto en el mapa.');
+      });
+
+      document.getElementById('ob-map-search-btn').addEventListener('click', searchObAddress);
+      document.getElementById('ob-map-search').addEventListener('input', scheduleObSearch);
+      document.getElementById('ob-map-search').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          searchObAddress();
+        }
+      });
+      document.getElementById('ob-map-search').addEventListener('blur', () => {
+        window.setTimeout(hideObSuggestions, 200);
+      });
+
       document.getElementById('data-form').addEventListener('submit', (event) => {
         event.preventDefault();
         writeStore(DATA_KEY, {
@@ -2611,11 +3314,86 @@
         status.hidden = false;
       });
 
+      document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
+        radio.addEventListener('change', toggleGuardFields);
+      });
+
+      document.getElementById('ob-call-add').addEventListener('click', () => addCallRow('', ''));
+      document.getElementById('ob-guard-add').addEventListener('click', () => addGuardRow(''));
+
+      document.getElementById('onboarding-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const error = document.getElementById('ob-error');
+        const account = getAccount(clientSessionId());
+        if (!account) {
+          session.remove(SESSION_KEY);
+          showView('login');
+          return;
+        }
+
+        const installation = document.getElementById('ob-installation').value.trim();
+        const guardRadio = document.querySelector('input[name="ob-guard"]:checked');
+        const hasGuard = guardRadio ? guardRadio.value : '';
+        const callOrder = Array.prototype.map.call(
+          document.querySelectorAll('#ob-call-list .ob-row'),
+          (row) => ({
+            name: row.querySelector('.ob-call-name').value.trim(),
+            phone: row.querySelector('.ob-call-phone').value.trim(),
+          })
+        );
+        const guards = Array.prototype.map.call(
+          document.querySelectorAll('#ob-guard-list .ob-guard-name'),
+          (input) => input.value.trim()
+        ).filter(Boolean);
+        const supervisorPhone = document.getElementById('ob-supervisor-phone').value.trim();
+        const addresses = obAddresses
+          .map((entry) => ({
+            address: (entry.address || '').trim(),
+            lat: (typeof entry.lat === 'number' ? entry.lat : null),
+            lng: (typeof entry.lng === 'number' ? entry.lng : null),
+          }))
+          .filter((entry) => entry.address);
+
+        const missing = [];
+        if (!installation) missing.push('el nombre de la instalación');
+        if (!hasGuard) missing.push('si contiene guardia');
+        if (!addresses.length) missing.push('al menos una dirección de ingreso');
+        if (callOrder.length < 3 || !callOrder.every((entry) => entry.name && entry.phone)) {
+          missing.push('el orden de llamado en caso de intrusión (nombre y número de al menos 1°, 2° y 3°)');
+        }
+        if (hasGuard === 'si' && !supervisorPhone) missing.push('el número telefónico del supervisor');
+        if (missing.length) {
+          error.textContent = 'Falta completar ' + missing.join(', ') + '. Sin estos datos no se puede iniciar el monitoreo.';
+          error.hidden = false;
+          return;
+        }
+
+        const all = readAccounts();
+        const target = all.find((item) => String(item.id) === String(account.id));
+        if (target) {
+          target.installation = installation;
+          target.addresses = addresses;
+          target.address = addresses[0].address;
+          target.mapLat = addresses[0].lat;
+          target.mapLng = addresses[0].lng;
+          target.hasGuard = hasGuard;
+          target.callOrder = callOrder;
+          target.guards = hasGuard === 'si' ? guards : [];
+          target.supervisorPhone = hasGuard === 'si' ? supervisorPhone : '';
+          target.onboarded = true;
+          target.onboardedAt = nowLabel();
+        }
+        writeAccounts(all);
+        showView('cliente');
+      });
+
       setInterval(updateClock, 1000);
 
-      const activeSession = session.get(SESSION_KEY);
-      if (activeSession === 'admin' || activeSession === 'cliente') {
-        showView(activeSession);
+      const activeSession = session.get(SESSION_KEY) || '';
+      if (activeSession === 'admin') {
+        showView('admin');
+      } else if (activeSession.indexOf('cliente:') === 0) {
+        showClientArea();
       } else {
         showView('login');
       }
