@@ -560,7 +560,7 @@
           <div id="ob-guard-fields" hidden>
             <fieldset class="ob-section">
               <legend>Guardias de la instalación</legend>
-              <p class="ob-hint">Indica el nombre del guardia (puedes agregar más).</p>
+              <p class="ob-hint">Indica el nombre y el número telefónico del guardia (puedes agregar más).</p>
               <div id="ob-guard-list" class="ob-list"></div>
               <button id="ob-guard-add" class="ob-add" type="button">+ Agregar guardia</button>
             </fieldset>
@@ -573,7 +573,7 @@
 
           <fieldset class="ob-section">
             <legend>Orden de llamado en caso de intrusión</legend>
-            <p class="ob-hint">Debes indicar al menos el 1°, 2° y 3° (nombre y número telefónico). Puedes agregar más.</p>
+            <p class="ob-hint">Indica al menos el 1° (nombre y número telefónico). Puedes agregar más.</p>
             <div id="ob-call-list" class="ob-list"></div>
             <button id="ob-call-add" class="ob-add" type="button">+ Agregar orden de llamado</button>
           </fieldset>
@@ -765,7 +765,7 @@
       function accountReady(account) {
         if (!account || !account.onboarded || !account.installation || !account.address) return false;
         const order = normalizeCallOrder(account.callOrder);
-        if (order.length < 3 || !order.every((entry) => entry.name && entry.phone)) return false;
+        if (order.length < 1 || !order.every((entry) => entry.name && entry.phone)) return false;
         if (account.hasGuard === 'si') return !!account.supervisorPhone;
         return account.hasGuard === 'no';
       }
@@ -1136,26 +1136,32 @@
         const rows = document.querySelectorAll('#ob-call-list .ob-row');
         rows.forEach((row, position) => {
           row.querySelector('.ob-row-index').textContent = (position + 1) + '\u00b0';
-          row.querySelector('.ob-row-remove').hidden = rows.length <= 3;
+          row.querySelector('.ob-row-remove').hidden = rows.length <= 1;
         });
       }
 
-      function addGuardRow(name) {
+      function addGuardRow(name, phone) {
         const list = document.getElementById('ob-guard-list');
         const row = document.createElement('div');
         row.className = 'ob-row ob-row-guard';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'ob-guard-name';
-        input.placeholder = 'Nombre del guardia';
-        input.value = name || '';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'ob-guard-name';
+        nameInput.placeholder = 'Nombre del guardia';
+        nameInput.value = name || '';
+        const phoneInput = document.createElement('input');
+        phoneInput.type = 'tel';
+        phoneInput.inputMode = 'tel';
+        phoneInput.className = 'ob-guard-phone';
+        phoneInput.placeholder = 'Número telefónico';
+        phoneInput.value = phone || '';
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'ob-row-remove';
         remove.textContent = '\u00d7';
         remove.setAttribute('aria-label', 'Quitar guardia');
         remove.addEventListener('click', () => { row.remove(); refreshGuardRows(); });
-        row.append(input, remove);
+        row.append(nameInput, phoneInput, remove);
         list.appendChild(row);
         refreshGuardRows();
       }
@@ -1426,11 +1432,17 @@
         document.getElementById('ob-installation').value = account.installation || '';
         document.getElementById('ob-call-list').innerHTML = '';
         normalizeCallOrder(account.callOrder).forEach((entry) => addCallRow(entry.name, entry.phone));
-        while (document.querySelectorAll('#ob-call-list .ob-row').length < 3) addCallRow('', '');
+        while (document.querySelectorAll('#ob-call-list .ob-row').length < 1) addCallRow('', '');
         document.getElementById('ob-guard-list').innerHTML = '';
         const guards = Array.isArray(account.guards) ? account.guards : [];
-        if (guards.length) guards.forEach((name) => addGuardRow(name));
-        else addGuardRow('');
+        if (guards.length) {
+          guards.forEach((entry) => {
+            if (entry && typeof entry === 'object') addGuardRow(entry.name || '', entry.phone || '');
+            else addGuardRow(entry || '', '');
+          });
+        } else {
+          addGuardRow('', '');
+        }
         const saved = Array.isArray(account.addresses) ? account.addresses : [];
         obAddresses = saved.length
           ? saved.map((entry) => ({
@@ -3342,9 +3354,12 @@
           })
         );
         const guards = Array.prototype.map.call(
-          document.querySelectorAll('#ob-guard-list .ob-guard-name'),
-          (input) => input.value.trim()
-        ).filter(Boolean);
+          document.querySelectorAll('#ob-guard-list .ob-row'),
+          (row) => ({
+            name: row.querySelector('.ob-guard-name').value.trim(),
+            phone: row.querySelector('.ob-guard-phone').value.trim(),
+          })
+        ).filter((entry) => entry.name || entry.phone);
         const supervisorPhone = document.getElementById('ob-supervisor-phone').value.trim();
         const addresses = obAddresses
           .map((entry) => ({
@@ -3358,8 +3373,8 @@
         if (!installation) missing.push('el nombre de la instalación');
         if (!hasGuard) missing.push('si contiene guardia');
         if (!addresses.length) missing.push('al menos una dirección de ingreso');
-        if (callOrder.length < 3 || !callOrder.every((entry) => entry.name && entry.phone)) {
-          missing.push('el orden de llamado en caso de intrusión (nombre y número de al menos 1°, 2° y 3°)');
+        if (callOrder.length < 1 || !callOrder.every((entry) => entry.name && entry.phone)) {
+          missing.push('el orden de llamado en caso de intrusión (nombre y número)');
         }
         if (hasGuard === 'si' && !supervisorPhone) missing.push('el número telefónico del supervisor');
         if (missing.length) {

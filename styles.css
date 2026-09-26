@@ -660,7 +660,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 /* Filas de orden de llamado / guardias */
 .ob-list { display: grid; gap: 0.7rem; margin-bottom: 0.9rem; }
 .ob-row { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.02); transition: border-color 200ms ease; }
-.ob-row-guard { grid-template-columns: minmax(0, 1fr) auto; }
+.ob-row-guard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
 .ob-row:focus-within { border-color: rgba(var(--accent-rgb), 0.55); }
 .ob-row-index { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: rgba(var(--accent-rgb), 0.16); color: var(--accent-bright); font-weight: 800; font-size: 0.85rem; }
 .ob-row input { width: 100%; min-width: 0; min-height: 40px; padding: 0.5rem 0.65rem; border: 1px solid transparent; border-radius: 10px; background: rgba(0, 0, 0, 0.22); color: var(--ink); font: inherit; font-size: 0.95rem; }
@@ -701,4 +701,8 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
   .ob-row:not(.ob-row-guard) .ob-call-name { grid-area: name; }
   .ob-row:not(.ob-row-guard) .ob-call-phone { grid-area: phone; }
   .ob-row:not(.ob-row-guard) .ob-row-remove { grid-area: remove; }
+  .ob-row-guard { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name remove" "phone phone"; row-gap: 0.45rem; }
+  .ob-row-guard .ob-guard-name { grid-area: name; }
+  .ob-row-guard .ob-guard-phone { grid-area: phone; }
+  .ob-row-guard .ob-row-remove { grid-area: remove; }
 }
