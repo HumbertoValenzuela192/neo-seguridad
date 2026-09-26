@@ -565,9 +565,15 @@
               <button id="ob-guard-add" class="ob-add" type="button">+ Agregar guardia</button>
             </fieldset>
 
-            <div class="field">
-              <label for="ob-supervisor-phone">Número telefónico del supervisor</label>
-              <input id="ob-supervisor-phone" type="tel" inputmode="tel" autocomplete="tel" />
+            <div class="ob-two">
+              <div class="field">
+                <label for="ob-supervisor-name">Nombre del supervisor</label>
+                <input id="ob-supervisor-name" type="text" autocomplete="name" placeholder="Nombre del supervisor" />
+              </div>
+              <div class="field">
+                <label for="ob-supervisor-phone">Número telefónico del supervisor</label>
+                <input id="ob-supervisor-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número telefónico" />
+              </div>
             </div>
           </div>
 
@@ -766,7 +772,11 @@
         if (!account || !account.onboarded || !account.installation || !account.address) return false;
         const order = normalizeCallOrder(account.callOrder);
         if (order.length < 1 || !order.every((entry) => entry.name && entry.phone)) return false;
-        if (account.hasGuard === 'si') return !!account.supervisorPhone;
+        if (account.hasGuard === 'si') {
+          if (!account.supervisorName || !account.supervisorPhone) return false;
+          const guards = Array.isArray(account.guards) ? account.guards : [];
+          return guards.length > 0 && guards.every((entry) => entry && entry.name && entry.phone);
+        }
         return account.hasGuard === 'no';
       }
 
@@ -942,6 +952,11 @@
         });
       }
 
+      function passwordFromRut(rut) {
+        const beforeDash = String(rut || '').split('-')[0].replace(/\D/g, '');
+        return beforeDash.slice(-4);
+      }
+
       function accountStatusNode(account) {
         const wrap = document.createElement('div');
         wrap.className = 'account-status';
@@ -976,7 +991,7 @@
         userInput.type = 'text';
         userInput.autocomplete = 'off';
         userInput.placeholder = 'usuario';
-        userInput.value = account ? account.user : '';
+        userInput.value = account ? account.user : ((source && source.email) || '');
         userField.append(userLabel, userInput);
 
         const passField = document.createElement('div');
@@ -987,7 +1002,7 @@
         passInput.type = 'text';
         passInput.autocomplete = 'off';
         passInput.placeholder = 'contraseña';
-        passInput.value = account ? account.pass : '';
+        passInput.value = account ? account.pass : ((source && source.password) || '');
         passField.append(passLabel, passInput);
 
         const msg = document.createElement('p');
@@ -1079,6 +1094,8 @@
             id: lead.id,
             title: lead.company || 'Sin nombre',
             subtitle: (lead.rut || 'Sin RUT') + ' · ' + (lead.solution || 'Sin solución'),
+            email: lead.email || '',
+            password: passwordFromRut(lead.rut),
           }));
         readStore(CLIENT_KEY)
           .filter((item) => (item.status || 'nuevo') === 'atendido')
@@ -1457,6 +1474,7 @@
             }];
         obActiveIndex = 0;
         renderAddressRows();
+        document.getElementById('ob-supervisor-name').value = account.supervisorName || '';
         document.getElementById('ob-supervisor-phone').value = account.supervisorPhone || '';
         document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
           radio.checked = account.hasGuard === radio.value;
@@ -3353,13 +3371,16 @@
             phone: row.querySelector('.ob-call-phone').value.trim(),
           })
         );
-        const guards = Array.prototype.map.call(
+        const guardRows = Array.prototype.map.call(
           document.querySelectorAll('#ob-guard-list .ob-row'),
           (row) => ({
             name: row.querySelector('.ob-guard-name').value.trim(),
             phone: row.querySelector('.ob-guard-phone').value.trim(),
           })
-        ).filter((entry) => entry.name || entry.phone);
+        );
+        const guards = guardRows.filter((entry) => entry.name || entry.phone);
+        const guardsComplete = guardRows.length > 0 && guardRows.every((entry) => entry.name && entry.phone);
+        const supervisorName = document.getElementById('ob-supervisor-name').value.trim();
         const supervisorPhone = document.getElementById('ob-supervisor-phone').value.trim();
         const addresses = obAddresses
           .map((entry) => ({
@@ -3376,7 +3397,9 @@
         if (callOrder.length < 1 || !callOrder.every((entry) => entry.name && entry.phone)) {
           missing.push('el orden de llamado en caso de intrusión (nombre y número)');
         }
+        if (hasGuard === 'si' && !supervisorName) missing.push('el nombre del supervisor');
         if (hasGuard === 'si' && !supervisorPhone) missing.push('el número telefónico del supervisor');
+        if (hasGuard === 'si' && !guardsComplete) missing.push('al menos un guardia con nombre y número telefónico');
         if (missing.length) {
           error.textContent = 'Falta completar ' + missing.join(', ') + '. Sin estos datos no se puede iniciar el monitoreo.';
           error.hidden = false;
@@ -3394,6 +3417,7 @@
           target.hasGuard = hasGuard;
           target.callOrder = callOrder;
           target.guards = hasGuard === 'si' ? guards : [];
+          target.supervisorName = hasGuard === 'si' ? supervisorName : '';
           target.supervisorPhone = hasGuard === 'si' ? supervisorPhone : '';
           target.onboarded = true;
           target.onboardedAt = nowLabel();

@@ -659,6 +659,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 
 /* Filas de orden de llamado / guardias */
 .ob-list { display: grid; gap: 0.7rem; margin-bottom: 0.9rem; }
+.ob-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .ob-row { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.02); transition: border-color 200ms ease; }
 .ob-row-guard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
 .ob-row:focus-within { border-color: rgba(var(--accent-rgb), 0.55); }
@@ -691,6 +692,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .onboarding-note::before { content: "!"; display: grid; place-items: center; width: 1.35rem; height: 1.35rem; flex: none; border-radius: 50%; background: #f2d06b; color: #1a0f06; font-weight: 900; font-size: 0.85rem; }
 
 @media (max-width: 760px) {
+  .ob-two { grid-template-columns: 1fr; }
   .account-form { grid-template-columns: 1fr; align-items: stretch; }
   .account-actions { width: 100%; }
   .account-actions .btn { flex: 1; }
