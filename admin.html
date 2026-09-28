@@ -49,6 +49,7 @@
             <button class="admin-nav-btn" type="button" data-admin="solicitudes">Clientes potenciales</button>
             <button class="admin-nav-btn" type="button" data-admin="clientes">Solicitudes de clientes</button>
             <button class="admin-nav-btn" type="button" data-admin="cuentas">Cuentas del cliente</button>
+            <button class="admin-nav-btn" type="button" data-admin="roles">Roles</button>
             <button class="admin-nav-btn" type="button" data-admin="precios">Precios por cámaras</button>
             <button class="admin-nav-btn" type="button" data-admin="mensual">Cálculo mensual</button>
             <button class="admin-nav-btn" type="button" data-admin="sueldo">Sueldos</button>
@@ -168,6 +169,30 @@
               <p class="portal-subtitle">Cuando una solicitud queda <strong>Ya atendido</strong>, asigna aquí un <strong>usuario</strong> y <strong>contraseña</strong>. El cliente deberá completar sus datos en el primer ingreso para habilitar el monitoreo.</p>
               <div id="accounts-list" class="record-list"></div>
               <p id="accounts-empty" class="empty-state">Aún no hay solicitudes completadas para crear cuentas.</p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="roles" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Accesos</p>
+                  <h1 class="portal-title">Roles</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Define qué secciones del panel puede ver cada rol. Luego asigna el rol a cada cuenta en "Cuentas del cliente".</p>
+
+              <div class="calc">
+                <h2 class="panel-subtitle">Crear rol</h2>
+                <div class="field">
+                  <label for="role-name">Nombre del rol</label>
+                  <input id="role-name" type="text" placeholder="Ej: Supervisor" />
+                </div>
+                <div id="role-perms" class="role-perms"></div>
+                <button id="role-add" class="btn btn-sm" type="button">Crear rol</button>
+                <p id="role-status" class="form-status" role="status" aria-live="polite" hidden></p>
+              </div>
+
+              <div id="roles-list" class="record-list"></div>
+              <p id="roles-empty" class="empty-state">Aún no hay roles.</p>
             </div>
 
             <div class="admin-panel" data-admin-panel="precios" hidden>
@@ -663,6 +688,21 @@
       const UF_KEY = 'neo_uf';
       const SESSION_KEY = 'neo_admin_session';
       const ACCOUNTS_KEY = 'neo_cuentas_cliente';
+      const ROLES_KEY = 'neo_roles';
+      const SECTIONS = [
+        { key: 'inicio', label: 'Inicio' },
+        { key: 'solicitudes', label: 'Clientes potenciales' },
+        { key: 'clientes', label: 'Solicitudes de clientes' },
+        { key: 'cuentas', label: 'Cuentas del cliente' },
+        { key: 'roles', label: 'Roles' },
+        { key: 'precios', label: 'Precios por cámaras' },
+        { key: 'mensual', label: 'Cálculo mensual' },
+        { key: 'sueldo', label: 'Sueldos' },
+      ];
+      const DEFAULT_ROLES = [
+        { id: 'admin', name: 'Administrador', sections: SECTIONS.map((item) => item.key), portal: false },
+        { id: 'cliente', name: 'Cliente', sections: [], portal: true },
+      ];
       const ORDER = ['nuevo', 'proceso', 'atendido'];
       const CONTACT_NAMES = ['Administrador', 'Jefe de seguridad', 'Supervisor', 'Guardia principal', 'Central de monitoreo'];
       let contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
@@ -749,6 +789,31 @@
 
       function writeAccounts(list) {
         writeStore(ACCOUNTS_KEY, list);
+      }
+
+      function readRoles() {
+        const stored = readStore(ROLES_KEY);
+        if (Array.isArray(stored) && stored.length) return stored;
+        return DEFAULT_ROLES.map((role) => ({ id: role.id, name: role.name, sections: role.sections.slice(), portal: role.portal }));
+      }
+
+      function writeRoles(list) {
+        writeStore(ROLES_KEY, list);
+      }
+
+      function getRole(id) {
+        return readRoles().find((role) => role.id === id) || null;
+      }
+
+      function currentAdminSections() {
+        const value = session.get(SESSION_KEY) || '';
+        if (value === 'admin') return SECTIONS.map((item) => item.key);
+        if (value.indexOf('cliente:') === 0) {
+          const account = getAccount(value.slice('cliente:'.length));
+          const role = account ? getRole(account.role) : null;
+          return role ? role.sections.slice() : [];
+        }
+        return [];
       }
 
       function clientSessionId() {
@@ -1005,6 +1070,20 @@
         passInput.value = account ? account.pass : ((source && source.password) || '');
         passField.append(passLabel, passInput);
 
+        const roleField = document.createElement('div');
+        roleField.className = 'field';
+        const roleLabel = document.createElement('label');
+        roleLabel.textContent = 'Rol';
+        const roleSelect = document.createElement('select');
+        readRoles().forEach((role) => {
+          const option = document.createElement('option');
+          option.value = role.id;
+          option.textContent = role.name;
+          roleSelect.appendChild(option);
+        });
+        roleSelect.value = (account && account.role) ? account.role : 'cliente';
+        roleField.append(roleLabel, roleSelect);
+
         const msg = document.createElement('p');
         msg.className = 'account-msg';
         msg.setAttribute('role', 'status');
@@ -1037,6 +1116,7 @@
             if (target) {
               target.user = user;
               target.pass = pass;
+              target.role = roleSelect.value;
               if (source) target.name = source.title || '';
             }
           } else {
@@ -1047,6 +1127,7 @@
               name: source ? (source.title || '') : '',
               user: user,
               pass: pass,
+              role: roleSelect.value,
               onboarded: false,
               installation: '',
               address: '',
@@ -1074,7 +1155,7 @@
           actions.appendChild(remove);
         }
 
-        form.append(userField, passField, actions, msg);
+        form.append(userField, passField, roleField, actions, msg);
         card.appendChild(form);
         return card;
       }
@@ -1119,6 +1200,109 @@
         });
 
         empty.hidden = container.children.length > 0;
+      }
+
+      function renderRolePerms(container, selected) {
+        if (!container) return;
+        container.innerHTML = '';
+        const keys = selected || [];
+        SECTIONS.forEach((section) => {
+          const label = document.createElement('label');
+          label.className = 'role-perm';
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.value = section.key;
+          input.checked = keys.indexOf(section.key) !== -1;
+          label.append(input, document.createTextNode(section.label));
+          container.appendChild(label);
+        });
+        const portalLabel = document.createElement('label');
+        portalLabel.className = 'role-perm';
+        const portalInput = document.createElement('input');
+        portalInput.type = 'checkbox';
+        portalInput.value = 'portal';
+        portalInput.checked = keys.indexOf('portal') !== -1;
+        portalLabel.append(portalInput, document.createTextNode('Portal cliente'));
+        container.appendChild(portalLabel);
+      }
+
+      function readRolePerms(container) {
+        const sections = [];
+        let portal = false;
+        if (container) {
+          container.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+            if (!input.checked) return;
+            if (input.value === 'portal') portal = true;
+            else sections.push(input.value);
+          });
+        }
+        return { sections: sections, portal: portal };
+      }
+
+      function renderRoles() {
+        const roles = readRoles();
+        const list = document.getElementById('roles-list');
+        const empty = document.getElementById('roles-empty');
+        if (!list) return;
+        list.innerHTML = '';
+        roles.forEach((role) => {
+          const card = document.createElement('article');
+          card.className = 'record';
+          card.appendChild(recordHead(role.name, role.id === 'admin' ? 'Acceso total' : 'Rol personalizado', []));
+
+          const perms = document.createElement('div');
+          perms.className = 'role-perms';
+          renderRolePerms(perms, role.sections.concat(role.portal ? ['portal'] : []));
+          card.appendChild(perms);
+
+          const foot = document.createElement('div');
+          foot.className = 'record-foot';
+          const save = document.createElement('button');
+          save.type = 'button';
+          save.className = 'btn btn-sm';
+          save.textContent = 'Guardar permisos';
+          const msg = document.createElement('span');
+          msg.className = 'account-msg';
+          save.addEventListener('click', () => {
+            const data = readRolePerms(perms);
+            const all = readRoles();
+            const target = all.find((item) => item.id === role.id);
+            if (target) {
+              target.sections = data.sections;
+              target.portal = data.portal;
+            }
+            writeRoles(all);
+            msg.textContent = 'Permisos guardados.';
+          });
+          foot.append(save, msg);
+
+          if (role.id !== 'admin') {
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-sm btn-ghost';
+            remove.textContent = 'Eliminar';
+            remove.addEventListener('click', () => {
+              writeRoles(readRoles().filter((item) => item.id !== role.id));
+              renderRoles();
+            });
+            foot.appendChild(remove);
+          }
+          card.appendChild(foot);
+          list.appendChild(card);
+        });
+        empty.hidden = roles.length > 0;
+      }
+
+      function applyAdminPermissions() {
+        const allowed = currentAdminSections();
+        document.querySelectorAll('.admin-nav-btn').forEach((button) => {
+          button.hidden = allowed.indexOf(button.dataset.admin) === -1;
+        });
+        const active = document.querySelector('.admin-nav-btn.is-active:not([hidden])');
+        if (!active) {
+          const first = document.querySelector('.admin-nav-btn:not([hidden])');
+          if (first) first.click();
+        }
       }
 
       function addCallRow(name, phone) {
@@ -2684,6 +2868,7 @@
         renderLeads();
         renderClientRequests();
         renderAccounts();
+        renderRoles();
         renderPrices();
         renderImplementation();
         renderCalcExpenses();
@@ -2813,7 +2998,10 @@
         panelView.hidden = view !== 'admin';
         clientView.hidden = view !== 'cliente';
         onboardingView.hidden = view !== 'onboarding';
-        if (view === 'admin') renderAll();
+        if (view === 'admin') {
+          applyAdminPermissions();
+          renderAll();
+        }
         if (view === 'cliente') initClientData();
         if (view === 'onboarding') initOnboarding();
         if (view === 'login') {
@@ -2964,7 +3152,12 @@
         const account = readAccounts().find((item) => item.user === user && item.pass === pass);
         if (account) {
           session.set(SESSION_KEY, 'cliente:' + account.id);
-          showClientArea();
+          const role = getRole(account.role);
+          if (role && role.sections && role.sections.length) {
+            showView('admin');
+          } else {
+            showClientArea();
+          }
           return;
         }
         loginError.textContent = 'Usuario o contraseña incorrectos.';
@@ -3306,6 +3499,27 @@
 
       document.getElementById('inst-address').addEventListener('input', (event) => {
         updateMapsLink(event.target.value);
+      });
+
+      renderRolePerms(document.getElementById('role-perms'), []);
+      document.getElementById('role-add').addEventListener('click', () => {
+        const nameInput = document.getElementById('role-name');
+        const name = nameInput.value.trim();
+        const status = document.getElementById('role-status');
+        if (!name) {
+          status.textContent = 'Escribe un nombre para el rol.';
+          status.hidden = false;
+          return;
+        }
+        const data = readRolePerms(document.getElementById('role-perms'));
+        const all = readRoles();
+        all.push({ id: 'role_' + Date.now(), name: name, sections: data.sections, portal: data.portal });
+        writeRoles(all);
+        nameInput.value = '';
+        renderRolePerms(document.getElementById('role-perms'), []);
+        renderRoles();
+        status.textContent = 'Rol creado.';
+        status.hidden = false;
       });
 
       document.getElementById('ob-address-add').addEventListener('click', () => {

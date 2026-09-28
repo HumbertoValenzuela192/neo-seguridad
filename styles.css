@@ -628,7 +628,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .status-badge.is-ok { border-color: rgba(var(--accent-rgb), 0.5); color: var(--accent-bright); background: rgba(var(--accent-rgb), 0.12); }
 .status-badge.is-pending { border-color: rgba(242, 208, 107, 0.5); color: #f2d06b; background: rgba(242, 208, 107, 0.12); }
 .account-status { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
-.account-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 0.85rem; align-items: end; margin-top: 1rem; }
+.account-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 0.85rem; align-items: end; margin-top: 1rem; }
 .account-form .field { margin: 0; }
 .account-actions { display: flex; gap: 0.5rem; }
 .account-msg { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 0.85rem; }
@@ -660,6 +660,9 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 /* Filas de orden de llamado / guardias */
 .ob-list { display: grid; gap: 0.7rem; margin-bottom: 0.9rem; }
 .ob-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.role-perms { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 1rem 0; }
+.role-perm { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.8rem; border: 1px solid var(--line); border-radius: 999px; font-size: 0.85rem; cursor: pointer; }
+.role-perm input { accent-color: var(--accent); }
 .ob-row { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.02); transition: border-color 200ms ease; }
 .ob-row-guard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
 .ob-row:focus-within { border-color: rgba(var(--accent-rgb), 0.55); }
