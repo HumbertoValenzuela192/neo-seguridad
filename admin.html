@@ -49,6 +49,7 @@
             <button class="admin-nav-btn" type="button" data-admin="solicitudes">Clientes potenciales</button>
             <button class="admin-nav-btn" type="button" data-admin="clientes">Solicitudes de clientes</button>
             <button class="admin-nav-btn" type="button" data-admin="cuentas">Cuentas del cliente</button>
+            <button class="admin-nav-btn" type="button" data-admin="usuarios">Usuarios</button>
             <button class="admin-nav-btn" type="button" data-admin="roles">Roles</button>
             <button class="admin-nav-btn" type="button" data-admin="precios">Precios por cámaras</button>
             <button class="admin-nav-btn" type="button" data-admin="mensual">Cálculo mensual</button>
@@ -193,6 +194,41 @@
 
               <div id="roles-list" class="record-list"></div>
               <p id="roles-empty" class="empty-state">Aún no hay roles.</p>
+            </div>
+
+            <div class="admin-panel" data-admin-panel="usuarios" hidden>
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Accesos</p>
+                  <h1 class="portal-title">Usuarios</h1>
+                </div>
+              </div>
+              <p class="portal-subtitle">Usuarios del panel. Las contraseñas se guardan cifradas (hash), nunca en texto plano.</p>
+
+              <div class="calc">
+                <h2 class="panel-subtitle">Crear usuario</h2>
+                <div class="account-form">
+                  <div class="field">
+                    <label for="user-new-usuario">Usuario</label>
+                    <input id="user-new-usuario" type="text" autocomplete="off" placeholder="usuario o correo" />
+                  </div>
+                  <div class="field">
+                    <label for="user-new-pass">Contraseña</label>
+                    <input id="user-new-pass" type="text" autocomplete="off" placeholder="contraseña" />
+                  </div>
+                  <div class="field">
+                    <label for="user-new-rol">Rol</label>
+                    <select id="user-new-rol"></select>
+                  </div>
+                  <div class="account-actions">
+                    <button id="user-add" class="btn btn-sm" type="button">Crear usuario</button>
+                  </div>
+                  <p id="user-status" class="account-msg" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+
+              <div id="users-list" class="record-list"></div>
+              <p id="users-empty" class="empty-state">Aún no hay usuarios.</p>
             </div>
 
             <div class="admin-panel" data-admin-panel="precios" hidden>
@@ -689,11 +725,13 @@
       const SESSION_KEY = 'neo_admin_session';
       const ACCOUNTS_KEY = 'neo_cuentas_cliente';
       const ROLES_KEY = 'neo_roles';
+      const USERS_KEY = 'neo_usuarios';
       const SECTIONS = [
         { key: 'inicio', label: 'Inicio' },
         { key: 'solicitudes', label: 'Clientes potenciales' },
         { key: 'clientes', label: 'Solicitudes de clientes' },
         { key: 'cuentas', label: 'Cuentas del cliente' },
+        { key: 'usuarios', label: 'Usuarios' },
         { key: 'roles', label: 'Roles' },
         { key: 'precios', label: 'Precios por cámaras' },
         { key: 'mensual', label: 'Cálculo mensual' },
@@ -808,12 +846,60 @@
       function currentAdminSections() {
         const value = session.get(SESSION_KEY) || '';
         if (value === 'admin') return SECTIONS.map((item) => item.key);
+        if (value.indexOf('user:') === 0) {
+          const usuario = readUsers().find((item) => String(item.id) === value.slice('user:'.length));
+          const role = usuario ? getRole(usuario.rol) : null;
+          return role ? role.sections.slice() : [];
+        }
         if (value.indexOf('cliente:') === 0) {
           const account = getAccount(value.slice('cliente:'.length));
           const role = account ? getRole(account.role) : null;
           return role ? role.sections.slice() : [];
         }
         return [];
+      }
+
+      function readUsers() {
+        return readStore(USERS_KEY);
+      }
+
+      function writeUsers(list) {
+        writeStore(USERS_KEY, list);
+      }
+
+      function sha256Hex(text) {
+        const data = new TextEncoder().encode(text);
+        return crypto.subtle.digest('SHA-256', data).then((buffer) => {
+          return Array.prototype.map.call(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
+        });
+      }
+
+      function hashPassword(password, salt) {
+        const value = salt || (Math.random().toString(36).slice(2) + Date.now().toString(36));
+        return sha256Hex(value + password).then((hash) => value + ':' + hash);
+      }
+
+      function verifyPassword(password, stored) {
+        if (!stored || String(stored).indexOf(':') === -1) return Promise.resolve(stored === password);
+        const salt = String(stored).split(':')[0];
+        return sha256Hex(salt + password).then((hash) => (salt + ':' + hash) === stored);
+      }
+
+      function ensureAdminUser() {
+        const users = readUsers();
+        if (users.some((item) => item.usuario === 'admin')) return Promise.resolve();
+        return hashPassword('admin').then((hashed) => {
+          users.push({
+            id: Date.now(),
+            usuario: 'admin',
+            nombre: 'Administrador',
+            password: hashed,
+            rol: 'admin',
+            activo: true,
+            createdAt: nowLabel(),
+          });
+          writeUsers(users);
+        });
       }
 
       function clientSessionId() {
@@ -1066,8 +1152,8 @@
         const passInput = document.createElement('input');
         passInput.type = 'text';
         passInput.autocomplete = 'off';
-        passInput.placeholder = 'contraseña';
-        passInput.value = account ? account.pass : ((source && source.password) || '');
+        passInput.placeholder = account ? 'Nueva contraseña (opcional)' : 'contraseña';
+        passInput.value = account ? '' : ((source && source.password) || '');
         passField.append(passLabel, passInput);
 
         const roleField = document.createElement('div');
@@ -1096,10 +1182,10 @@
         save.type = 'button';
         save.className = 'btn btn-sm';
         save.textContent = account ? 'Actualizar' : 'Crear cuenta';
-        save.addEventListener('click', () => {
+        save.addEventListener('click', async () => {
           const user = userInput.value.trim();
           const pass = passInput.value;
-          if (!user || !pass) {
+          if (!user || (!account && !pass)) {
             msg.textContent = 'Usuario y contraseña son obligatorios.';
             msg.className = 'account-msg is-error';
             return;
@@ -1115,7 +1201,7 @@
             const target = all.find((item) => String(item.id) === String(account.id));
             if (target) {
               target.user = user;
-              target.pass = pass;
+              if (pass) target.pass = await hashPassword(pass);
               target.role = roleSelect.value;
               if (source) target.name = source.title || '';
             }
@@ -1126,7 +1212,7 @@
               sourceId: source ? source.id : null,
               name: source ? (source.title || '') : '',
               user: user,
-              pass: pass,
+              pass: await hashPassword(pass),
               role: roleSelect.value,
               onboarded: false,
               installation: '',
@@ -1291,6 +1377,63 @@
           list.appendChild(card);
         });
         empty.hidden = roles.length > 0;
+      }
+
+      function fillUserRoleOptions() {
+        const select = document.getElementById('user-new-rol');
+        if (!select) return;
+        select.innerHTML = '';
+        readRoles().forEach((role) => {
+          const option = document.createElement('option');
+          option.value = role.id;
+          option.textContent = role.name;
+          select.appendChild(option);
+        });
+      }
+
+      function renderUsers() {
+        const users = readUsers();
+        const list = document.getElementById('users-list');
+        const empty = document.getElementById('users-empty');
+        if (!list) return;
+        list.innerHTML = '';
+        users.forEach((usuario) => {
+          const card = document.createElement('article');
+          card.className = 'record';
+          const role = getRole(usuario.rol);
+          const actions = document.createElement('div');
+          actions.className = 'status-select';
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'status-opt' + (usuario.activo !== false ? ' is-active' : '');
+          toggle.textContent = usuario.activo !== false ? 'Activo' : 'Inactivo';
+          toggle.addEventListener('click', () => {
+            const all = readUsers();
+            const target = all.find((item) => String(item.id) === String(usuario.id));
+            if (target) target.activo = target.activo === false;
+            writeUsers(all);
+            renderUsers();
+          });
+          actions.appendChild(toggle);
+          card.appendChild(recordHead(usuario.usuario, (usuario.nombre || 'Sin nombre') + ' · ' + (role ? role.name : 'Sin rol'), actions));
+
+          const foot = document.createElement('div');
+          foot.className = 'record-foot';
+          if (usuario.usuario !== 'admin') {
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-sm btn-ghost';
+            remove.textContent = 'Eliminar';
+            remove.addEventListener('click', () => {
+              writeUsers(readUsers().filter((item) => String(item.id) !== String(usuario.id)));
+              renderUsers();
+            });
+            foot.appendChild(remove);
+          }
+          card.appendChild(foot);
+          list.appendChild(card);
+        });
+        empty.hidden = users.length > 0;
       }
 
       function applyAdminPermissions() {
@@ -2869,6 +3012,8 @@
         renderClientRequests();
         renderAccounts();
         renderRoles();
+        fillUserRoleOptions();
+        renderUsers();
         renderPrices();
         renderImplementation();
         renderCalcExpenses();
@@ -3140,17 +3285,27 @@
         renderCallList();
       }
 
-      loginForm.addEventListener('submit', (event) => {
+      loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const user = document.getElementById('user').value.trim();
         const pass = document.getElementById('pass').value;
-        if (user === 'admin' && pass === 'admin123') {
-          session.set(SESSION_KEY, 'admin');
-          showView('admin');
+        await ensureAdminUser();
+
+        const usuario = readUsers().find((item) => item.usuario === user && item.activo !== false);
+        if (usuario && await verifyPassword(pass, usuario.password)) {
+          session.set(SESSION_KEY, 'user:' + usuario.id);
+          const role = getRole(usuario.rol);
+          if (role && role.sections && role.sections.length) {
+            showView('admin');
+          } else {
+            loginError.textContent = 'Tu usuario no tiene acceso al panel.';
+            loginError.hidden = false;
+          }
           return;
         }
-        const account = readAccounts().find((item) => item.user === user && item.pass === pass);
-        if (account) {
+
+        const account = readAccounts().find((item) => item.user === user);
+        if (account && await verifyPassword(pass, account.pass)) {
           session.set(SESSION_KEY, 'cliente:' + account.id);
           const role = getRole(account.role);
           if (role && role.sections && role.sections.length) {
@@ -3160,6 +3315,7 @@
           }
           return;
         }
+
         loginError.textContent = 'Usuario o contraseña incorrectos.';
         loginError.hidden = false;
       });
@@ -3516,7 +3672,32 @@
         all.push({ id: 'role_' + Date.now(), name: name, sections: data.sections, portal: data.portal });
         writeRoles(all);
         nameInput.value = '';
-        renderRolePerms(document.getElementById('role-perms'), []);
+      document.getElementById('user-add').addEventListener('click', async () => {
+        const usuario = document.getElementById('user-new-usuario').value.trim();
+        const pass = document.getElementById('user-new-pass').value;
+        const rol = document.getElementById('user-new-rol').value;
+        const status = document.getElementById('user-status');
+        if (!usuario || !pass) {
+          status.textContent = 'Usuario y contraseña son obligatorios.';
+          status.className = 'account-msg is-error';
+          return;
+        }
+        const users = readUsers();
+        if (users.some((item) => item.usuario === usuario)) {
+          status.textContent = 'Ese usuario ya existe.';
+          status.className = 'account-msg is-error';
+          return;
+        }
+        users.push({ id: Date.now(), usuario: usuario, nombre: usuario, password: await hashPassword(pass), rol: rol, activo: true, createdAt: nowLabel() });
+        writeUsers(users);
+        document.getElementById('user-new-usuario').value = '';
+        document.getElementById('user-new-pass').value = '';
+        renderUsers();
+        status.textContent = 'Usuario creado.';
+        status.className = 'account-msg';
+      });
+
+      renderRolePerms(document.getElementById('role-perms'), []);
         renderRoles();
         status.textContent = 'Rol creado.';
         status.hidden = false;
@@ -3642,14 +3823,17 @@
 
       setInterval(updateClock, 1000);
 
-      const activeSession = session.get(SESSION_KEY) || '';
-      if (activeSession === 'admin') {
-        showView('admin');
-      } else if (activeSession.indexOf('cliente:') === 0) {
-        showClientArea();
-      } else {
-        showView('login');
-      }
+      ensureAdminUser().then(() => {
+        fillUserRoleOptions();
+        const activeSession = session.get(SESSION_KEY) || '';
+        if (activeSession === 'admin' || activeSession.indexOf('user:') === 0) {
+          showView('admin');
+        } else if (activeSession.indexOf('cliente:') === 0) {
+          showClientArea();
+        } else {
+          showView('login');
+        }
+      });
     </script>
   </body>
 </html>
