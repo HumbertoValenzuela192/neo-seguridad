@@ -573,6 +573,13 @@
         </div>
 
         <div class="tab-panel" data-panel="data" hidden>
+          <div class="inst-bar">
+            <div class="field field-inline" id="inst-select-field" hidden>
+              <label for="inst-select">Instalación</label>
+              <select id="inst-select"></select>
+            </div>
+            <button id="inst-add" class="btn btn-ghost btn-sm" type="button">+ Agregar otra instalación</button>
+          </div>
           <form id="data-form" class="contact-form" action="#">
             <div class="field">
               <label for="inst-name">Nombre de la instalación</label>
@@ -768,6 +775,7 @@
       let obMarker = null;
       let obAddresses = [{ address: '', lat: null, lng: null }];
       let obActiveIndex = 0;
+      let obEditingId = null;
       const DEFAULT_SALARY_PARAMS = { afp: 'capital', salud: 'fonasa', plan: '0', uf: '0', cesantia: '0,6', jornada: '45', utm: '0' };
       const AFP_COMISIONES = {
         capital: { name: 'Capital', comision: 1.44 },
@@ -919,16 +927,87 @@
           : { name: '', phone: '' });
       }
 
-      function accountReady(account) {
-        if (!account || !account.onboarded || !account.installation || !account.address) return false;
-        const order = normalizeCallOrder(account.callOrder);
+      function defaultInstallation() {
+        return {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          name: '',
+          addresses: [],
+          hasGuard: '',
+          guards: [],
+          supervisorName: '',
+          supervisorPhone: '',
+          callOrder: [{ name: '', phone: '' }],
+          onboarded: false,
+          createdAt: nowLabel(),
+        };
+      }
+
+      function normalizeInstallation(raw) {
+        const inst = raw || {};
+        return {
+          id: inst.id || (Date.now() + Math.floor(Math.random() * 1000)),
+          name: inst.name || '',
+          addresses: Array.isArray(inst.addresses)
+            ? inst.addresses.map((item) => ({
+                address: item.address || '',
+                lat: (typeof item.lat === 'number' ? item.lat : null),
+                lng: (typeof item.lng === 'number' ? item.lng : null),
+              }))
+            : [],
+          hasGuard: inst.hasGuard || '',
+          guards: Array.isArray(inst.guards)
+            ? inst.guards.map((guard) => (guard && typeof guard === 'object')
+                ? { name: guard.name || '', phone: guard.phone || '' }
+                : { name: guard || '', phone: '' })
+            : [],
+          supervisorName: inst.supervisorName || '',
+          supervisorPhone: inst.supervisorPhone || '',
+          callOrder: normalizeCallOrder(inst.callOrder),
+          onboarded: !!inst.onboarded,
+          createdAt: inst.createdAt || nowLabel(),
+        };
+      }
+
+      function accountInstallations(account) {
+        if (!account) return [];
+        if (Array.isArray(account.installations) && account.installations.length) {
+          return account.installations.map(normalizeInstallation);
+        }
+        if (account.installation || account.address || (Array.isArray(account.addresses) && account.addresses.length)) {
+          return [normalizeInstallation({
+            id: account.id,
+            name: account.installation || '',
+            addresses: (Array.isArray(account.addresses) && account.addresses.length)
+              ? account.addresses
+              : [{ address: account.address || '', lat: account.mapLat, lng: account.mapLng }],
+            hasGuard: account.hasGuard,
+            guards: account.guards,
+            supervisorName: account.supervisorName,
+            supervisorPhone: account.supervisorPhone,
+            callOrder: account.callOrder,
+            onboarded: !!account.onboarded,
+            createdAt: account.createdAt,
+          })];
+        }
+        return [];
+      }
+
+      function installationReady(inst) {
+        if (!inst || !inst.onboarded || !inst.name) return false;
+        const addresses = Array.isArray(inst.addresses) ? inst.addresses.filter((item) => item.address) : [];
+        if (!addresses.length) return false;
+        const order = normalizeCallOrder(inst.callOrder);
         if (order.length < 1 || !order.every((entry) => entry.name && entry.phone)) return false;
-        if (account.hasGuard === 'si') {
-          if (!account.supervisorName || !account.supervisorPhone) return false;
-          const guards = Array.isArray(account.guards) ? account.guards : [];
+        if (inst.hasGuard === 'si') {
+          if (!inst.supervisorName || !inst.supervisorPhone) return false;
+          const guards = Array.isArray(inst.guards) ? inst.guards : [];
           return guards.length > 0 && guards.every((entry) => entry && entry.name && entry.phone);
         }
-        return account.hasGuard === 'no';
+        return inst.hasGuard === 'no';
+      }
+
+      function accountReady(account) {
+        return accountInstallations(account).some((inst) => installationReady(inst));
       }
 
       function formatDateTime(value) {
@@ -1775,38 +1854,27 @@
           showView('login');
           return;
         }
-        document.getElementById('ob-installation').value = account.installation || '';
+        const installations = accountInstallations(account);
+        let inst = null;
+        if (obEditingId) inst = installations.find((item) => String(item.id) === String(obEditingId)) || null;
+        inst = inst ? normalizeInstallation(inst) : defaultInstallation();
+
+        document.getElementById('ob-installation').value = inst.name || '';
         document.getElementById('ob-call-list').innerHTML = '';
-        normalizeCallOrder(account.callOrder).forEach((entry) => addCallRow(entry.name, entry.phone));
+        (inst.callOrder.length ? inst.callOrder : [{ name: '', phone: '' }]).forEach((entry) => addCallRow(entry.name, entry.phone));
         while (document.querySelectorAll('#ob-call-list .ob-row').length < 1) addCallRow('', '');
         document.getElementById('ob-guard-list').innerHTML = '';
-        const guards = Array.isArray(account.guards) ? account.guards : [];
-        if (guards.length) {
-          guards.forEach((entry) => {
-            if (entry && typeof entry === 'object') addGuardRow(entry.name || '', entry.phone || '');
-            else addGuardRow(entry || '', '');
-          });
-        } else {
-          addGuardRow('', '');
-        }
-        const saved = Array.isArray(account.addresses) ? account.addresses : [];
-        obAddresses = saved.length
-          ? saved.map((entry) => ({
-              address: entry.address || '',
-              lat: (typeof entry.lat === 'number' ? entry.lat : null),
-              lng: (typeof entry.lng === 'number' ? entry.lng : null),
-            }))
-          : [{
-              address: account.address || '',
-              lat: (typeof account.mapLat === 'number' ? account.mapLat : null),
-              lng: (typeof account.mapLng === 'number' ? account.mapLng : null),
-            }];
+        if (inst.guards.length) inst.guards.forEach((entry) => addGuardRow(entry.name, entry.phone));
+        else addGuardRow('', '');
+        obAddresses = inst.addresses.length
+          ? inst.addresses.map((item) => ({ address: item.address, lat: item.lat, lng: item.lng }))
+          : [{ address: '', lat: null, lng: null }];
         obActiveIndex = 0;
         renderAddressRows();
-        document.getElementById('ob-supervisor-name').value = account.supervisorName || '';
-        document.getElementById('ob-supervisor-phone').value = account.supervisorPhone || '';
+        document.getElementById('ob-supervisor-name').value = inst.supervisorName || '';
+        document.getElementById('ob-supervisor-phone').value = inst.supervisorPhone || '';
         document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
-          radio.checked = account.hasGuard === radio.value;
+          radio.checked = inst.hasGuard === radio.value;
         });
         document.getElementById('ob-error').hidden = true;
         toggleGuardFields();
@@ -3165,6 +3233,8 @@
           return;
         }
         if (!accountReady(account)) {
+          const pending = accountInstallations(account).find((inst) => !installationReady(inst));
+          obEditingId = pending ? pending.id : null;
           showView('onboarding');
           return;
         }
@@ -3291,30 +3361,52 @@
         });
       }
 
+      let clientInstId = null;
+
+      function populateInstallSelect(account) {
+        const field = document.getElementById('inst-select-field');
+        const select = document.getElementById('inst-select');
+        const installations = accountInstallations(account);
+        select.innerHTML = '';
+        installations.forEach((inst) => {
+          const option = document.createElement('option');
+          option.value = inst.id;
+          option.textContent = inst.name || 'Instalación sin nombre';
+          select.appendChild(option);
+        });
+        field.hidden = installations.length <= 1;
+        if (installations.length && (!clientInstId || !installations.some((inst) => String(inst.id) === String(clientInstId)))) {
+          clientInstId = installations[0].id;
+        }
+        if (clientInstId != null) select.value = String(clientInstId);
+        return installations;
+      }
+
+      function loadInstallationIntoClientForm(inst) {
+        document.getElementById('inst-name').value = inst ? (inst.name || '') : '';
+        const address = (inst && inst.addresses[0]) ? (inst.addresses[0].address || '') : '';
+        document.getElementById('inst-address').value = address;
+        updateMapsLink(address);
+        const guardNames = inst ? inst.guards.map((guard) => guard.name).filter(Boolean) : [];
+        if (inst && inst.callOrder.some((entry) => entry.name || entry.phone)) {
+          contacts = inst.callOrder.map((entry) => ({
+            name: entry.name,
+            number: entry.phone,
+            guard: guardNames.indexOf(entry.name) !== -1,
+          }));
+        } else {
+          contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
+        }
+        renderCallList();
+      }
+
       function initClientData() {
         const account = activeClientAccount();
         if (account) {
-          document.getElementById('inst-name').value = account.installation || '';
-          const first = (Array.isArray(account.addresses) && account.addresses[0]) ? account.addresses[0] : null;
-          const address = first ? (first.address || '') : (account.address || '');
-          document.getElementById('inst-address').value = address;
-          updateMapsLink(address);
-
-          const order = normalizeCallOrder(account.callOrder);
-          const guardNames = (Array.isArray(account.guards) ? account.guards : [])
-            .map((guard) => (guard && guard.name) || guard)
-            .filter(Boolean);
-          if (order.some((entry) => entry.name || entry.phone)) {
-            contacts = order.map((entry) => ({
-              name: entry.name || '',
-              number: entry.phone || '',
-              guard: guardNames.indexOf(entry.name) !== -1,
-            }));
-          } else {
-            contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
-          }
+          const installations = populateInstallSelect(account);
+          const inst = installations.find((item) => String(item.id) === String(clientInstId)) || installations[0] || null;
+          loadInstallationIntoClientForm(inst);
           applyClientIdentity();
-          renderCallList();
           return;
         }
 
@@ -3799,30 +3891,50 @@
         const account = activeClientAccount();
         if (account) {
           const all = readAccounts();
-          const target = all.find((item) => String(item.id) === String(account.id));
-          if (target) {
-            target.installation = installation;
-            const addresses = Array.isArray(target.addresses) ? target.addresses.slice() : [];
-            if (addresses.length) {
-              addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
-            } else {
-              addresses.push({
-                address: address,
-                lat: (typeof target.mapLat === 'number' ? target.mapLat : null),
-                lng: (typeof target.mapLng === 'number' ? target.mapLng : null),
-              });
+          const acc = all.find((item) => String(item.id) === String(account.id));
+          if (acc) {
+            const installations = accountInstallations(acc);
+            let target = installations.find((inst) => String(inst.id) === String(clientInstId)) || installations[0] || null;
+            if (!target) {
+              target = defaultInstallation();
+              installations.push(target);
+              clientInstId = target.id;
             }
+            target.name = installation;
+            const addresses = target.addresses.length ? target.addresses.slice() : [{ address: '', lat: null, lng: null }];
+            addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
             target.addresses = addresses.filter((entry) => entry.address);
-            target.address = address;
             target.callOrder = contacts.map((item) => ({ name: item.name, phone: item.number }));
             target.guards = contacts.filter((item) => item.guard).map((item) => ({ name: item.name, phone: item.number }));
+
+            acc.installations = installations;
+            const first = installations[0];
+            acc.installation = first.name;
+            acc.addresses = first.addresses;
+            acc.address = first.addresses[0] ? first.addresses[0].address : '';
+            acc.callOrder = first.callOrder;
+            acc.guards = first.guards;
+            acc.onboarded = installations.some((inst) => installationReady(inst));
             writeAccounts(all);
+            populateInstallSelect(acc);
           }
         }
 
         const status = document.getElementById('data-status');
         status.textContent = 'Datos actualizados correctamente.';
         status.hidden = false;
+      });
+
+      document.getElementById('inst-select').addEventListener('change', (event) => {
+        clientInstId = event.target.value;
+        const account = activeClientAccount();
+        const inst = accountInstallations(account).find((item) => String(item.id) === String(clientInstId)) || null;
+        loadInstallationIntoClientForm(inst);
+      });
+
+      document.getElementById('inst-add').addEventListener('click', () => {
+        obEditingId = null;
+        showView('onboarding');
       });
 
       document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
@@ -3888,22 +4000,40 @@
         }
 
         const all = readAccounts();
-        const target = all.find((item) => String(item.id) === String(account.id));
-        if (target) {
-          target.installation = installation;
+        const acc = all.find((item) => String(item.id) === String(account.id));
+        if (acc) {
+          const installations = accountInstallations(acc);
+          let target = obEditingId ? installations.find((item) => String(item.id) === String(obEditingId)) : null;
+          if (!target) {
+            target = defaultInstallation();
+            installations.push(target);
+          }
+          target.name = installation;
           target.addresses = addresses;
-          target.address = addresses[0].address;
-          target.mapLat = addresses[0].lat;
-          target.mapLng = addresses[0].lng;
           target.hasGuard = hasGuard;
           target.callOrder = callOrder;
           target.guards = hasGuard === 'si' ? guards : [];
           target.supervisorName = hasGuard === 'si' ? supervisorName : '';
           target.supervisorPhone = hasGuard === 'si' ? supervisorPhone : '';
           target.onboarded = true;
-          target.onboardedAt = nowLabel();
+
+          acc.installations = installations;
+          const first = installations[0];
+          acc.installation = first.name;
+          acc.addresses = first.addresses;
+          acc.address = first.addresses[0] ? first.addresses[0].address : '';
+          acc.mapLat = first.addresses[0] ? first.addresses[0].lat : null;
+          acc.mapLng = first.addresses[0] ? first.addresses[0].lng : null;
+          acc.hasGuard = first.hasGuard;
+          acc.callOrder = first.callOrder;
+          acc.guards = first.guards;
+          acc.supervisorName = first.supervisorName;
+          acc.supervisorPhone = first.supervisorPhone;
+          acc.onboarded = installations.some((item) => installationReady(item));
+          acc.onboardedAt = nowLabel();
         }
         writeAccounts(all);
+        obEditingId = null;
         showView('cliente');
       });
 

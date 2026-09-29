@@ -445,6 +445,8 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .tab:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: -3px; }
 .tab.is-active { color: var(--accent-bright); border-bottom-color: var(--accent); }
 .tab-panel { margin-top: 2rem; }
+.inst-bar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.inst-bar .field { margin: 0; }
 .tab-panel .contact-form { max-width: 720px; }
 
 /* Range group */
