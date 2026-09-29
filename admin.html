@@ -511,7 +511,7 @@
 
         <div class="tab-panel is-active" data-panel="recording">
           <form id="recording-form" class="contact-form" action="#">
-            <div class="field">
+            <div class="field" hidden>
               <label for="rec-client">Cliente</label>
               <input id="rec-client" type="text" autocomplete="organization" required />
             </div>
@@ -555,7 +555,7 @@
 
         <div class="tab-panel" data-panel="cameras" hidden>
           <form id="cameras-form" class="contact-form" action="#">
-            <div class="field">
+            <div class="field" hidden>
               <label for="cam-client">Cliente</label>
               <input id="cam-client" type="text" autocomplete="organization" required />
             </div>
@@ -585,7 +585,7 @@
             </div>
             <fieldset class="call-list">
               <legend>Orden a quiénes llamar</legend>
-              <p class="call-list-hint">Solo puedes cambiar el orden, si es guardia y el número.</p>
+              <p class="call-list-hint">Puedes editar el nombre, el número (solo dígitos), marcar si es guardia y cambiar el orden.</p>
               <ol id="call-list" class="call-list-items"></ol>
             </fieldset>
             <button class="btn" type="submit">Guardar datos</button>
@@ -1461,10 +1461,11 @@
         nameInput.value = name || '';
         const phoneInput = document.createElement('input');
         phoneInput.type = 'tel';
-        phoneInput.inputMode = 'tel';
+        phoneInput.inputMode = 'numeric';
         phoneInput.className = 'ob-call-phone';
         phoneInput.placeholder = 'Número telefónico';
         phoneInput.value = phone || '';
+        phoneInput.addEventListener('input', () => { phoneInput.value = phoneInput.value.replace(/\D/g, ''); });
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'ob-row-remove';
@@ -1495,10 +1496,11 @@
         nameInput.value = name || '';
         const phoneInput = document.createElement('input');
         phoneInput.type = 'tel';
-        phoneInput.inputMode = 'tel';
+        phoneInput.inputMode = 'numeric';
         phoneInput.className = 'ob-guard-phone';
         phoneInput.placeholder = 'Número telefónico';
         phoneInput.value = phone || '';
+        phoneInput.addEventListener('input', () => { phoneInput.value = phoneInput.value.replace(/\D/g, ''); });
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'ob-row-remove';
@@ -3223,17 +3225,24 @@
           order.className = 'call-order';
           order.textContent = String(index + 1);
 
-          const name = document.createElement('span');
+          const name = document.createElement('input');
           name.className = 'call-name';
-          name.textContent = contact.name;
+          name.type = 'text';
+          name.placeholder = 'Nombre';
+          name.value = contact.name;
+          name.addEventListener('input', () => { contact.name = name.value; });
 
           const number = document.createElement('input');
           number.className = 'call-number';
           number.type = 'tel';
-          number.inputMode = 'tel';
+          number.inputMode = 'numeric';
+          number.setAttribute('pattern', '[0-9]*');
           number.placeholder = 'Número';
           number.value = contact.number;
-          number.addEventListener('input', () => { contact.number = number.value; });
+          number.addEventListener('input', () => {
+            number.value = number.value.replace(/\D/g, '');
+            contact.number = number.value;
+          });
 
           const guardLabel = document.createElement('label');
           guardLabel.className = 'call-guard';
@@ -3270,6 +3279,18 @@
         return id ? getAccount(id) : null;
       }
 
+      function applyClientIdentity() {
+        const account = activeClientAccount();
+        const name = account ? (account.name || account.user || '') : '';
+        ['rec-client', 'cam-client'].forEach((id) => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.value = name;
+            input.readOnly = true;
+          }
+        });
+      }
+
       function initClientData() {
         const account = activeClientAccount();
         if (account) {
@@ -3292,6 +3313,7 @@
           } else {
             contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
           }
+          applyClientIdentity();
           renderCallList();
           return;
         }
@@ -3312,6 +3334,7 @@
           document.getElementById('inst-address').value = '';
           updateMapsLink('');
         }
+        applyClientIdentity();
         renderCallList();
       }
 
@@ -3663,6 +3686,7 @@
         status.textContent = 'Solicitud de grabación enviada correctamente.';
         status.hidden = false;
         event.target.reset();
+        applyClientIdentity();
       });
 
       document.getElementById('cameras-form').addEventListener('submit', (event) => {
@@ -3681,6 +3705,7 @@
         status.textContent = 'Solicitud de aumento de cámaras enviada correctamente.';
         status.hidden = false;
         event.target.reset();
+        applyClientIdentity();
       });
 
       document.getElementById('inst-address').addEventListener('input', (event) => {
@@ -3731,6 +3756,10 @@
         renderRoles();
         status.textContent = 'Rol creado.';
         status.hidden = false;
+      });
+
+      document.getElementById('ob-supervisor-phone').addEventListener('input', (event) => {
+        event.target.value = event.target.value.replace(/\D/g, '');
       });
 
       document.getElementById('ob-address-add').addEventListener('click', () => {
