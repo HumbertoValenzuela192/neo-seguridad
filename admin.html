@@ -3265,7 +3265,37 @@
         });
       }
 
+      function activeClientAccount() {
+        const id = clientSessionId();
+        return id ? getAccount(id) : null;
+      }
+
       function initClientData() {
+        const account = activeClientAccount();
+        if (account) {
+          document.getElementById('inst-name').value = account.installation || '';
+          const first = (Array.isArray(account.addresses) && account.addresses[0]) ? account.addresses[0] : null;
+          const address = first ? (first.address || '') : (account.address || '');
+          document.getElementById('inst-address').value = address;
+          updateMapsLink(address);
+
+          const order = normalizeCallOrder(account.callOrder);
+          const guardNames = (Array.isArray(account.guards) ? account.guards : [])
+            .map((guard) => (guard && guard.name) || guard)
+            .filter(Boolean);
+          if (order.some((entry) => entry.name || entry.phone)) {
+            contacts = order.map((entry) => ({
+              name: entry.name || '',
+              number: entry.phone || '',
+              guard: guardNames.indexOf(entry.name) !== -1,
+            }));
+          } else {
+            contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
+          }
+          renderCallList();
+          return;
+        }
+
         let saved = null;
         try {
           saved = JSON.parse(localStorage.getItem(DATA_KEY) || 'null');
@@ -3728,12 +3758,39 @@
 
       document.getElementById('data-form').addEventListener('submit', (event) => {
         event.preventDefault();
+        const installation = document.getElementById('inst-name').value.trim();
+        const address = document.getElementById('inst-address').value.trim();
         writeStore(DATA_KEY, {
-          installation: document.getElementById('inst-name').value.trim(),
-          address: document.getElementById('inst-address').value.trim(),
+          installation: installation,
+          address: address,
           contacts: contacts.map((item) => ({ name: item.name, number: item.number, guard: item.guard })),
           updatedAt: nowLabel(),
         });
+
+        const account = activeClientAccount();
+        if (account) {
+          const all = readAccounts();
+          const target = all.find((item) => String(item.id) === String(account.id));
+          if (target) {
+            target.installation = installation;
+            const addresses = Array.isArray(target.addresses) ? target.addresses.slice() : [];
+            if (addresses.length) {
+              addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
+            } else {
+              addresses.push({
+                address: address,
+                lat: (typeof target.mapLat === 'number' ? target.mapLat : null),
+                lng: (typeof target.mapLng === 'number' ? target.mapLng : null),
+              });
+            }
+            target.addresses = addresses.filter((entry) => entry.address);
+            target.address = address;
+            target.callOrder = contacts.map((item) => ({ name: item.name, phone: item.number }));
+            target.guards = contacts.filter((item) => item.guard).map((item) => ({ name: item.name, phone: item.number }));
+            writeAccounts(all);
+          }
+        }
+
         const status = document.getElementById('data-status');
         status.textContent = 'Datos actualizados correctamente.';
         status.hidden = false;
