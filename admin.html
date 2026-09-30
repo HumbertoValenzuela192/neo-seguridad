@@ -574,6 +574,7 @@
 
         <div class="tab-panel" data-panel="data" hidden>
           <div class="inst-bar">
+            <button id="client-back" class="btn btn-ghost btn-sm" type="button">&#8592; Volver</button>
             <div class="field field-inline" id="inst-select-field" hidden>
               <label for="inst-select">Instalación</label>
               <select id="inst-select"></select>
@@ -596,10 +597,7 @@
               <ol id="call-list" class="call-list-items"></ol>
               <div class="call-actions">
                 <button id="call-add-person" class="btn btn-ghost btn-sm" type="button">+ Agregar persona</button>
-                <div id="call-guard-wrap" class="call-guard-add" hidden>
-                  <select id="call-guard-select" aria-label="Guardias disponibles"></select>
-                  <button id="call-add-guard" class="btn btn-ghost btn-sm" type="button">+ Agregar guardia</button>
-                </div>
+                <button id="call-add-guard" class="btn btn-ghost btn-sm" type="button">+ Agregar guardia</button>
                 <button id="call-add-supervisor" class="btn btn-ghost btn-sm" type="button">+ Agregar supervisor de guardia</button>
               </div>
             </fieldset>
@@ -3400,23 +3398,6 @@
           item.append(order, cargo, name, number, guardLabel, move);
           list.appendChild(item);
         });
-        refreshCallGuardOptions();
-      }
-
-      function refreshCallGuardOptions() {
-        const wrap = document.getElementById('call-guard-wrap');
-        const select = document.getElementById('call-guard-select');
-        if (!wrap || !select) return;
-        const used = contacts.map((item) => item.name);
-        const available = clientGuards.filter((guard) => used.indexOf(guard.name) === -1);
-        select.innerHTML = '';
-        available.forEach((guard) => {
-          const option = document.createElement('option');
-          option.value = guard.name;
-          option.textContent = guard.name + (guard.phone ? ' · ' + guard.phone : '');
-          select.appendChild(option);
-        });
-        wrap.hidden = available.length === 0;
       }
 
       function activeClientAccount() {
@@ -4073,15 +4054,15 @@
       });
 
       document.getElementById('call-add-guard').addEventListener('click', () => {
-        const select = document.getElementById('call-guard-select');
-        const name = select.value;
-        if (!name) return;
-        const guard = clientGuards.find((item) => item.name === name);
-        if (!guard) return;
-        contacts.push({ cargo: 'Guardia', name: guard.name, number: guard.phone || '', guard: true });
+        contacts.push({ cargo: 'Guardia', name: '', number: '', guard: true });
         saveClientCallOrder();
         renderCallList();
         showToast('Guardia agregado al orden de llamado.');
+      });
+
+      document.getElementById('client-back').addEventListener('click', () => {
+        const firstTab = document.querySelector('.tab');
+        if (firstTab) firstTab.click();
       });
 
       document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
