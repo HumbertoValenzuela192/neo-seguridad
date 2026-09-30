@@ -837,6 +837,26 @@
         writeStore(ACCOUNTS_KEY, list);
       }
 
+      function showToast(message, isError) {
+        let wrap = document.getElementById('toast-wrap');
+        if (!wrap) {
+          wrap = document.createElement('div');
+          wrap.id = 'toast-wrap';
+          wrap.className = 'toast-wrap';
+          wrap.setAttribute('aria-live', 'polite');
+          document.body.appendChild(wrap);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (isError ? ' is-error' : '');
+        toast.setAttribute('role', 'status');
+        toast.textContent = message;
+        wrap.appendChild(toast);
+        window.setTimeout(() => {
+          toast.classList.add('is-out');
+          window.setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+        }, 2600);
+      }
+
       function readRoles() {
         const stored = readStore(ROLES_KEY);
         if (Array.isArray(stored) && stored.length) return stored;
@@ -1305,6 +1325,7 @@
           }
           writeAccounts(all);
           renderAccounts();
+          showToast('Cuenta guardada con éxito.');
         });
         actions.appendChild(save);
 
@@ -1316,6 +1337,7 @@
           remove.addEventListener('click', () => {
             writeAccounts(readAccounts().filter((item) => String(item.id) !== String(account.id)));
             renderAccounts();
+            showToast('Cuenta eliminada.');
           });
           actions.appendChild(remove);
         }
@@ -1438,6 +1460,7 @@
             }
             writeRoles(all);
             msg.textContent = 'Permisos guardados.';
+            showToast('Permisos guardados con éxito.');
           });
           foot.append(save, msg);
 
@@ -1449,6 +1472,7 @@
             remove.addEventListener('click', () => {
               writeRoles(readRoles().filter((item) => item.id !== role.id));
               renderRoles();
+              showToast('Rol eliminado.');
             });
             foot.appendChild(remove);
           }
@@ -1506,6 +1530,7 @@
             remove.addEventListener('click', () => {
               writeUsers(readUsers().filter((item) => String(item.id) !== String(usuario.id)));
               renderUsers();
+              showToast('Usuario eliminado.');
             });
             foot.appendChild(remove);
           }
@@ -3538,6 +3563,7 @@
         const status = document.getElementById('price-status');
         status.textContent = 'Precios guardados correctamente.';
         status.hidden = false;
+        showToast('Precios guardados con éxito.');
       });
 
       document.getElementById('impl-add').addEventListener('click', () => {
@@ -3550,6 +3576,7 @@
         const status = document.getElementById('impl-status');
         status.textContent = 'Implementación guardada correctamente.';
         status.hidden = false;
+        showToast('Implementación guardada con éxito.');
       });
 
       const ufField = document.getElementById('uf-value');
@@ -3574,6 +3601,7 @@
               writeStore(UF_KEY, ufValue);
               const fecha = first.fecha ? String(first.fecha).slice(0, 10) : '';
               status.textContent = 'UF chilena actualizada: ' + formatClp(ufValue) + (fecha ? ' (' + fecha + ')' : '');
+              showToast('UF actualizada con éxito.');
             } else {
               status.textContent = 'No se pudo obtener la UF. Ingresa el valor manualmente.';
             }
@@ -3680,6 +3708,7 @@
         const status = document.getElementById('salary-status');
         status.textContent = 'Operador agregado.';
         renderSalaryList();
+        showToast('Operador guardado con éxito.');
       });
 
       document.getElementById('s-update').addEventListener('click', () => {
@@ -3696,6 +3725,7 @@
             renderSalaryParams();
             renderSalaryList();
             status.textContent = 'UF: ' + formatClp(Math.round(uf || 0)) + ' · UTM: ' + formatClp(Math.round(utm || 0));
+            showToast('UF/UTM actualizadas con éxito.');
           })
           .catch(() => {
             status.textContent = 'No se pudo conectar. Ingresa los valores manualmente.';
@@ -3723,6 +3753,7 @@
         const status = document.getElementById('price-status');
         status.textContent = 'Precio agregado a la tabla (' + priceLabel + ' UF). Recuerda guardar.';
         status.hidden = false;
+        showToast('Precio agregado. Recuerda guardar.');
       });
 
       ['m-ops', 'm-salary', 'm-cameras', 'm-integration', 'm-other', 'm-iva'].forEach((id) => {
@@ -3777,6 +3808,7 @@
         const status = document.getElementById('rec-status');
         status.textContent = 'Solicitud de grabación enviada correctamente.';
         status.hidden = false;
+        showToast('Solicitud enviada con éxito.');
         event.target.reset();
         applyClientIdentity();
       });
@@ -3796,6 +3828,7 @@
         const status = document.getElementById('cam-status');
         status.textContent = 'Solicitud de aumento de cámaras enviada correctamente.';
         status.hidden = false;
+        showToast('Solicitud enviada con éxito.');
         event.target.reset();
         applyClientIdentity();
       });
@@ -3842,12 +3875,14 @@
         renderUsers();
         status.textContent = 'Usuario creado.';
         status.className = 'account-msg';
+        showToast('Usuario creado con éxito.');
       });
 
       renderRolePerms(document.getElementById('role-perms'), []);
         renderRoles();
         status.textContent = 'Rol creado.';
         status.hidden = false;
+        showToast('Rol creado con éxito.');
       });
 
       document.getElementById('ob-supervisor-phone').addEventListener('input', (event) => {
@@ -3923,6 +3958,7 @@
         const status = document.getElementById('data-status');
         status.textContent = 'Datos actualizados correctamente.';
         status.hidden = false;
+        showToast('Datos guardados con éxito.');
       });
 
       document.getElementById('inst-select').addEventListener('change', (event) => {
@@ -4034,6 +4070,7 @@
         }
         writeAccounts(all);
         obEditingId = null;
+        showToast('Datos guardados con éxito.');
         showView('cliente');
       });
 
