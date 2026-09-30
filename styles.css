@@ -471,10 +471,12 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .call-guard-add { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .call-guard-add select { min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: #101413; color: var(--ink); font: inherit; font-size: 0.85rem; padding: 0 0.7rem; -webkit-appearance: none; appearance: none; }
 .call-list-items { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
-.call-item { display: grid; grid-template-columns: 1.5rem minmax(120px, 1fr) minmax(120px, 1fr) auto auto; grid-template-areas: "order name number guard move"; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: #101413; }
+.call-item { display: grid; grid-template-columns: 1.5rem minmax(90px, 0.8fr) minmax(110px, 1fr) minmax(110px, 1fr) auto auto; grid-template-areas: "order cargo name number guard move"; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: #101413; }
 .call-order { grid-area: order; color: var(--accent-bright); font-size: 0.8rem; font-weight: 800; }
 .call-name { grid-area: name; width: 100%; min-width: 0; min-height: 44px; border: 1px solid #46534c; border-radius: 8px; background: #0d1110; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; padding: 0.45rem 0.6rem; -webkit-appearance: none; appearance: none; }
 .call-name:focus { border-color: var(--accent-bright); outline: 3px solid rgba(var(--accent-rgb), 0.23); }
+.call-cargo { grid-area: cargo; width: 100%; min-width: 0; min-height: 44px; border: 1px solid #46534c; border-radius: 8px; background: #0d1110; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; padding: 0.45rem 0.6rem; -webkit-appearance: none; appearance: none; }
+.call-cargo:focus { border-color: var(--accent-bright); outline: 3px solid rgba(var(--accent-rgb), 0.23); }
 .call-number { grid-area: number; width: 100%; min-width: 0; min-height: 44px; border: 1px solid #46534c; border-radius: 8px; background: #0d1110; color: var(--ink); font: inherit; font-size: 16px; padding: 0.45rem 0.6rem; -webkit-appearance: none; appearance: none; }
 .call-number:focus { border-color: var(--accent-bright); outline: 3px solid rgba(var(--accent-rgb), 0.23); }
 .call-guard { grid-area: guard; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
@@ -561,7 +563,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
   .tigrr-actions .btn { flex: 1 1 100%; }
   .section-block { padding-block: 4.5rem; }
   .contact-form .btn { width: 100%; }
-  .call-item { grid-template-columns: 1.5rem 1fr auto; grid-template-areas: "order name move" "order number number" "order guard guard"; row-gap: 0.5rem; }
+  .call-item { grid-template-columns: 1.5rem 1fr auto; grid-template-areas: "order cargo move" "order name name" "order number number" "order guard guard"; row-gap: 0.5rem; }
   .range-group { padding: 0.9rem 0.85rem; }
   .range-fields { gap: 0.6rem; }
   .calc-grid { grid-template-columns: 1fr; }

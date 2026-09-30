@@ -592,7 +592,7 @@
             </div>
             <fieldset class="call-list">
               <legend>Orden a quiénes llamar</legend>
-              <p class="call-list-hint">Puedes editar el nombre, el número (solo dígitos), marcar si es guardia y cambiar el orden.</p>
+              <p class="call-list-hint">Puedes editar el cargo, el nombre, el número (solo dígitos), marcar si es guardia y cambiar el orden.</p>
               <ol id="call-list" class="call-list-items"></ol>
               <div class="call-actions">
                 <button id="call-add-person" class="btn btn-ghost btn-sm" type="button">+ Agregar persona</button>
@@ -3332,6 +3332,13 @@
           order.className = 'call-order';
           order.textContent = String(index + 1);
 
+          const cargo = document.createElement('input');
+          cargo.className = 'call-cargo';
+          cargo.type = 'text';
+          cargo.placeholder = 'Cargo';
+          cargo.value = contact.cargo || '';
+          cargo.addEventListener('input', () => { contact.cargo = cargo.value; });
+
           const name = document.createElement('input');
           name.className = 'call-name';
           name.type = 'text';
@@ -3376,7 +3383,7 @@
           down.addEventListener('click', () => moveContact(index, 1));
           move.append(up, down);
 
-          item.append(order, name, number, guardLabel, move);
+          item.append(order, cargo, name, number, guardLabel, move);
           list.appendChild(item);
         });
         refreshCallGuardOptions();
