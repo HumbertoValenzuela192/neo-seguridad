@@ -574,6 +574,7 @@
 
         <div class="tab-panel" data-panel="data" hidden>
           <div class="inst-bar">
+            <button id="client-back" class="btn btn-ghost btn-sm" type="button">&#8592; Volver</button>
             <div class="field field-inline" id="inst-select-field" hidden>
               <label for="inst-select">Instalación</label>
               <select id="inst-select"></select>
@@ -1561,6 +1562,7 @@
           panel.insertBefore(button, panel.firstChild);
         });
         document.querySelectorAll('.tab-panel').forEach((panel) => {
+          if (panel.dataset.panel === 'data') return;
           if (panel.querySelector('.back-btn')) return;
           const button = document.createElement('button');
           button.type = 'button';
@@ -3596,6 +3598,10 @@
       });
       document.getElementById('onboarding-back').addEventListener('click', () => {
         showView('cliente');
+      });
+      document.getElementById('client-back').addEventListener('click', () => {
+        const firstTab = document.querySelector('.tab');
+        if (firstTab) firstTab.click();
       });
 
       document.getElementById('client-search').addEventListener('input', renderClientRequests);
