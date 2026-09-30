@@ -3389,6 +3389,7 @@
           del.textContent = '\u00d7';
           del.setAttribute('aria-label', 'Quitar ' + (contact.name || 'contacto'));
           del.addEventListener('click', () => {
+            if (!window.confirm('¿Estás seguro de eliminar este contacto del orden de llamado?')) return;
             contacts.splice(index, 1);
             saveClientCallOrder();
             renderCallList();
