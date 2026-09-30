@@ -100,6 +100,7 @@ CREATE TABLE orden_llamado (
   id              BIGSERIAL PRIMARY KEY,
   instalacion_id  BIGINT NOT NULL REFERENCES instalaciones(id) ON DELETE CASCADE,
   orden           SMALLINT NOT NULL,
+  cargo           VARCHAR(120),
   nombre          VARCHAR(160) NOT NULL,
   telefono        VARCHAR(40) NOT NULL,
   UNIQUE (instalacion_id, orden)

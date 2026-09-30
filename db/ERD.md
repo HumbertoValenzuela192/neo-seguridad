@@ -65,6 +65,7 @@ erDiagram
         bigint id PK
         bigint instalacion_id FK
         smallint orden
+        string cargo
         string nombre
         string telefono
     }

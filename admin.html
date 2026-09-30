@@ -950,8 +950,8 @@
       function normalizeCallOrder(value) {
         const list = Array.isArray(value) ? value : [];
         return list.map((item) => (item && typeof item === 'object')
-          ? { name: item.name || '', phone: item.phone || '' }
-          : { name: '', phone: '' });
+          ? { cargo: item.cargo || '', name: item.name || '', phone: item.phone || '' }
+          : { cargo: '', name: (typeof item === 'string' ? item : ''), phone: '' });
       }
 
       function defaultInstallation() {
@@ -1559,12 +1559,17 @@
         }
       }
 
-      function addCallRow(name, phone) {
+      function addCallRow(name, phone, cargo) {
         const list = document.getElementById('ob-call-list');
         const row = document.createElement('div');
         row.className = 'ob-row';
         const index = document.createElement('span');
         index.className = 'ob-row-index';
+        const cargoInput = document.createElement('input');
+        cargoInput.type = 'text';
+        cargoInput.className = 'ob-call-cargo';
+        cargoInput.placeholder = 'Cargo';
+        cargoInput.value = cargo || '';
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.className = 'ob-call-name';
@@ -1583,7 +1588,7 @@
         remove.textContent = '\u00d7';
         remove.setAttribute('aria-label', 'Quitar orden de llamado');
         remove.addEventListener('click', () => { row.remove(); refreshCallRows(); });
-        row.append(index, nameInput, phoneInput, remove);
+        row.append(index, cargoInput, nameInput, phoneInput, remove);
         list.appendChild(row);
         refreshCallRows();
       }
@@ -1893,7 +1898,7 @@
 
         document.getElementById('ob-installation').value = inst.name || '';
         document.getElementById('ob-call-list').innerHTML = '';
-        (inst.callOrder.length ? inst.callOrder : [{ name: '', phone: '' }]).forEach((entry) => addCallRow(entry.name, entry.phone));
+        (inst.callOrder.length ? inst.callOrder : [{ cargo: '', name: '', phone: '' }]).forEach((entry) => addCallRow(entry.name, entry.phone, entry.cargo));
         while (document.querySelectorAll('#ob-call-list .ob-row').length < 1) addCallRow('', '');
         document.getElementById('ob-guard-list').innerHTML = '';
         if (inst.guards.length) inst.guards.forEach((entry) => addGuardRow(entry.name, entry.phone));
@@ -3441,12 +3446,13 @@
         const guardNames = clientGuards.map((guard) => guard.name);
         if (inst && inst.callOrder.some((entry) => entry.name || entry.phone)) {
           contacts = inst.callOrder.map((entry) => ({
+            cargo: entry.cargo || '',
             name: entry.name,
             number: entry.phone,
             guard: guardNames.indexOf(entry.name) !== -1,
           }));
         } else {
-          contacts = CONTACT_NAMES.map((name) => ({ name: name, number: '', guard: false }));
+          contacts = CONTACT_NAMES.map((name) => ({ cargo: '', name: name, number: '', guard: false }));
         }
         renderCallList();
       }
@@ -3965,7 +3971,7 @@
             const addresses = target.addresses.length ? target.addresses.slice() : [{ address: '', lat: null, lng: null }];
             addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
             target.addresses = addresses.filter((entry) => entry.address);
-            target.callOrder = contacts.map((item) => ({ name: item.name, phone: item.number }));
+            target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number }));
             const existingGuardNames = clientGuards.map((guard) => guard.name);
             const addedGuards = contacts
               .filter((item) => item.guard && item.name && existingGuardNames.indexOf(item.name) === -1)
@@ -4004,7 +4010,7 @@
       });
 
       document.getElementById('call-add-person').addEventListener('click', () => {
-        contacts.push({ name: '', number: '', guard: false });
+        contacts.push({ cargo: '', name: '', number: '', guard: false });
         renderCallList();
       });
 
@@ -4014,7 +4020,7 @@
         if (!name) return;
         const guard = clientGuards.find((item) => item.name === name);
         if (!guard) return;
-        contacts.push({ name: guard.name, number: guard.phone || '', guard: true });
+        contacts.push({ cargo: 'Guardia', name: guard.name, number: guard.phone || '', guard: true });
         renderCallList();
         showToast('Guardia agregado al orden de llamado.');
       });
@@ -4042,6 +4048,7 @@
         const callOrder = Array.prototype.map.call(
           document.querySelectorAll('#ob-call-list .ob-row'),
           (row) => ({
+            cargo: row.querySelector('.ob-call-cargo').value.trim(),
             name: row.querySelector('.ob-call-name').value.trim(),
             phone: row.querySelector('.ob-call-phone').value.trim(),
           })
