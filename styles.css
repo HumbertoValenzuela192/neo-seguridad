@@ -467,6 +467,9 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .call-list { margin: 0; padding: 0; border: 0; }
 .call-list legend { margin-bottom: 0.35rem; padding: 0; color: var(--ink); font-size: 0.88rem; font-weight: 700; }
 .call-list-hint { margin: 0 0 1rem; color: var(--muted); font-size: 0.85rem; }
+.call-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.85rem; }
+.call-guard-add { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.call-guard-add select { min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: #101413; color: var(--ink); font: inherit; font-size: 0.85rem; padding: 0 0.7rem; -webkit-appearance: none; appearance: none; }
 .call-list-items { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .call-item { display: grid; grid-template-columns: 1.5rem minmax(120px, 1fr) minmax(120px, 1fr) auto auto; grid-template-areas: "order name number guard move"; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: #101413; }
 .call-order { grid-area: order; color: var(--accent-bright); font-size: 0.8rem; font-weight: 800; }

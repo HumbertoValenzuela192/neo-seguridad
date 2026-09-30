@@ -594,6 +594,13 @@
               <legend>Orden a quiénes llamar</legend>
               <p class="call-list-hint">Puedes editar el nombre, el número (solo dígitos), marcar si es guardia y cambiar el orden.</p>
               <ol id="call-list" class="call-list-items"></ol>
+              <div class="call-actions">
+                <button id="call-add-person" class="btn btn-ghost btn-sm" type="button">+ Agregar persona</button>
+                <div id="call-guard-wrap" class="call-guard-add" hidden>
+                  <select id="call-guard-select" aria-label="Guardias disponibles"></select>
+                  <button id="call-add-guard" class="btn btn-ghost btn-sm" type="button">+ Agregar guardia</button>
+                </div>
+              </div>
             </fieldset>
             <button class="btn" type="submit">Guardar datos</button>
             <p id="data-status" class="form-status" role="status" aria-live="polite" hidden></p>
@@ -3367,6 +3374,23 @@
           item.append(order, name, number, guardLabel, move);
           list.appendChild(item);
         });
+        refreshCallGuardOptions();
+      }
+
+      function refreshCallGuardOptions() {
+        const wrap = document.getElementById('call-guard-wrap');
+        const select = document.getElementById('call-guard-select');
+        if (!wrap || !select) return;
+        const used = contacts.map((item) => item.name);
+        const available = clientGuards.filter((guard) => used.indexOf(guard.name) === -1);
+        select.innerHTML = '';
+        available.forEach((guard) => {
+          const option = document.createElement('option');
+          option.value = guard.name;
+          option.textContent = guard.name + (guard.phone ? ' · ' + guard.phone : '');
+          select.appendChild(option);
+        });
+        wrap.hidden = available.length === 0;
       }
 
       function activeClientAccount() {
@@ -3387,6 +3411,7 @@
       }
 
       let clientInstId = null;
+      let clientGuards = [];
 
       function populateInstallSelect(account) {
         const field = document.getElementById('inst-select-field');
@@ -3412,7 +3437,8 @@
         const address = (inst && inst.addresses[0]) ? (inst.addresses[0].address || '') : '';
         document.getElementById('inst-address').value = address;
         updateMapsLink(address);
-        const guardNames = inst ? inst.guards.map((guard) => guard.name).filter(Boolean) : [];
+        clientGuards = inst ? inst.guards.filter((guard) => guard.name) : [];
+        const guardNames = clientGuards.map((guard) => guard.name);
         if (inst && inst.callOrder.some((entry) => entry.name || entry.phone)) {
           contacts = inst.callOrder.map((entry) => ({
             name: entry.name,
@@ -3940,7 +3966,11 @@
             addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
             target.addresses = addresses.filter((entry) => entry.address);
             target.callOrder = contacts.map((item) => ({ name: item.name, phone: item.number }));
-            target.guards = contacts.filter((item) => item.guard).map((item) => ({ name: item.name, phone: item.number }));
+            const existingGuardNames = clientGuards.map((guard) => guard.name);
+            const addedGuards = contacts
+              .filter((item) => item.guard && item.name && existingGuardNames.indexOf(item.name) === -1)
+              .map((item) => ({ name: item.name, phone: item.number }));
+            target.guards = clientGuards.concat(addedGuards);
 
             acc.installations = installations;
             const first = installations[0];
@@ -3971,6 +4001,22 @@
       document.getElementById('inst-add').addEventListener('click', () => {
         obEditingId = null;
         showView('onboarding');
+      });
+
+      document.getElementById('call-add-person').addEventListener('click', () => {
+        contacts.push({ name: '', number: '', guard: false });
+        renderCallList();
+      });
+
+      document.getElementById('call-add-guard').addEventListener('click', () => {
+        const select = document.getElementById('call-guard-select');
+        const name = select.value;
+        if (!name) return;
+        const guard = clientGuards.find((item) => item.name === name);
+        if (!guard) return;
+        contacts.push({ name: guard.name, number: guard.phone || '', guard: true });
+        renderCallList();
+        showToast('Guardia agregado al orden de llamado.');
       });
 
       document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
