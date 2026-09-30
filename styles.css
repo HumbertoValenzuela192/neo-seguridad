@@ -447,6 +447,7 @@ select.price-input { -webkit-appearance: none; appearance: none; background-imag
 .tab-panel { margin-top: 2rem; }
 .inst-bar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .inst-bar .field { margin: 0; }
+.back-btn { margin-bottom: 1.25rem; }
 .tab-panel .contact-form { max-width: 720px; }
 
 /* Range group */

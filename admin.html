@@ -574,7 +574,6 @@
 
         <div class="tab-panel" data-panel="data" hidden>
           <div class="inst-bar">
-            <button id="client-back" class="btn btn-ghost btn-sm" type="button">&#8592; Volver</button>
             <div class="field field-inline" id="inst-select-field" hidden>
               <label for="inst-select">Instalación</label>
               <select id="inst-select"></select>
@@ -614,6 +613,7 @@
             <h1 class="portal-title">Completa los datos de tu instalación</h1>
             <p class="portal-subtitle">Es obligatorio para poder iniciar el monitoreo.</p>
           </div>
+          <button id="onboarding-back" class="btn btn-ghost" type="button" hidden>&#8592; Volver</button>
           <button id="onboarding-logout" class="btn btn-ghost" type="button">Cerrar sesión</button>
         </div>
 
@@ -1546,6 +1546,34 @@
         empty.hidden = users.length > 0;
       }
 
+      function injectBackButtons() {
+        document.querySelectorAll('.admin-panel').forEach((panel) => {
+          if (panel.dataset.adminPanel === 'inicio') return;
+          if (panel.querySelector('.back-btn')) return;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn btn-ghost btn-sm back-btn';
+          button.innerHTML = '&#8592; Volver';
+          button.addEventListener('click', () => {
+            const home = document.querySelector('.admin-nav-btn[data-admin="inicio"]');
+            if (home) home.click();
+          });
+          panel.insertBefore(button, panel.firstChild);
+        });
+        document.querySelectorAll('.tab-panel').forEach((panel) => {
+          if (panel.querySelector('.back-btn')) return;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn btn-ghost btn-sm back-btn';
+          button.innerHTML = '&#8592; Volver';
+          button.addEventListener('click', () => {
+            const first = document.querySelector('.tab');
+            if (first) first.click();
+          });
+          panel.insertBefore(button, panel.firstChild);
+        });
+      }
+
       function applyAdminPermissions() {
         const allowed = currentAdminSections();
         document.querySelectorAll('.admin-nav-btn').forEach((button) => {
@@ -1890,6 +1918,7 @@
           showView('login');
           return;
         }
+        document.getElementById('onboarding-back').hidden = !accountReady(account);
         const installations = accountInstallations(account);
         let inst = null;
         if (obEditingId) inst = installations.find((item) => String(item.id) === String(obEditingId)) || null;
@@ -3565,6 +3594,9 @@
         session.remove(SESSION_KEY);
         showView('login');
       });
+      document.getElementById('onboarding-back').addEventListener('click', () => {
+        showView('cliente');
+      });
 
       document.getElementById('client-search').addEventListener('input', renderClientRequests);
 
@@ -4060,10 +4092,7 @@
         showToast('Guardia agregado al orden de llamado.');
       });
 
-      document.getElementById('client-back').addEventListener('click', () => {
-        const firstTab = document.querySelector('.tab');
-        if (firstTab) firstTab.click();
-      });
+
 
       document.querySelectorAll('input[name="ob-guard"]').forEach((radio) => {
         radio.addEventListener('change', toggleGuardFields);
@@ -4171,6 +4200,7 @@
 
       ensureAdminUser().then(() => {
         fillUserRoleOptions();
+        injectBackButtons();
         const activeSession = session.get(SESSION_KEY) || '';
         if (activeSession === 'admin' || activeSession.indexOf('user:') === 0) {
           showView('admin');
