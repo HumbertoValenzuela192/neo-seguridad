@@ -583,11 +583,11 @@
           <form id="data-form" class="contact-form" action="#">
             <div class="field">
               <label for="inst-name">Nombre de la instalación</label>
-              <input id="inst-name" type="text" autocomplete="organization" required />
+              <input id="inst-name" type="text" autocomplete="organization" readonly />
             </div>
             <div class="field">
               <label for="inst-address">Dirección</label>
-              <input id="inst-address" type="text" autocomplete="street-address" required />
+              <input id="inst-address" type="text" autocomplete="street-address" readonly />
               <a id="maps-link" class="maps-link" href="#" target="_blank" rel="noopener" hidden>Ver en Google Maps</a>
             </div>
             <fieldset class="call-list">
@@ -600,6 +600,7 @@
                   <select id="call-guard-select" aria-label="Guardias disponibles"></select>
                   <button id="call-add-guard" class="btn btn-ghost btn-sm" type="button">+ Agregar guardia</button>
                 </div>
+                <button id="call-add-supervisor" class="btn btn-ghost btn-sm" type="button">+ Agregar supervisor de guardia</button>
               </div>
             </fieldset>
             <button class="btn" type="submit">Guardar datos</button>
@@ -3318,6 +3319,7 @@
         const swap = contacts[index];
         contacts[index] = contacts[target];
         contacts[target] = swap;
+        saveClientCallOrder();
         renderCallList();
       }
 
@@ -3381,7 +3383,18 @@
           down.setAttribute('aria-label', 'Bajar ' + contact.name);
           down.disabled = index === contacts.length - 1;
           down.addEventListener('click', () => moveContact(index, 1));
-          move.append(up, down);
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'call-remove';
+          del.textContent = '\u00d7';
+          del.setAttribute('aria-label', 'Quitar ' + (contact.name || 'contacto'));
+          del.addEventListener('click', () => {
+            contacts.splice(index, 1);
+            saveClientCallOrder();
+            renderCallList();
+            showToast('Contacto eliminado.');
+          });
+          move.append(up, down, del);
 
           item.append(order, cargo, name, number, guardLabel, move);
           list.appendChild(item);
@@ -3462,6 +3475,35 @@
           contacts = CONTACT_NAMES.map((name) => ({ cargo: '', name: name, number: '', guard: false }));
         }
         renderCallList();
+      }
+
+      function saveClientCallOrder() {
+        const account = activeClientAccount();
+        if (!account) return;
+        const all = readAccounts();
+        const acc = all.find((item) => String(item.id) === String(account.id));
+        if (!acc) return;
+        const installations = accountInstallations(acc);
+        let target = installations.find((inst) => String(inst.id) === String(clientInstId)) || installations[0] || null;
+        if (!target) {
+          target = defaultInstallation();
+          installations.push(target);
+          clientInstId = target.id;
+        }
+        target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number }));
+        const existingNames = clientGuards.map((guard) => guard.name);
+        const addedGuards = contacts
+          .filter((item) => item.guard && item.name && existingNames.indexOf(item.name) === -1)
+          .map((item) => ({ name: item.name, phone: item.number }));
+        target.guards = clientGuards.concat(addedGuards);
+
+        acc.installations = installations;
+        const first = installations[0];
+        acc.installation = first.name;
+        acc.callOrder = first.callOrder;
+        acc.guards = first.guards;
+        acc.onboarded = installations.some((inst) => installationReady(inst));
+        writeAccounts(all);
       }
 
       function initClientData() {
@@ -4018,7 +4060,15 @@
 
       document.getElementById('call-add-person').addEventListener('click', () => {
         contacts.push({ cargo: '', name: '', number: '', guard: false });
+        saveClientCallOrder();
         renderCallList();
+      });
+
+      document.getElementById('call-add-supervisor').addEventListener('click', () => {
+        contacts.push({ cargo: 'Supervisor de guardia', name: '', number: '', guard: false });
+        saveClientCallOrder();
+        renderCallList();
+        showToast('Supervisor de guardia agregado.');
       });
 
       document.getElementById('call-add-guard').addEventListener('click', () => {
@@ -4028,6 +4078,7 @@
         const guard = clientGuards.find((item) => item.name === name);
         if (!guard) return;
         contacts.push({ cargo: 'Guardia', name: guard.name, number: guard.phone || '', guard: true });
+        saveClientCallOrder();
         renderCallList();
         showToast('Guardia agregado al orden de llamado.');
       });
