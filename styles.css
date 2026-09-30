@@ -208,6 +208,7 @@ h3 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: -0.04em; li
 .login-error[hidden] { display: none; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
 .panel-head .portal-title { margin-bottom: 0; }
+.panel-head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 .requests-wrap { margin-top: 2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow-x: auto; }
 .requests-table { width: 100%; min-width: 860px; border-collapse: collapse; }
 .requests-table th, .requests-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; text-align: left; white-space: nowrap; }
