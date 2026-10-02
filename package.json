@@ -1,0 +1,12 @@
+{
+  "name": "neo-seguridad",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NEO Seguridad - sitio + API con Postgres",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
