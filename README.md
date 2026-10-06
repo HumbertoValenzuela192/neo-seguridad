@@ -67,7 +67,10 @@ Vista previa integrada: `PREVIEW_BASE=/preview/5176/`, `PORTAL_API_URL=http://12
 
 ## Organización
 
-`src/public/`: contenido comercial y efectos WebGL/Canvas.
+`src/public/pages/`: una página comercial por archivo (`HomePage.tsx`, `SolutionsPage.tsx`, `NeoPage.tsx`, `CentralPage.tsx`, `ContactPage.tsx`).
+`src/public/components/`: cabecera (`Header.tsx`), pie (`Footer.tsx`), formulario (`ContactForm.tsx`) y bloques compartidos (`Sections.tsx`).
+`src/public/Marketing.tsx`: conecta la página seleccionada con cabecera, pie y tema. No contiene el contenido de las páginas.
+`src/public/Effects.tsx`: efectos WebGL/Canvas.
 `src/portal/`: sesión, navegación y módulos de gestión.
 `src/components/`: controles accesibles, marca, contactos y ubicación.
 `src/lib/`: API, cálculos y compatibilidad de datos.
