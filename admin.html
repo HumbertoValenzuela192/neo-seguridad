@@ -39,6 +39,7 @@
             <button class="btn" type="submit">Ingresar</button>
             <p id="login-error" class="login-error" role="alert" hidden></p>
           </form>
+          <a href="recover.html">Respaldar datos guardados en este navegador</a>
         </div>
       </section>
 
@@ -50,6 +51,8 @@
             <button class="admin-nav-btn" type="button" data-admin="solicitudes">Clientes potenciales</button>
             <button class="admin-nav-btn" type="button" data-admin="clientes">Solicitudes de clientes</button>
             <button class="admin-nav-btn" type="button" data-admin="cuentas">Cuentas del cliente</button>
+            <a class="btn btn-ghost" href="directory.html">Clientes compartidos con NEO</a>
+            <a class="btn btn-ghost" href="recover.html">Respaldar datos de este navegador</a>
             <button class="admin-nav-btn" type="button" data-admin="usuarios">Usuarios</button>
             <button class="admin-nav-btn" type="button" data-admin="roles">Roles</button>
             <button class="admin-nav-btn" type="button" data-admin="precios">Precios por cámaras</button>
@@ -847,7 +850,8 @@
         writeStore(ACCOUNTS_KEY, list);
       }
 
-      function showToast(message, isError) {
+      async function showToast(message, isError) {
+        try { await window.portalSync.flush(); } catch(error) { message=error.message+' Recarga antes de continuar.';isError=true; }
         let wrap = document.getElementById('toast-wrap');
         if (!wrap) {
           wrap = document.createElement('div');
@@ -913,8 +917,7 @@
       }
 
       function hashPassword(password, salt) {
-        const value = salt || (Math.random().toString(36).slice(2) + Date.now().toString(36));
-        return sha256Hex(value + password).then((hash) => value + ':' + hash);
+        return window.portalSync.request('/api/password-hash',{password}).then(result=>result.hash);
       }
 
       function verifyPassword(password, stored) {
@@ -924,20 +927,7 @@
       }
 
       function ensureAdminUser() {
-        const users = readUsers();
-        if (users.some((item) => item.usuario === 'admin')) return Promise.resolve();
-        return hashPassword('admin').then((hashed) => {
-          users.push({
-            id: Date.now(),
-            usuario: 'admin',
-            nombre: 'Administrador',
-            password: hashed,
-            rol: 'admin',
-            activo: true,
-            createdAt: nowLabel(),
-          });
-          writeUsers(users);
-        });
+        return Promise.resolve();
       }
 
       function clientSessionId() {
@@ -953,8 +943,8 @@
       function normalizeCallOrder(value) {
         const list = Array.isArray(value) ? value : [];
         return list.map((item) => (item && typeof item === 'object')
-          ? { cargo: item.cargo || '', name: item.name || '', phone: item.phone || '' }
-          : { cargo: '', name: (typeof item === 'string' ? item : ''), phone: '' });
+          ? { cargo: item.cargo || '', name: item.name || '', phone: item.phone || '', email: item.email || '' }
+          : { cargo: '', name: (typeof item === 'string' ? item : ''), phone: '', email: '' });
       }
 
       function defaultInstallation() {
@@ -987,14 +977,16 @@
           hasGuard: inst.hasGuard || '',
           guards: Array.isArray(inst.guards)
             ? inst.guards.map((guard) => (guard && typeof guard === 'object')
-                ? { name: guard.name || '', phone: guard.phone || '' }
+                ? { name: guard.name || '', phone: guard.phone || '', cargo: guard.cargo || 'Guardia', email: guard.email || '' }
                 : { name: guard || '', phone: '' })
             : [],
           supervisorName: inst.supervisorName || '',
           supervisorPhone: inst.supervisorPhone || '',
+          supervisorEmail: inst.supervisorEmail || '', supervisorCargo: inst.supervisorCargo || 'Supervisor',
           callOrder: normalizeCallOrder(inst.callOrder),
           onboarded: !!inst.onboarded,
           createdAt: inst.createdAt || nowLabel(),
+          coreId: inst.coreId, coreVersion: inst.coreVersion, code: inst.code, organizationId: inst.organizationId,
         };
       }
 
@@ -1213,8 +1205,7 @@
       }
 
       function passwordFromRut(rut) {
-        const beforeDash = String(rut || '').split('-')[0].replace(/\D/g, '');
-        return beforeDash.slice(-4);
+        return '';
       }
 
       function accountStatusNode(account) {
@@ -1591,10 +1582,11 @@
         }
       }
 
-      function addCallRow(name, phone, cargo) {
+      function addCallRow(name, phone, cargo, email) {
         const list = document.getElementById('ob-call-list');
         const row = document.createElement('div');
         row.className = 'ob-row';
+        row.dataset.email = email || '';
         const index = document.createElement('span');
         index.className = 'ob-row-index';
         const cargoInput = document.createElement('input');
@@ -1633,10 +1625,11 @@
         });
       }
 
-      function addGuardRow(name, phone) {
+      function addGuardRow(name, phone, cargo, email) {
         const list = document.getElementById('ob-guard-list');
         const row = document.createElement('div');
         row.className = 'ob-row ob-row-guard';
+        row.dataset.email = email || ''; row.dataset.cargo = cargo || 'Guardia';
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.className = 'ob-guard-name';
@@ -1931,10 +1924,10 @@
 
         document.getElementById('ob-installation').value = inst.name || '';
         document.getElementById('ob-call-list').innerHTML = '';
-        (inst.callOrder.length ? inst.callOrder : [{ cargo: '', name: '', phone: '' }]).forEach((entry) => addCallRow(entry.name, entry.phone, entry.cargo));
+        (inst.callOrder.length ? inst.callOrder : [{ cargo: '', name: '', phone: '' }]).forEach((entry) => addCallRow(entry.name, entry.phone, entry.cargo, entry.email));
         while (document.querySelectorAll('#ob-call-list .ob-row').length < 1) addCallRow('', '');
         document.getElementById('ob-guard-list').innerHTML = '';
-        if (inst.guards.length) inst.guards.forEach((entry) => addGuardRow(entry.name, entry.phone));
+        if (inst.guards.length) inst.guards.forEach((entry) => addGuardRow(entry.name, entry.phone, entry.cargo, entry.email));
         else addGuardRow('', '');
         obAddresses = inst.addresses.length
           ? inst.addresses.map((item) => ({ address: item.address, lat: item.lat, lng: item.lng }))
@@ -3485,6 +3478,7 @@
             cargo: entry.cargo || '',
             name: entry.name,
             number: entry.phone,
+            email: entry.email || '',
             guard: guardNames.indexOf(entry.name) !== -1,
           }));
         } else {
@@ -3506,7 +3500,7 @@
           installations.push(target);
           clientInstId = target.id;
         }
-        target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number }));
+        target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number, email: item.email || '' }));
         const existingNames = clientGuards.map((guard) => guard.name);
         const addedGuards = contacts
           .filter((item) => item.guard && item.name && existingNames.indexOf(item.name) === -1)
@@ -3556,46 +3550,22 @@
         event.preventDefault();
         const user = document.getElementById('user').value.trim();
         const pass = document.getElementById('pass').value;
-        await ensureAdminUser();
-
-        const usuario = readUsers().find((item) => item.usuario === user && item.activo !== false);
-        if (usuario && await verifyPassword(pass, usuario.password)) {
-          session.set(SESSION_KEY, 'user:' + usuario.id);
-          const role = getRole(usuario.rol);
-          if (role && role.sections && role.sections.length) {
-            showView('admin');
-          } else {
-            loginError.textContent = 'Tu usuario no tiene acceso al panel.';
-            loginError.hidden = false;
-          }
-          return;
-        }
-
-        const account = readAccounts().find((item) => item.user === user);
-        if (account && await verifyPassword(pass, account.pass)) {
-          session.set(SESSION_KEY, 'cliente:' + account.id);
-          const role = getRole(account.role);
-          if (role && role.sections && role.sections.length) {
-            showView('admin');
-          } else {
-            showClientArea();
-          }
-          return;
-        }
-
-        loginError.textContent = 'Usuario o contraseña incorrectos.';
-        loginError.hidden = false;
+        try {await window.portalSync.request('/api/auth/login',{username:user,password:pass});location.reload();}
+        catch(error){loginError.textContent=error.message;loginError.hidden=false;}
       });
 
       document.getElementById('logout').addEventListener('click', () => {
+        void window.portalSync.request('/api/auth/logout',{}).then(()=>location.reload());
         session.remove(SESSION_KEY);
         showView('login');
       });
       document.getElementById('client-logout').addEventListener('click', () => {
+        void window.portalSync.request('/api/auth/logout',{}).then(()=>location.reload());
         session.remove(SESSION_KEY);
         showView('login');
       });
       document.getElementById('onboarding-logout').addEventListener('click', () => {
+        void window.portalSync.request('/api/auth/logout',{}).then(()=>location.reload());
         session.remove(SESSION_KEY);
         showView('login');
       });
@@ -4043,7 +4013,7 @@
             const addresses = target.addresses.length ? target.addresses.slice() : [{ address: '', lat: null, lng: null }];
             addresses[0] = { address: address, lat: addresses[0].lat, lng: addresses[0].lng };
             target.addresses = addresses.filter((entry) => entry.address);
-            target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number }));
+            target.callOrder = contacts.map((item) => ({ cargo: item.cargo || '', name: item.name, phone: item.number, email: item.email || '' }));
             const existingGuardNames = clientGuards.map((guard) => guard.name);
             const addedGuards = contacts
               .filter((item) => item.guard && item.name && existingGuardNames.indexOf(item.name) === -1)
@@ -4129,6 +4099,7 @@
             cargo: row.querySelector('.ob-call-cargo').value.trim(),
             name: row.querySelector('.ob-call-name').value.trim(),
             phone: row.querySelector('.ob-call-phone').value.trim(),
+            email: row.dataset.email || '',
           })
         );
         const guardRows = Array.prototype.map.call(
@@ -4136,6 +4107,7 @@
           (row) => ({
             name: row.querySelector('.ob-guard-name').value.trim(),
             phone: row.querySelector('.ob-guard-phone').value.trim(),
+            email: row.dataset.email || '', cargo: row.dataset.cargo || 'Guardia',
           })
         );
         const guards = guardRows.filter((entry) => entry.name || entry.phone);

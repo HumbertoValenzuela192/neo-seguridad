@@ -4,7 +4,8 @@
   "private": true,
   "description": "NEO Seguridad - sitio + API con Postgres",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test portal-server.test.js sync.test.js"
   },
   "dependencies": {
     "pg": "^8.13.1"

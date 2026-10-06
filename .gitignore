@@ -8,3 +8,8 @@ node_modules/
 
 # Logs
 *.log
+.env
+.env.*
+!.env.example
+*.dump
+*browser-backup*.json

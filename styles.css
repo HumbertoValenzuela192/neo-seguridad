@@ -3,6 +3,26 @@
   --container: 1160px;
 }
 
+.directory-page fieldset { min-width: 0; margin: 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); }
+.directory-page legend { padding-inline: .5rem; font-weight: 600; }
+.directory-page summary { min-height: 44px; padding-block: .75rem; cursor: pointer; }
+.directory-page summary:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 3px; }
+.directory-page dialog { width: min(92vw, 36rem); max-height: 90dvh; overflow-y: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); background: var(--surface); }
+.directory-page dialog::backdrop { background: rgb(0 0 0 / .65); }
+.directory-page dialog input { min-height: 44px; padding: .6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--ink); font: inherit; }
+.directory-page #message:empty { display: none; }
+.directory-page #clients { margin-block: 1.5rem; }
+.directory-page #editor .contact-form { padding: 1rem; }
+.directory-page input { font-size: 1rem; }
+.directory-page .section-block { padding-block: 1.5rem; }
+.directory-page h1 { font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.2; }
+.directory-page .directory-toolbar { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(12rem, .65fr) auto auto; align-items: end; padding: 1rem; gap: 1rem; }
+.directory-page .directory-toolbar .btn { min-height: 48px; }
+@media (max-width: 800px) {
+ .directory-page .directory-toolbar { grid-template-columns: 1fr 1fr; }
+ .directory-page .directory-toolbar .field { grid-column: 1 / -1; }
+}
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 

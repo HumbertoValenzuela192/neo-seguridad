@@ -6,7 +6,6 @@
     <meta name="description" content="Integramos tecnología, inteligencia y monitoreo humano para identificar riesgos, verificar amenazas y actuar antes de que una alerta se transforme en una pérdida." />
     <meta name="theme-color" content="#140f16" />
     <title>Tigrr Security | Seguridad que se anticipa</title>
-    <script src="sync.js"></script>
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23140f16'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Arial,sans-serif'%20font-size='38'%20font-weight='800'%20text-anchor='middle'%20fill='%23f2711c'%3ET%3C/text%3E%3C/svg%3E" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Tigrr Security" />
@@ -361,7 +360,7 @@
       emailInput.addEventListener('input', () => emailInput.setCustomValidity(''));
       rutInput.addEventListener('input', () => rutInput.setCustomValidity(''));
 
-      contactForm.addEventListener('submit', (event) => {
+      contactForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailInput.value.trim());
@@ -387,13 +386,10 @@
           solution: document.getElementById('solution').value,
           status: 'nuevo',
         };
-        try {
-          const stored = JSON.parse(localStorage.getItem('neo_solicitudes') || '[]');
-          stored.push(request);
-          localStorage.setItem('neo_solicitudes', JSON.stringify(stored));
-        } catch (error) {
-          /* almacenamiento no disponible */
-        }
+        const submitButton=contactForm.querySelector('button[type="submit"]');submitButton.disabled=true;
+        try {const response=await fetch('api/leads',{method:'POST',headers:{'Content-Type':'application/json','X-Portal-Request':'1'},body:JSON.stringify(request)});const result=await response.json();if(!response.ok)throw new Error(result.error||'No se pudo enviar la solicitud.');}
+        catch(error){formStatus.textContent=error.message;formStatus.hidden=false;return;}
+        finally{submitButton.disabled=false;}
         formStatus.textContent = 'Gracias. Nos comunicaremos con usted en las próximas 48 horas hábiles.';
         formStatus.hidden = false;
         contactForm.reset();
