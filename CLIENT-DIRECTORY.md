@@ -8,7 +8,7 @@ Implementado sobre `neov01`, base `97ac9e8`. El backend se despliega después de
 
 No se elimina la tabla `store`. Las cuentas, hashes existentes, solicitudes y configuración permanecen en PostgreSQL. El login se valida ahora en servidor y emite una cookie de sesión HttpOnly; las contraseñas nuevas usan scrypt. Los hashes SHA-256 heredados se verifican y se actualizan al iniciar sesión cuando la longitud permite el formato nuevo.
 
-En v2.1, `src/lib/recovery.ts` preserva una copia local antes de cargar los datos del servidor. En el primer ingreso de un administrador la archiva automáticamente mediante `/api/recovery` y dispara la importación idempotente al Core. Sólo entonces carga los datos compartidos. Conserva también el respaldo local. `recover.html` ofrece exportación/importación manual como recuperación adicional; no es necesaria para el flujo automático. Los archivos contienen información privada y no deben versionarse.
+En v2.1, `src/lib/recovery.ts` preserva una copia local antes de cargar los datos del servidor. En el primer ingreso de un administrador la archiva automáticamente mediante `/api/recovery` y dispara la importación idempotente al Core. Sólo entonces carga los datos compartidos. Conserva también el respaldo local. `/admin/recuperacion` ofrece exportación/importación manual como recuperación adicional; no es necesaria para el flujo automático. Los archivos contienen información privada y no deben versionarse.
 
 ## Configuración
 
@@ -29,7 +29,7 @@ CORE_URL y CORE_CLIENT_DIRECTORY_TOKEN se definen juntos. El Core pasa a ser la 
 2. Respaldar PostgreSQL. Desplegar primero Core y configurar su tenant/token.
 3. Desplegar este portal con DATABASE_URL existente y origen HTTPS. Iniciar sesión con una cuenta actual.
 4. Entrar como administrador en el mismo navegador/origen donde se hicieron las pruebas. La recuperación archiva el documento original y añade registros ausentes sin sobrescribir los existentes.
-5. La importación automática genera una referencia `portal:<cuenta>:<instalación>` por instalación, independiente del nombre, organización y posición. `directory.html` permite repetirla manualmente si hace falta.
+5. La importación automática genera una referencia `portal:<cuenta>:<instalación>` por instalación, independiente del nombre, organización y posición. `/admin/clientes` permite repetirla manualmente si hace falta.
 6. Verificar cantidades y datos; repetir importación no duplica ni sobrescribe.
 7. Administrar fichas y organizaciones en el directorio compartido. El formulario cliente existente también proyecta/actualiza su ficha en Core. Cambiar datos no altera cámaras, permisos ni WhatsApp.
 

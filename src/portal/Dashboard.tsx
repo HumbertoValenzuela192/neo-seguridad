@@ -17,6 +17,7 @@ import { dateKey } from '../lib/domain';
 import type { Task } from '../types';
 import { useStore } from './store';
 import { errorMessage } from '../lib/api';
+import { sectionPath } from '../lib/routes';
 
 const SLOTS = [
   ['09:30', '09:30 - 11:00'],
@@ -26,7 +27,7 @@ const SLOTS = [
   ['15:30', '15:30 - 17:00'],
   ['17:00', '17:00 - 18:30'],
 ];
-export default function Dashboard() {
+export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean }) {
   const [actionError, setActionError] = useState('');
   const { data, save, session } = useStore();
   const [now, setNow] = useState(new Date()),
@@ -57,10 +58,10 @@ export default function Dashboard() {
     today = agenda[dateKey(now)] || [];
   const summary = `Hoy tienes ${today.filter((t) => t.client || t.text).length} reuniones, ${leads.filter((l) => l.status === 'nuevo').length} clientes potenciales nuevos y ${requests.filter((r) => r.status === 'nuevo').length} solicitudes de clientes pendientes.`;
   const counts = [
-    ['Clientes nuevos', leads.filter((l) => l.status === 'nuevo').length, '/solicitudes'],
-    ['En proceso', leads.filter((l) => l.status === 'proceso').length, '/solicitudes'],
-    ['Solicitudes pendientes', requests.filter((r) => r.status !== 'atendido').length, '/clientes'],
-    ['Trabajadores', data.neo_sueldos.length, '/sueldo'],
+    ['Clientes nuevos', leads.filter((l) => l.status === 'nuevo').length, 'solicitudes'],
+    ['En proceso', leads.filter((l) => l.status === 'proceso').length, 'solicitudes'],
+    ['Solicitudes pendientes', requests.filter((r) => r.status !== 'atendido').length, 'clientes'],
+    ['Trabajadores', data.neo_sueldos.length, 'sueldo'],
   ] as const;
   const shift = (direction: number) => {
     const next = new Date(date);
@@ -73,7 +74,7 @@ export default function Dashboard() {
   return (
     <>
       <PageHeading
-        title={`Bienvenido, ${session?.name || 'usuario'}`}
+        title={agendaOnly ? 'Agenda' : `Bienvenido, ${session?.name || 'usuario'}`}
         description={
           now.toLocaleDateString('es-CL', {
             weekday: 'long',
@@ -85,52 +86,60 @@ export default function Dashboard() {
           now.toLocaleTimeString('es-CL')
         }
       />
-      <div className="mb-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {counts.map(([label, n, path]) =>
-          session?.sections.includes(path.slice(1) as 'solicitudes') ? (
-            <Link key={label} to={path} className="panel transition-colors hover:border-accent">
-              <span className="text-xs text-muted">{label}</span>
-              <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
-            </Link>
-          ) : (
-            <div key={label} className="panel">
-              <span className="text-xs text-muted">{label}</span>
-              <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
-            </div>
-          ),
-        )}
-      </div>
-      <Panel title="Resumen del día" className="mb-6">
-        <p className="mb-5 text-sm text-muted">{summary}</p>
-        {typeof window !== 'undefined' && 'speechSynthesis' in window && (
-          <div className="flex flex-wrap gap-3">
-            <Field label="Voz del resumen">
-              <select value={voice} onChange={(e) => setVoice(e.target.value)}>
-                <option value="">Voz predeterminada</option>
-                {voices.map((v) => (
-                  <option key={v.voiceURI} value={v.voiceURI}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Button
-              className="self-end"
-              variant="secondary"
-              onClick={() => {
-                speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(summary);
-                utterance.lang = 'es-CL';
-                utterance.voice = voices.find((v) => v.voiceURI === voice) || null;
-                speechSynthesis.speak(utterance);
-              }}
-            >
-              <Volume2 size={17} />
-              Escuchar resumen
-            </Button>
+      {!agendaOnly && (
+        <>
+          <div className="mb-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
+            {counts.map(([label, n, section]) =>
+              session?.sections.includes(section) ? (
+                <Link
+                  key={label}
+                  to={sectionPath(section)}
+                  className="panel transition-colors hover:border-accent"
+                >
+                  <span className="text-xs text-muted">{label}</span>
+                  <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
+                </Link>
+              ) : (
+                <div key={label} className="panel">
+                  <span className="text-xs text-muted">{label}</span>
+                  <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
+                </div>
+              ),
+            )}
           </div>
-        )}
-      </Panel>
+          <Panel title="Resumen del día" className="mb-6">
+            <p className="mb-5 text-sm text-muted">{summary}</p>
+            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
+              <div className="flex flex-wrap gap-3">
+                <Field label="Voz del resumen">
+                  <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+                    <option value="">Voz predeterminada</option>
+                    {voices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Button
+                  className="self-end"
+                  variant="secondary"
+                  onClick={() => {
+                    speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(summary);
+                    utterance.lang = 'es-CL';
+                    utterance.voice = voices.find((v) => v.voiceURI === voice) || null;
+                    speechSynthesis.speak(utterance);
+                  }}
+                >
+                  <Volume2 size={17} />
+                  Escuchar resumen
+                </Button>
+              </div>
+            )}
+          </Panel>
+        </>
+      )}
       <Panel>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="flex items-center gap-2 text-lg">

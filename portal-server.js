@@ -2,11 +2,14 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const routes = require('./routes.json');
 const { promisify } = require('node:util');
 const scrypt = promisify(crypto.scrypt);
 const SECTIONS = ['inicio','solicitudes','clientes','cuentas','usuarios','roles','precios','mensual','sueldo'];
 const KEY_SECTION = { neo_solicitudes:'solicitudes', neo_solicitudes_cliente:'clientes', neo_cuentas_cliente:'cuentas', neo_usuarios:'usuarios', neo_roles:'roles', neo_precios:'precios', neo_implementacion:'precios', neo_uf:'precios', neo_sueldos:'sueldo', neo_sueldo_params:'sueldo', neo_horario:'inicio', neo_datos_instalacion:'cuentas' };
 const PUBLIC_FILES = new Set(['index.html','tigrr.html','admin.html','directory.html','recover.html','tigrr.png','neo-globo.png','neo-globo-icon.png','a2791a37-6fe2-413d-9f5a-526532134dcc.jpg']);
+const PUBLIC_ROUTES = new Map(routes.publicPages.map(page=>[page.path,page.file]));
+const PORTAL_ROUTES = new Set(['/admin',...Object.values(routes.portalSections).map(slug=>'/admin/'+slug),...routes.portalExtra.map(slug=>'/admin/'+slug)]);
 const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2','.mp4':'video/mp4'};
 const fail = (status,message) => Object.assign(new Error(message),{status});
 const digest = value => crypto.createHash('sha256').update(String(value)).digest('hex');
@@ -107,13 +110,17 @@ function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrig
  const server=http.createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','DENY');
   try{
-   const url=new URL(req.url,'http://localhost');const pathname=url.pathname;
-   if(!pathname.startsWith('/api/')){
-    const rel=decodeURIComponent(pathname==='/'?'/index.html':pathname).slice(1);
+    const url=new URL(req.url,'http://localhost');const pathname=url.pathname;
+    if(!pathname.startsWith('/api/')){
+     const normalized=pathname.length>1?pathname.replace(/\/+$/,''):pathname;
+     const redirect=routes.redirects[pathname]||(pathname!==normalized&&(PUBLIC_ROUTES.has(normalized)||PORTAL_ROUTES.has(normalized))?normalized:null);
+     if(redirect){res.writeHead(308,{Location:redirect+url.search,'Cache-Control':'no-cache'});res.end();return;}
+     const portal=PORTAL_ROUTES.has(pathname);
+     const rel=portal?'admin.html':PUBLIC_ROUTES.get(pathname)||decodeURIComponent(pathname).slice(1);
      const asset=/^assets\/[a-zA-Z0-9_./-]+\.(js|css|png|jpg|jpeg|webp|svg|woff|woff2|mp4)$/.test(rel)&&!rel.includes('..');
-    if(!PUBLIC_FILES.has(rel)&&!asset){res.writeHead(404);res.end('Not found');return;}
+    if(!PUBLIC_ROUTES.has(pathname)&&!portal&&!PUBLIC_FILES.has(rel)&&!asset){res.writeHead(404);res.end('Not found');return;}
      const file=path.join(root,rel);const stat=await fs.promises.stat(file);if(!stat.isFile())throw fail(404,'Not found');
-     if(['admin.html','directory.html','recover.html'].includes(rel))res.setHeader('X-Robots-Tag','noindex, nofollow');
+     if(portal)res.setHeader('X-Robots-Tag','noindex, nofollow');
      const etag='W/"'+stat.size+'-'+stat.mtimeMs+'"';res.setHeader('ETag',etag);
      if(req.headers['if-none-match']===etag){res.writeHead(304,{'Cache-Control':asset?'public, max-age=31536000, immutable':'no-cache'});res.end();return;}
      res.writeHead(200,{'Content-Type':MIME[path.extname(file)]||'application/octet-stream','Cache-Control':asset?'public, max-age=31536000, immutable':'no-cache','Content-Length':stat.size});

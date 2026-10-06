@@ -1,7 +1,11 @@
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { Marketing } from './Marketing';
 import '../styles/index.css';
+import { legacyPublicPath, publicPage, siteURL } from '../lib/routes';
+const page = publicPage(location.pathname, import.meta.env.BASE_URL);
+const legacy = page === 'home' ? legacyPublicPath(location.hash) : null;
+if (legacy) location.replace(siteURL(legacy) + location.search);
 const root = document.getElementById('root')!;
-const app = <Marketing neo={document.documentElement.dataset.page === 'neo'} />;
+const app = <Marketing page={page} />;
 if (root.hasChildNodes()) hydrateRoot(root, app);
 else createRoot(root).render(app);

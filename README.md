@@ -15,15 +15,19 @@ npm run dev
 
 Vite escucha en `:5173` y envía `/api` a `http://127.0.0.1:3000`. Para escribir desde Vite, agregar su origen a `PORTAL_ALLOWED_ORIGINS`. `PORTAL_API_URL` permite cambiar el backend local. No apuntar pruebas de escritura a producción.
 
-Entradas conservadas:
+Rutas públicas:
 
-- `/` y `/index.html`: web comercial Tigrr.
-- `/tigrr.html`: presentación NEO.
-- `/admin.html`: login, administración y solicitudes del cliente.
-- `/directory.html`: directorio compartido (requiere permiso `cuentas`).
-- `/recover.html`: respaldo del navegador; exportar no exige sesión.
+- `/`: inicio, con resumen de las soluciones.
+- `/soluciones`: monitoreo 24/7 y plataforma para una central propia.
+- `/neo`: presentación detallada de NEO.
+- `/central-24-7`: servicio de monitoreo humano.
+- `/contacto`: formulario para solicitar una evaluación.
 
-El portal usa rutas hash (`admin.html#/cuentas`) para conservar URLs, recargas y navegación sin cambios de proxy. Cada módulo se carga bajo demanda. La web comercial y NEO se prerenderizan en el build y tienen su propia entrada.
+El portal usa `BrowserRouter` bajo `/admin`: `/admin/inicio`, `/admin/clientes-potenciales`, `/admin/solicitudes`, `/admin/cuentas`, `/admin/clientes` (directorio compartido), `/admin/agenda`, `/admin/precios`, `/admin/calculo-mensual`, `/admin/sueldos`, `/admin/usuarios`, `/admin/roles`, `/admin/portal-cliente` y `/admin/recuperacion`. Exportar el respaldo del navegador no exige sesión.
+
+`routes.json` es el mapa compartido por frontend, servidor, Vite y prerenderizado. Las claves de permisos siguen siendo las originales: cambiar una URL no cambia el alcance de una cuenta. Cada módulo del portal se carga bajo demanda.
+
+El servidor sirve la entrada del portal sólo en rutas conocidas, para que la recarga directa funcione sin devolver HTML en assets inexistentes ni exponer archivos internos. `index.html`, `tigrr.html`, `admin.html`, `directory.html` y `recover.html` redirigen a rutas limpias; el frontend convierte también enlaces antiguos `admin.html#/cuentas` y `index.html#contacto`. `/inicio` redirige a `/`.
 
 ## Compilación y producción
 
@@ -32,7 +36,7 @@ npm run build
 npm start
 ```
 
-`build` comprueba TypeScript, genera `dist/` y prerenderiza ambas páginas públicas. El servidor sólo publica `dist/`, nunca `src/`, configuración ni archivos del backend. HTML e imágenes de marca revalidan por ETag; chunks versionados tienen caché immutable. API mantiene `no-store`.
+`build` comprueba TypeScript, genera `dist/` y prerenderiza las cinco páginas comerciales con título, descripción y URL canónica propios. El servidor sólo publica `dist/`, nunca `src/`, configuración ni archivos del backend. HTML e imágenes de marca revalidan por ETag; chunks versionados tienen caché immutable. API mantiene `no-store`.
 
 El Dockerfile compila en una etapa separada y conserva Node.js, PostgreSQL externo y puerto `3000`. Las variables existentes no cambian; los secretos sólo se leen en runtime.
 
@@ -55,7 +59,7 @@ npm test
 npm audit --audit-level=high
 ```
 
-Las pruebas del servidor crean un schema temporal y cubren autorización, credenciales heredadas, recuperación, conflictos, aislamiento y servido de assets. Las pruebas TypeScript cubren remuneraciones, decimales, RUT, tramos y recuperación asíncrona sin sobrescribir datos locales.
+Las pruebas del servidor crean un schema temporal y cubren autorización, credenciales heredadas, recuperación, conflictos, aislamiento, rutas directas, redirecciones y servido de assets. Las pruebas TypeScript cubren remuneraciones, decimales, RUT, tramos, conversión de URLs heredadas y recuperación asíncrona sin sobrescribir datos locales.
 
 `scripts/lab-server.cjs` es un laboratorio opcional: exige `TEST_DATABASE_URL` y `LAB_PASSWORD`, crea otro schema, usa fixtures explícitas y simula únicamente el directorio Core. Escucha en `:3101` y elimina su schema al recibir SIGINT/SIGTERM.
 

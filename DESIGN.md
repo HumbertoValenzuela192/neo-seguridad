@@ -10,11 +10,13 @@ Refinamiento de la identidad existente, no reemplazo de marca.
 - Ondas WebGL y Matrix sólo como ambiente. Efectos limitados a la superficie correspondiente, con limpieza de recursos y reducción de movimiento.
 - Glassmorphism tenue en cabecera y superficies comerciales seleccionadas; texto siempre legible.
 - Contenido visible por defecto; sin cortina de carga ni secciones ocultas hasta el scroll.
+- Inicio en `/`, con páginas propias para `/soluciones`, `/neo`, `/central-24-7` y `/contacto`. Navegación principal indica la página actual; títulos y metadatos públicos se prerenderizan.
 
 ## Portal: operar
 
 - Fondo NEO (`#111514`), superficies (`#1a211e`, `#252e29`), verde (`#7fca91`) para acción/foco/selección.
 - Navegación agrupada en Operación, Comercial, Finanzas, Administración y Respaldo.
+- Secciones bajo `/admin/...` con navegación History API, recarga directa y compatibilidad de URLs anteriores. Agenda también tiene una vista propia en `/admin/agenda`.
 - Listados resumidos, filtros claros, edición contextual y formulario amplio para instalaciones.
 - Estados visibles: carga, guardado confirmado, error, conflicto y vacío. Nunca confirmar una escritura sólo local.
 - Estados semánticos: éxito verde, advertencia dorado, información azul y error coral, siempre con texto.

@@ -10,7 +10,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
-COPY server.js portal-server.js ./
+COPY server.js portal-server.js routes.json ./
 COPY --from=build /app/dist ./dist
 EXPOSE 3000
 CMD ["node", "server.js"]

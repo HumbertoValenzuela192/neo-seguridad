@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { HashRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router';
+import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router';
 import {
   Camera,
+  CalendarDays,
   Check,
   ClipboardList,
   Contact,
@@ -20,6 +21,7 @@ import { Button, Confirm, Field, Form, Loading, Notice, text } from '../componen
 import { SECTIONS } from '../lib/domain';
 import type { Section } from '../types';
 import { StoreProvider, useStore } from './store';
+import { sectionPath, siteURL } from '../lib/routes';
 
 const Dashboard = lazy(() => import('./Dashboard')),
   Commercial = lazy(() => import('./Commercial')),
@@ -47,7 +49,13 @@ function Guard({ section, children }: { section: Section; children: ReactNode })
     children
   ) : (
     <Navigate
-      to={session?.portal ? '/cliente' : `/${session?.sections[0] || 'sin-acceso'}`}
+      to={
+        session?.portal
+          ? '/portal-cliente'
+          : session?.sections[0]
+            ? sectionPath(session.sections[0])
+            : '/sin-acceso'
+      }
       replace
     />
   );
@@ -67,7 +75,7 @@ function Login() {
           <p className="mt-6 text-muted">Portal de administración y solicitudes de servicio.</p>
         </div>
         <div>
-          <a href="./index.html" className="text-sm text-muted hover:text-bright">
+          <a href={siteURL('/')} className="text-sm text-muted hover:text-bright">
             Volver a Tigrr Security
           </a>
         </div>
@@ -90,7 +98,7 @@ function Login() {
             </Field>
           </Form>
           <a
-            href="./recover.html"
+            href={siteURL('/admin/recuperacion')}
             className="mt-7 block text-xs text-muted underline underline-offset-4"
           >
             Respaldar datos guardados en este navegador
@@ -106,7 +114,6 @@ function Shell() {
     [open, setOpen] = useState(false),
     [confirmLogout, setConfirmLogout] = useState(false),
     location = useLocation();
-  const initial = document.documentElement.dataset.page;
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null,
@@ -140,22 +147,32 @@ function Shell() {
       previous?.focus();
     };
   }, [open]);
-  const fallback = session?.portal ? '/cliente' : `/${session?.sections[0] || 'sin-acceso'}`;
+  const fallback = session?.portal
+    ? '/portal-cliente'
+    : session?.sections[0]
+      ? sectionPath(session.sections[0])
+      : '/sin-acceso';
   const label =
-    location.pathname === '/directorio'
+    location.pathname === '/clientes'
       ? 'Clientes compartidos con NEO'
       : location.pathname === '/recuperacion'
         ? 'Recuperación'
-        : location.pathname === '/cliente'
+        : location.pathname === '/portal-cliente'
           ? 'Portal cliente'
-          : SECTIONS.find((s) => '/' + s.key === location.pathname)?.label || 'Portal';
-  if (initial === 'recovery' && !session)
+          : location.pathname === '/agenda'
+            ? 'Agenda'
+            : SECTIONS.find((s) => sectionPath(s.key) === location.pathname)?.label || 'Portal';
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = `${label} | NEO Seguridad`;
+  }, [location.pathname, label]);
+  if (location.pathname === '/recuperacion' && !session)
     return (
       <div className="min-h-dvh p-5">
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 flex justify-between">
             <Brand neo />
-            <a href="./admin.html" className="button button-secondary">
+            <a href={siteURL('/admin')} className="button button-secondary">
               Iniciar sesión
             </a>
           </div>
@@ -221,7 +238,7 @@ function Shell() {
                   return (
                     <NavLink
                       className="nav-item"
-                      to={'/' + s.key}
+                      to={sectionPath(s.key)}
                       key={s.key}
                       onClick={() => setOpen(false)}
                     >
@@ -230,8 +247,14 @@ function Shell() {
                     </NavLink>
                   );
                 })}
+                {group === 'Operación' && session.sections.includes('inicio') && (
+                  <NavLink className="nav-item" to="/agenda" onClick={() => setOpen(false)}>
+                    <CalendarDays size={18} />
+                    Agenda
+                  </NavLink>
+                )}
                 {group === 'Comercial' && session.sections.includes('cuentas') && (
-                  <NavLink className="nav-item" to="/directorio" onClick={() => setOpen(false)}>
+                  <NavLink className="nav-item" to="/clientes" onClick={() => setOpen(false)}>
                     <Contact size={18} />
                     Clientes compartidos
                   </NavLink>
@@ -240,7 +263,7 @@ function Shell() {
             ) : null;
           })}
           {session.portal && (
-            <NavLink className="nav-item" to="/cliente" onClick={() => setOpen(false)}>
+            <NavLink className="nav-item" to="/portal-cliente" onClick={() => setOpen(false)}>
               <ClipboardList size={18} />
               Portal cliente
             </NavLink>
@@ -261,7 +284,7 @@ function Shell() {
             <LogOut size={18} />
             Cerrar sesión
           </Button>
-          <a href="./index.html" className="nav-item">
+          <a href={siteURL('/')} className="nav-item">
             Volver al sitio
           </a>
         </div>
@@ -304,21 +327,7 @@ function Shell() {
           )}
           <Suspense fallback={<Loading />}>
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <Navigate
-                    replace
-                    to={
-                      initial === 'directory' && session.sections.includes('cuentas')
-                        ? '/directorio'
-                        : initial === 'recovery'
-                          ? '/recuperacion'
-                          : fallback
-                    }
-                  />
-                }
-              />
+              <Route path="/" element={<Navigate replace to={fallback} />} />
               <Route
                 path="/inicio"
                 element={
@@ -328,7 +337,7 @@ function Shell() {
                 }
               />
               <Route
-                path="/solicitudes"
+                path={sectionPath('solicitudes')}
                 element={
                   <Guard section="solicitudes">
                     <Commercial key="leads" />
@@ -336,7 +345,7 @@ function Shell() {
                 }
               />
               <Route
-                path="/clientes"
+                path={sectionPath('clientes')}
                 element={
                   <Guard section="clientes">
                     <Commercial key="requests" requests />
@@ -376,7 +385,7 @@ function Shell() {
                 }
               />
               <Route
-                path="/mensual"
+                path={sectionPath('mensual')}
                 element={
                   <Guard section="mensual">
                     <Finance monthly />
@@ -384,7 +393,7 @@ function Shell() {
                 }
               />
               <Route
-                path="/sueldo"
+                path={sectionPath('sueldo')}
                 element={
                   <Guard section="sueldo">
                     <Salary />
@@ -392,16 +401,24 @@ function Shell() {
                 }
               />
               <Route
-                path="/directorio"
+                path="/clientes"
                 element={
                   <Guard section="cuentas">
                     <Directory />
                   </Guard>
                 }
               />
+              <Route
+                path="/agenda"
+                element={
+                  <Guard section="inicio">
+                    <Dashboard agendaOnly />
+                  </Guard>
+                }
+              />
               <Route path="/recuperacion" element={<Recovery />} />
               <Route
-                path="/cliente"
+                path="/portal-cliente"
                 element={session.portal ? <Client /> : <Navigate to={fallback} replace />}
               />
               <Route
@@ -434,9 +451,9 @@ function Shell() {
 export default function App() {
   return (
     <StoreProvider>
-      <HashRouter>
+      <BrowserRouter basename={siteURL('/admin')}>
         <Shell />
-      </HashRouter>
+      </BrowserRouter>
     </StoreProvider>
   );
 }

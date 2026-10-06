@@ -5,6 +5,7 @@ import { request } from '../lib/api';
 import { nowLabel, validRut } from '../lib/domain';
 import { Matrix, Waves } from './Effects';
 import { asset, Brand } from '../components/Brand';
+import { siteURL, type PublicPage } from '../lib/routes';
 
 function Country() {
   const [country, setCountry] = useState<{ name: string; code: string } | null>(null);
@@ -43,21 +44,23 @@ function Country() {
     </span>
   ) : null;
 }
-function Header({ neo = false }: { neo?: boolean }) {
+function Header({ page }: { page: PublicPage }) {
+  const neo = page === 'neo';
   const [open, setOpen] = useState(false);
-  const links = neo
-    ? [
-        ['#capacidades', 'Capacidades'],
-        ['#implementacion', 'Implementación'],
-        ['./index.html#contacto', 'Contacto'],
-      ]
-    : [
-        ['#soluciones', 'Soluciones'],
-        ['#tigrr', 'NEO'],
-        ['#central', 'Central 24/7'],
-        ['#proceso', 'Cómo protegemos'],
-        ['#contacto', 'Contacto'],
-      ];
+  const links = [
+    ['/', 'Inicio'],
+    ['/soluciones', 'Soluciones'],
+    ['/neo', 'NEO'],
+    ['/central-24-7', 'Central 24/7'],
+    ['/contacto', 'Contacto'],
+  ];
+  const active = {
+    home: '/',
+    solutions: '/soluciones',
+    neo: '/neo',
+    central: '/central-24-7',
+    contact: '/contacto',
+  }[page];
   return (
     <header className="site-header">
       <div className="site-container flex min-h-18 items-center justify-between gap-4">
@@ -68,19 +71,21 @@ function Header({ neo = false }: { neo?: boolean }) {
             aria-label="Navegación principal"
           >
             {links.map(([href, label]) => (
-              <a key={href} href={href} className="hover:text-bright">
+              <a
+                key={href}
+                href={siteURL(href)}
+                aria-current={active === href ? 'page' : undefined}
+                className={active === href ? 'text-bright' : 'hover:text-bright'}
+              >
                 {label}
               </a>
             ))}
           </nav>
           <Country />
-          <a href="./admin.html" className="button button-ghost hidden sm:inline-flex">
+          <a href={siteURL('/admin')} className="button button-ghost hidden sm:inline-flex">
             Acceso al portal
           </a>
-          <a
-            className="button button-primary rounded-full"
-            href={neo ? './index.html#contacto' : '#contacto'}
-          >
+          <a className="button button-primary rounded-full" href={siteURL('/contacto')}>
             {neo ? 'Contáctanos' : 'Evaluación'}
           </a>
           <button
@@ -105,13 +110,14 @@ function Header({ neo = false }: { neo?: boolean }) {
             <a
               className="rounded-lg px-3 py-3 text-sm hover:bg-raised"
               key={href}
-              href={href}
+              href={siteURL(href)}
+              aria-current={active === href ? 'page' : undefined}
               onClick={() => setOpen(false)}
             >
               {label}
             </a>
           ))}
-          <a className="rounded-lg px-3 py-3 text-sm text-bright" href="./admin.html">
+          <a className="rounded-lg px-3 py-3 text-sm text-bright" href={siteURL('/admin')}>
             Acceso al portal
           </a>
         </nav>
@@ -223,15 +229,18 @@ function ContactForm() {
     </div>
   );
 }
-export function Marketing({ neo = false }: { neo?: boolean }) {
+export function Marketing({ page = 'home' }: { page?: PublicPage }) {
+  const neo = page === 'neo';
   return (
     <div className={`public-page ${neo ? 'theme-neo' : ''}`}>
       <a href="#main" className="skip-link">
         Saltar al contenido
       </a>
-      <Header neo={neo} />
+      <Header page={page} />
       {neo ? (
         <NeoPage />
+      ) : page !== 'home' ? (
+        <CommercialPage page={page} />
       ) : (
         <>
           <section className="public-hero">
@@ -244,7 +253,7 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                   inteligencia y monitoreo 24/7 para anticiparnos a los riesgos y proteger tu
                   operación.
                 </p>
-                <a href="#contacto" className="button button-primary rounded-full px-6">
+                <a href={siteURL('/contacto')} className="button button-primary rounded-full px-6">
                   Solicita una evaluación <ArrowRight size={18} />
                 </a>
               </div>
@@ -317,10 +326,10 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                     ]}
                   />
                   <a
-                    href="#contacto"
+                    href={siteURL('/central-24-7')}
                     className="button button-primary mt-auto self-start rounded-full"
                   >
-                    Solicita una evaluación
+                    Conocer el servicio <ArrowRight size={17} />
                   </a>
                 </article>
                 <article className="glass-card flex flex-col">
@@ -338,7 +347,7 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                     ]}
                   />
                   <a
-                    href="./tigrr.html"
+                    href={siteURL('/neo')}
                     className="button button-secondary mt-auto self-start rounded-full"
                   >
                     Conocer NEO <ArrowRight size={17} />
@@ -357,7 +366,7 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                   la atención donde realmente importa.
                 </p>
                 <p className="mb-6 text-bright">NEO — menos ruido. Más control.</p>
-                <a href="./tigrr.html" className="button button-secondary rounded-full">
+                <a href={siteURL('/neo')} className="button button-secondary rounded-full">
                   Ver NEO en detalle <ArrowRight size={17} />
                 </a>
               </div>
@@ -388,6 +397,12 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                   Una central convencional mira cámaras. Tigrr Security detecta, analiza, verifica y
                   responde.
                 </p>
+                <a
+                  href={siteURL('/central-24-7')}
+                  className="button button-secondary mt-6 rounded-full"
+                >
+                  Conocer la central <ArrowRight size={17} />
+                </a>
               </div>
               <Checklist
                 items={[
@@ -433,7 +448,11 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
                   riesgos, infraestructura y necesidades.
                 </p>
               </div>
-              <ContactForm />
+              <div className="flex items-center">
+                <a href={siteURL('/contacto')} className="button button-primary rounded-full px-6">
+                  Solicita una evaluación <ArrowRight size={18} />
+                </a>
+              </div>
             </section>
           </main>
         </>
@@ -446,7 +465,7 @@ export function Marketing({ neo = false }: { neo?: boolean }) {
               ? 'NEO Seguridad. Menos ruido. Más control.'
               : 'Tigrr Security. Seguridad que se anticipa.'}
           </small>
-          <a href="./admin.html" className="hover:text-bright">
+          <a href={siteURL('/admin')} className="hover:text-bright">
             Acceso al portal
           </a>
         </div>
@@ -506,10 +525,10 @@ function NeoPage() {
             </p>
             <p className="mb-6 text-bright">NEO — menos ruido. Más control.</p>
             <div className="flex flex-wrap gap-3">
-              <a href="./index.html#contacto" className="button button-primary rounded-full">
+              <a href={siteURL('/contacto')} className="button button-primary rounded-full">
                 Contáctanos
               </a>
-              <a href="./index.html" className="button button-secondary rounded-full">
+              <a href={siteURL('/')} className="button button-secondary rounded-full">
                 Volver a Tigrr Security
               </a>
             </div>
@@ -748,11 +767,164 @@ function NeoPage() {
             Eso permite reducir ruido, estandarizar la respuesta y disminuir la necesidad de recurso
             humano por cámara monitoreada.
           </p>
-          <a href="./index.html#contacto" className="button button-primary rounded-full">
+          <a href={siteURL('/contacto')} className="button button-primary rounded-full">
             Contáctanos <ArrowRight size={17} />
           </a>
         </Section>
       </main>
     </>
+  );
+}
+
+function CommercialPage({ page }: { page: Exclude<PublicPage, 'home' | 'neo'> }) {
+  const content = {
+    solutions: {
+      title: 'Dos soluciones, una inteligencia.',
+      description:
+        'Implementa NEO en tu propia central de monitoreo o deja que Tigrr Security gestione completamente tu seguridad desde nuestra Central 24/7.',
+    },
+    central: {
+      title: 'Central Tigrr Security 24/7: personas que responden.',
+      description:
+        'No solo observamos cámaras. Analizamos eventos, verificamos amenazas y actuamos según protocolos definidos para cada operación.',
+    },
+    contact: {
+      title: 'Cuéntanos qué necesitas proteger.',
+      description:
+        'Analizamos tu operación y te ayudamos a definir la solución adecuada para tus riesgos, infraestructura y necesidades.',
+    },
+  }[page];
+  return (
+    <main id="main" className="site-container">
+      <div className="pt-7 text-sm text-muted">
+        <a href={siteURL('/')} className="hover:text-bright">
+          Inicio
+        </a>
+        <span aria-hidden="true"> / </span>
+        <span>
+          {page === 'solutions' ? 'Soluciones' : page === 'central' ? 'Central 24/7' : 'Contacto'}
+        </span>
+      </div>
+      {page === 'contact' ? (
+        <section className="public-section grid gap-10 lg:grid-cols-2">
+          <div>
+            <h1 className="public-page-title">{content.title}</h1>
+            <p className="mt-6 text-muted">{content.description}</p>
+            <p className="mt-6 text-sm text-muted">
+              Selecciona la solución y completa los datos de tu operación para solicitar una
+              evaluación.
+            </p>
+          </div>
+          <ContactForm />
+        </section>
+      ) : (
+        <>
+          <section className="public-section">
+            <h1 className="public-page-title">{content.title}</h1>
+            <p className="mt-6 text-lg text-muted">{content.description}</p>
+          </section>
+          {page === 'solutions' ? (
+            <section
+              className="pb-12 grid gap-6 md:grid-cols-2"
+              aria-label="Soluciones disponibles"
+            >
+              <article className="glass-card flex flex-col">
+                <h2 className="text-2xl">Tigrr Security · Monitoreo 24/7</h2>
+                <p className="mt-4">
+                  Para organizaciones que prefieren delegar la supervisión, verificación y gestión
+                  de eventos a un equipo especializado.
+                </p>
+                <Checklist
+                  items={[
+                    'Supervisión continua 24/7.',
+                    'Verificación y gestión de alertas.',
+                    'Protocolos personalizados.',
+                    'Soporte operacional permanente.',
+                  ]}
+                />
+                <a
+                  href={siteURL('/central-24-7')}
+                  className="button button-secondary self-start mt-auto"
+                >
+                  Conocer la central <ArrowRight size={17} />
+                </a>
+              </article>
+              <article className="glass-card flex flex-col">
+                <h2 className="text-2xl">NEO · Plataforma de monitoreo</h2>
+                <p className="mt-4">
+                  Para empresas y centrales que quieren administrar su propia operación con
+                  tecnología NEO.
+                </p>
+                <Checklist
+                  items={[
+                    'Centralización de eventos de seguridad.',
+                    'Gestión inteligente de alertas.',
+                    'Visualización y verificación.',
+                    'Integración con tu infraestructura.',
+                  ]}
+                />
+                <a href={siteURL('/neo')} className="button button-secondary self-start mt-auto">
+                  Conocer NEO <ArrowRight size={17} />
+                </a>
+              </article>
+            </section>
+          ) : (
+            <>
+              <section className="grid gap-10 pb-12 md:grid-cols-2">
+                <div>
+                  <h2 className="text-2xl">
+                    Supervisión, verificación y respuesta humana permanente.
+                  </h2>
+                  <p className="mt-5 text-muted">
+                    Una central convencional mira cámaras. Tigrr Security detecta, analiza, verifica
+                    y responde.
+                  </p>
+                </div>
+                <Checklist
+                  items={[
+                    'Supervisión continua.',
+                    'Verificación y gestión de alertas.',
+                    'Protocolos personalizados.',
+                    'Gestión y escalamiento de incidentes.',
+                    'Reportabilidad y trazabilidad.',
+                    'Soporte operacional permanente.',
+                  ]}
+                />
+              </section>
+              <Section
+                title="De alertas a decisiones."
+                description="De miles de alertas a las que realmente importan. NEO concentra la información, nuestro equipo aporta el criterio y juntos convertimos eventos en decisiones."
+              >
+                <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    [Camera, 'Detectamos'],
+                    [ListFilter, 'Priorizamos'],
+                    [Search, 'Verificamos'],
+                    [ShieldCheck, 'Actuamos'],
+                  ].map(([Icon, label], i) => {
+                    const Component = Icon as typeof Camera;
+                    return (
+                      <li className="flex items-center gap-3" key={i}>
+                        <Component size={28} className="text-accent" />
+                        <strong>{label as string}</strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </Section>
+            </>
+          )}
+          <section className="public-section border-t border-line">
+            <h2>Definamos la solución para tu operación.</h2>
+            <p className="section-description">
+              Analizamos tus riesgos, infraestructura y necesidades.
+            </p>
+            <a href={siteURL('/contacto')} className="button button-primary rounded-full">
+              Solicita una evaluación <ArrowRight size={18} />
+            </a>
+          </section>
+        </>
+      )}
+    </main>
   );
 }

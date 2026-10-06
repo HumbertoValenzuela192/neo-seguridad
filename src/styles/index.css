@@ -464,6 +464,11 @@
   padding-block: clamp(3rem, 6vw, 5rem);
   scroll-margin-top: 90px;
 }
+.public-page-title {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  max-width: 22ch;
+  margin: 0;
+}
 .public-section h2 {
   font-size: clamp(1.8rem, 3.7vw, 3rem);
   max-width: 24ch;
