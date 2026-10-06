@@ -6,7 +6,7 @@ const { promisify } = require('node:util');
 const scrypt = promisify(crypto.scrypt);
 const SECTIONS = ['inicio','solicitudes','clientes','cuentas','usuarios','roles','precios','mensual','sueldo'];
 const KEY_SECTION = { neo_solicitudes:'solicitudes', neo_solicitudes_cliente:'clientes', neo_cuentas_cliente:'cuentas', neo_usuarios:'usuarios', neo_roles:'roles', neo_precios:'precios', neo_implementacion:'precios', neo_uf:'precios', neo_sueldos:'sueldo', neo_sueldo_params:'sueldo', neo_horario:'inicio', neo_datos_instalacion:'cuentas' };
-const PUBLIC_FILES = new Set(['index.html','tigrr.html','admin.html','directory.html','recover.html','sync.js','directory.js','recover.js','styles.css','theme-neo.css','theme-tigrr.css','tigrr.css','tigrr.png','neo-globo.png','neo-globo-icon.png','a2791a37-6fe2-413d-9f5a-526532134dcc.jpg']);
+const PUBLIC_FILES = new Set(['index.html','tigrr.html','admin.html','directory.html','recover.html','tigrr.png','neo-globo.png','neo-globo-icon.png','a2791a37-6fe2-413d-9f5a-526532134dcc.jpg']);
 const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2','.mp4':'video/mp4'};
 const fail = (status,message) => Object.assign(new Error(message),{status});
 const digest = value => crypto.createHash('sha256').update(String(value)).digest('hex');
@@ -34,7 +34,7 @@ async function readJSON(req,limit=2*1024*1024) {
 }
 function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 
-function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrigins=[],root=__dirname,fetchCore=fetch}) {
+function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrigins=[],root=path.join(__dirname,'dist'),fetchCore=fetch}) {
  const failures=new Map();
  const origin=publicURL?new URL(publicURL).origin:null;
  const secureCookie=origin?.startsWith('https:')?'Secure; ':'';
@@ -110,10 +110,15 @@ function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrig
    const url=new URL(req.url,'http://localhost');const pathname=url.pathname;
    if(!pathname.startsWith('/api/')){
     const rel=decodeURIComponent(pathname==='/'?'/index.html':pathname).slice(1);
-    const asset=/^assets\/[a-zA-Z0-9_./-]+\.(png|jpg|jpeg|webp|svg|woff2|mp4)$/.test(rel)&&!rel.includes('..');
+     const asset=/^assets\/[a-zA-Z0-9_./-]+\.(js|css|png|jpg|jpeg|webp|svg|woff|woff2|mp4)$/.test(rel)&&!rel.includes('..');
     if(!PUBLIC_FILES.has(rel)&&!asset){res.writeHead(404);res.end('Not found');return;}
-    const file=path.join(root,rel);const stat=await fs.promises.stat(file);if(!stat.isFile())throw fail(404,'Not found');
-    res.writeHead(200,{'Content-Type':MIME[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return;
+     const file=path.join(root,rel);const stat=await fs.promises.stat(file);if(!stat.isFile())throw fail(404,'Not found');
+     if(['admin.html','directory.html','recover.html'].includes(rel))res.setHeader('X-Robots-Tag','noindex, nofollow');
+     const etag='W/"'+stat.size+'-'+stat.mtimeMs+'"';res.setHeader('ETag',etag);
+     if(req.headers['if-none-match']===etag){res.writeHead(304,{'Cache-Control':asset?'public, max-age=31536000, immutable':'no-cache'});res.end();return;}
+     res.writeHead(200,{'Content-Type':MIME[path.extname(file)]||'application/octet-stream','Cache-Control':asset?'public, max-age=31536000, immutable':'no-cache','Content-Length':stat.size});
+     if(req.method==='HEAD'){res.end();return;}
+     const stream=fs.createReadStream(file);stream.on('error',()=>res.destroy());stream.pipe(res);return;
    }
    if(!db)throw fail(503,'Base de datos no disponible.');
    if(!['GET','HEAD'].includes(req.method)){
@@ -199,7 +204,7 @@ function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrig
     }catch(e){await conn.query('ROLLBACK');throw e;}finally{conn.release();}return;
    }
    throw fail(404,'Ruta no encontrada.');
-   }catch(error){if(!error.status)console.error('Portal request failed:',error.code||'UNAVAILABLE');if(!res.headersSent)send(res,error.status||503,{error:error.status?error.message:'El servicio no está disponible. Tus cambios no se confirmaron.'});}
+    }catch(error){if(error.code==='ENOENT')error=fail(404,'Not found');if(!error.status)console.error('Portal request failed:',error.code||'UNAVAILABLE');if(!res.headersSent)send(res,error.status||503,{error:error.status?error.message:'El servicio no está disponible. Tus cambios no se confirmaron.'});}
  });
  server.importDirectory=importDirectory;
  return server;

@@ -5,6 +5,9 @@ Desktop.ini
 
 # Dependencias
 node_modules/
+dist/
+.playwright-mcp/
+test-results/
 
 # Logs
 *.log

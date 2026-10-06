@@ -8,7 +8,7 @@ Implementado sobre `neov01`, base `97ac9e8`. El backend se despliega después de
 
 No se elimina la tabla `store`. Las cuentas, hashes existentes, solicitudes y configuración permanecen en PostgreSQL. El login se valida ahora en servidor y emite una cookie de sesión HttpOnly; las contraseñas nuevas usan scrypt. Los hashes SHA-256 heredados se verifican y se actualizan al iniciar sesión cuando la longitud permite el formato nuevo.
 
-`sync.js` preserva una copia local antes de hidratar. En el primer ingreso de un administrador la archiva automáticamente mediante `/api/recovery` y dispara la importación idempotente al Core. Sólo entonces hidrata los datos compartidos. Conserva también el respaldo local. `recover.html` ofrece exportación/importación manual como recuperación adicional; no es necesaria para el flujo automático. Los archivos contienen información privada y no deben versionarse.
+En v2.1, `src/lib/recovery.ts` preserva una copia local antes de cargar los datos del servidor. En el primer ingreso de un administrador la archiva automáticamente mediante `/api/recovery` y dispara la importación idempotente al Core. Sólo entonces carga los datos compartidos. Conserva también el respaldo local. `recover.html` ofrece exportación/importación manual como recuperación adicional; no es necesaria para el flujo automático. Los archivos contienen información privada y no deben versionarse.
 
 ## Configuración
 

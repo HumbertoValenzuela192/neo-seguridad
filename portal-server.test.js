@@ -1,8 +1,9 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const crypto=require('node:crypto');
-const vm=require('node:vm');
 const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
 const {Pool}=require('pg');
 const {createPortalServer,initialize,hashPassword,verifyPassword}=require('./portal-server');
 
@@ -12,8 +13,17 @@ test('legacy credentials survive; new credentials use server-side scrypt',async(
  const salt='old-fixture-salt';const legacy=salt+':'+crypto.createHash('sha256').update(salt+password).digest('hex');assert.equal(await verifyPassword(password,legacy),true);
 });
 
-test('all shipped inline scripts compile',()=>{
- for(const file of ['admin.html','index.html']){const html=fs.readFileSync(file,'utf8');for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){if(!/\bsrc\s*=/.test(match[1]))new vm.Script(match[2],{filename:file});}}
+test('compiled pages and chunks have correct MIME, cache, HEAD and source isolation',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'neo-static-'));fs.mkdirSync(path.join(root,'assets'));
+ fs.writeFileSync(path.join(root,'index.html'),'<h1>Prerendered public page</h1>');fs.writeFileSync(path.join(root,'admin.html'),'<main id="root"></main>');fs.writeFileSync(path.join(root,'assets','app-hash.js'),'console.log("fixture")');fs.writeFileSync(path.join(root,'assets','app-hash.css'),'body{}');
+ const server=createPortalServer({db:null,root});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
+ t.after(async()=>{await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});});
+ const html=await fetch(origin+'/');assert.equal(html.status,200);assert.match(await html.text(),/Prerendered public page/);assert.equal(html.headers.get('cache-control'),'no-cache');
+ const cached=await fetch(origin+'/',{headers:{'If-None-Match':html.headers.get('etag')}});assert.equal(cached.status,304);
+ const js=await fetch(origin+'/assets/app-hash.js');assert.match(js.headers.get('content-type'),/javascript/);assert.match(js.headers.get('cache-control'),/immutable/);
+ const css=await fetch(origin+'/assets/app-hash.css');assert.match(css.headers.get('content-type'),/text\/css/);
+ const head=await fetch(origin+'/admin.html',{method:'HEAD'});assert.equal(head.status,200);assert.equal(await head.text(),'');assert.equal(head.headers.get('x-robots-tag'),'noindex, nofollow');
+ for(const resource of ['/server.js','/src/portal/store.tsx','/assets/missing.js','/assets/%2e%2e/server.js'])assert.equal((await fetch(origin+resource)).status,404);
 });
 
 test('PostgreSQL portal isolation, recovery, idempotent import and shared edits',async t=>{
