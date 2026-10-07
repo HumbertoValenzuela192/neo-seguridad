@@ -38,10 +38,10 @@ function Login() {
             <br />
             Más control.
           </h1>
-          <p className="mt-6 text-muted">Portal de administración y solicitudes de servicio.</p>
+          <p className="mt-6 text-muted">Gestión interna de Tigrr Security.</p>
         </div>
         <div>
-          <a href={siteURL('/')} className="text-sm text-muted hover:text-bright">
+          <a href="https://tigrrsecurity.cl/" className="text-sm text-muted hover:text-bright">
             Volver a Tigrr Security
           </a>
         </div>

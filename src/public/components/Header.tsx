@@ -79,9 +79,6 @@ export default function Header({ page }: { page: PublicPage }) {
             ))}
           </nav>
           <Country />
-          <a href={siteURL('/admin')} className="button button-ghost hidden sm:inline-flex">
-            Acceso al portal
-          </a>
           <a className="button button-primary rounded-full" href={siteURL('/contacto')}>
             {neo ? 'Contáctanos' : 'Evaluación'}
           </a>
@@ -114,9 +111,6 @@ export default function Header({ page }: { page: PublicPage }) {
               {label}
             </a>
           ))}
-          <a className="rounded-lg px-3 py-3 text-sm text-bright" href={siteURL('/admin')}>
-            Acceso al portal
-          </a>
         </nav>
       )}
     </header>

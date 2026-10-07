@@ -1,5 +1,3 @@
-import { siteURL } from '../../lib/routes';
-
 export default function Footer({ neo }: { neo: boolean }) {
   return (
     <footer className="public-footer">
@@ -10,9 +8,6 @@ export default function Footer({ neo }: { neo: boolean }) {
             ? 'NEO Seguridad. Menos ruido. Más control.'
             : 'Tigrr Security. Seguridad que se anticipa.'}
         </small>
-        <a href={siteURL('/admin')} className="hover:text-bright">
-          Acceso al portal
-        </a>
       </div>
     </footer>
   );

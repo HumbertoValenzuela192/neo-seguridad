@@ -1,4 +1,5 @@
 {
+  "adminURL": "https://administrativo.tigrrsecurity.cl",
   "publicPages": [
     { "path": "/", "page": "home", "file": "index.html", "title": "Tigrr Security | Seguridad que se anticipa", "description": "Tecnología, inteligencia y monitoreo 24/7 para anticiparnos a los riesgos y proteger tu operación." },
     { "path": "/soluciones", "page": "solutions", "file": "soluciones.html", "title": "Soluciones de seguridad | Tigrr Security", "description": "Monitoreo 24/7 o plataforma NEO para tu propia central. Dos soluciones, una inteligencia." },

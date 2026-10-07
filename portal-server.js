@@ -37,10 +37,35 @@ async function readJSON(req,limit=2*1024*1024) {
 }
 function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 
-function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrigins=[],root=path.join(__dirname,'dist'),fetchCore=fetch}) {
+function createPortalServer({db,coreURL='',coreToken='',publicURL='',adminURL='',allowedOrigins=[],root=path.join(__dirname,'dist'),fetchCore=fetch}) {
  const failures=new Map();
  const origin=publicURL?new URL(publicURL).origin:null;
- const secureCookie=origin?.startsWith('https:')?'Secure; ':'';
+ const adminOrigin=adminURL?new URL(adminURL).origin:null;
+ const adminHost=adminURL?new URL(adminURL).host.toLowerCase():null;
+ const secureCookie=(adminOrigin||origin)?.startsWith('https:')?'Secure; ':'';
+ const privateAssets=new Set();
+ if(adminHost){
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'.vite/manifest.json'),'utf8'));
+  const byFile=new Map(Object.entries(manifest).map(([key,chunk])=>[chunk.file,key]));
+  function assets(entries){
+   const files=new Set(),visited=new Set();
+   function visit(key){
+    if(visited.has(key))return;visited.add(key);
+    const chunk=manifest[key];if(!chunk)throw new Error('Entrada ausente en el manifest: '+key);
+    [chunk.file,...chunk.css||[],...chunk.assets||[]].forEach(file=>files.add(file));
+    [...chunk.imports||[],...chunk.dynamicImports||[]].forEach(visit);
+   }
+   for(const entry of entries){
+    if(manifest[entry]){visit(entry);continue;}
+    // Vite can merge HTML entries with identical imports; start from their emitted asset links.
+    const html=fs.readFileSync(path.join(root,entry),'utf8');
+    for(const [,file]of html.matchAll(/(?:src|href)="\/(assets\/[^"?#]+)"/g)){files.add(file);if(byFile.has(file))visit(byFile.get(file));}
+   }
+   return files;
+  }
+  const publicAssets=assets(['index.html','tigrr.html']);
+  for(const file of assets(['admin.html','directory.html','recover.html']))if(!publicAssets.has(file))privateAssets.add(file);
+ }
  function limitRequest(req,kind,limit){const now=Date.now();for(const[k,v]of failures)if(v.expires<now)failures.delete(k);const key=kind+':'+req.socket.remoteAddress;const bucket=failures.get(key)||{count:0,expires:now+60000};if(++bucket.count>limit||(!failures.has(key)&&failures.size>=10000))throw fail(429,'Demasiadas solicitudes. Espera un minuto.');failures.set(key,bucket);}
  async function store(key,conn=db){const result=await conn.query('SELECT value FROM store WHERE key=$1',[key]);return result.rows[0]?.value;}
  async function setStore(key,value,conn=db){await conn.query('INSERT INTO store(key,value,updated_at) VALUES($1,$2,now()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=now()',[key,value]);}
@@ -110,7 +135,16 @@ function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrig
  const server=http.createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','DENY');
   try{
-    const url=new URL(req.url,'http://localhost');const pathname=url.pathname;
+     const url=new URL(req.url,'http://localhost');const pathname=url.pathname;
+     const administrative=!adminHost||req.headers.host?.toLowerCase()===adminHost;
+     const lead=pathname==='/api/leads'&&req.method==='POST';
+     if(adminHost){
+      const target=routes.redirects[pathname];
+      const decoded=decodeURIComponent(pathname).replace(/\/+$/,'')||'/';
+      const internal=decoded==='/admin'||decoded.startsWith('/admin/')||['/admin.html','/directory.html','/recover.html'].includes(decoded)||target?.startsWith('/admin')||privateAssets.has(decoded.slice(1));
+      if(!administrative&&(internal||(pathname.startsWith('/api/')&&!lead)))throw fail(404,'Ruta no encontrada.');
+      if(administrative){res.setHeader('X-Robots-Tag','noindex, nofollow');if(pathname==='/'){res.writeHead(308,{Location:'/admin','Cache-Control':'no-cache'});res.end();return;}if(PUBLIC_ROUTES.has(decoded)||['/index.html','/tigrr.html'].includes(decoded)||lead)throw fail(404,'Ruta no encontrada.');}
+     }
     if(!pathname.startsWith('/api/')){
      const normalized=pathname.length>1?pathname.replace(/\/+$/,''):pathname;
      const redirect=routes.redirects[pathname]||(pathname!==normalized&&(PUBLIC_ROUTES.has(normalized)||PORTAL_ROUTES.has(normalized))?normalized:null);
@@ -129,8 +163,8 @@ function createPortalServer({db,coreURL='',coreToken='',publicURL='',allowedOrig
    }
    if(!db)throw fail(503,'Base de datos no disponible.');
    if(!['GET','HEAD'].includes(req.method)){
-    const expected=origin||'http://'+req.headers.host;
-    if(!(req.headers.origin===expected||allowedOrigins.includes(req.headers.origin))||req.headers['x-portal-request']!=='1')throw fail(403,'Origen de solicitud no autorizado.');
+     const expected=(administrative&&adminOrigin?adminOrigin:origin)||'http://'+req.headers.host;
+     if(!(req.headers.origin===expected||((!adminHost||lead)&&allowedOrigins.includes(req.headers.origin)))||req.headers['x-portal-request']!=='1')throw fail(403,'Origen de solicitud no autorizado.');
    }
    if(pathname==='/api/auth/login'&&req.method==='POST'){
     limitRequest(req,'login',20);
@@ -234,7 +268,9 @@ async function start(){
  const {Pool}=require('pg');const db=new Pool({connectionString:process.env.DATABASE_URL});
   const deadline=Date.now()+30000;
   for(;;){try{await initialize(db,process.env.PORTAL_BOOTSTRAP_PASSWORD||'');break;}catch(error){if(Date.now()>=deadline)throw error;await new Promise(resolve=>setTimeout(resolve,1000));}}
- const server=createPortalServer({db,coreURL:process.env.CORE_URL||'',coreToken:process.env.CORE_CLIENT_DIRECTORY_TOKEN||'',publicURL:process.env.PORTAL_PUBLIC_URL||'',allowedOrigins:(process.env.PORTAL_ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean)});
+  const adminURL=process.env.PORTAL_ADMIN_URL||(process.env.NODE_ENV==='production'?routes.adminURL:'');
+  if(process.env.NODE_ENV==='production'&&!adminURL.startsWith('https://'))throw new Error('PORTAL_ADMIN_URL debe usar HTTPS en producción.');
+  const server=createPortalServer({db,coreURL:process.env.CORE_URL||'',coreToken:process.env.CORE_CLIENT_DIRECTORY_TOKEN||'',publicURL:process.env.PORTAL_PUBLIC_URL||'',adminURL,allowedOrigins:(process.env.PORTAL_ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean)});
  if(process.env.CORE_URL)try{const result=await server.importDirectory();console.log('Directorio inicializado; cuentas procesadas: '+result.accounts);}catch(error){console.error('La importación inicial se reintentará al ingresar al portal:',error.status||'UNAVAILABLE');}
  server.listen(Number(process.env.PORT)||3000,'0.0.0.0',()=>console.log('Portal listo; directorio '+(process.env.CORE_URL?'configurado':'desactivado')));
 }

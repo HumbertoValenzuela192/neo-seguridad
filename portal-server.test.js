@@ -89,3 +89,27 @@ test('PostgreSQL portal isolation, recovery, idempotent import and shared edits'
  await request('/api/auth/logout','POST',{},cookie);assert.equal((await request('/api/db','GET',undefined,cookie)).status,401);
  const archives=await db.query('SELECT count(*)::integer AS count FROM portal_archives');assert.ok(archives.rows[0].count>=5);
 });
+
+test('administrative host isolates pages, private chunks and API before reading data',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'neo-hosts-'));fs.mkdirSync(path.join(root,'assets'));fs.mkdirSync(path.join(root,'.vite'));
+ for(const [file,content] of Object.entries({'index.html':'Public website<script src="/assets/public.js"></script>','tigrr.html':'Public NEO<script src="/assets/public.js"></script>','admin.html':'Internal login<script src="/assets/private.js"></script>','directory.html':'<script src="/assets/private.js"></script>','recover.html':'<script src="/assets/private.js"></script>','assets/public.js':'public','assets/shared.js':'shared','assets/private.js':'private','assets/salary.js':'salary','assets/private.css':'private CSS'}))fs.writeFileSync(path.join(root,file),content);
+ fs.writeFileSync(path.join(root,'.vite/manifest.json'),JSON.stringify({public:{file:'assets/public.js',imports:['shared']},shared:{file:'assets/shared.js'},private:{file:'assets/private.js',imports:['shared'],dynamicImports:['salary'],css:['assets/private.css']},salary:{file:'assets/salary.js'}}));
+ let queries=0;const db={query:async()=>{queries++;return {rows:[]};}};
+ const server=createPortalServer({db,root,publicURL:'https://tigrrsecurity.cl',adminURL:routes.adminURL,allowedOrigins:['https://www.tigrrsecurity.cl']});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
+ t.after(async()=>{await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});});
+ const request=(route,host='tigrrsecurity.cl',options={})=>new Promise((resolve,reject)=>{const req=require('node:http').request(origin+route,{method:options.method||'GET',headers:{Host:host,...options.headers}},res=>{res.resume();res.on('end',()=>resolve({status:res.statusCode,headers:new Headers(res.headers)}));});req.on('error',reject);req.end(options.body);});
+ for(const host of ['tigrrsecurity.cl','www.tigrrsecurity.cl','unknown.invalid'])for(const route of ['/admin','/admin/','/admin/inicio','/admin/recuperacion','/admin.html','/directory.html','/recover.html','/%61dmin/inicio','/assets/private.js','/assets/salary.js','/assets/private.css','/api/db','/api/directory/clients','/api/auth/me'])assert.equal((await request(route,host,{headers:{Cookie:'portal_session=old-session','X-Forwarded-Host':'administrativo.tigrrsecurity.cl'}})).status,404,host+route);
+ assert.equal((await request('/api/auth/login','tigrrsecurity.cl',{method:'POST',headers:{Origin:'https://tigrrsecurity.cl','X-Portal-Request':'1'},body:'{}'})).status,404);
+ assert.equal(queries,0);
+ for(const route of ['/','/assets/public.js','/assets/shared.js'])assert.equal((await request(route)).status,200);
+ const adminHost='administrativo.tigrrsecurity.cl';const home=await request('/',adminHost);assert.equal(home.status,308);assert.equal(home.headers.get('location'),'/admin');assert.equal(home.headers.get('x-robots-tag'),'noindex, nofollow');
+ for(const route of ['/admin','/admin/inicio','/assets/private.js','/assets/salary.js','/assets/private.css'])assert.equal((await request(route,adminHost)).status,200);
+ assert.equal((await request('/admin','ADMINISTRATIVO.TIGRRSECURITY.CL')).status,200);
+ assert.equal((await request('/api/db',adminHost)).status,401);
+ for(const route of ['/neo','/index.html','/.vite/manifest.json'])assert.equal((await request(route,adminHost)).status,404);
+ for(const source of ['https://tigrrsecurity.cl','https://www.tigrrsecurity.cl'])assert.equal((await request('/api/auth/login',adminHost,{method:'POST',headers:{Origin:source,'X-Portal-Request':'1'},body:'{}'})).status,403);
+ assert.equal((await request('/api/auth/login',adminHost,{method:'POST',headers:{Origin:routes.adminURL,'X-Portal-Request':'1'},body:'{}'})).status,401);
+ // Valid origins still reach contact validation, without touching the database for invalid input.
+ for(const source of ['https://tigrrsecurity.cl','https://www.tigrrsecurity.cl'])assert.equal((await request('/api/leads',new URL(source).host,{method:'POST',headers:{Origin:source,'X-Portal-Request':'1'},body:'{}'})).status,400);
+ assert.equal((await request('/api/leads',adminHost,{method:'POST',body:'{}'})).status,404);
+});

@@ -31,6 +31,15 @@ El servidor sirve la entrada del portal sólo en rutas conocidas, para que la re
 
 ## Compilación y producción
 
+### Dominios separados
+
+- `https://tigrrsecurity.cl` y `https://www.tigrrsecurity.cl`: sólo páginas comerciales y envío del formulario de contacto (`POST /api/leads`). No enlazan el panel y devuelven 404 para sus rutas, HTML, chunks exclusivos y API interna, incluso con una cookie de sesión.
+- `https://administrativo.tigrrsecurity.cl`: acceso interno; `/` lleva a `/admin` y las secciones conservan `/admin/...`. Requiere las cuentas y permisos existentes. HTML y API llevan `noindex`; la cookie permanece host-only, HttpOnly y Secure.
+- `PORTAL_PUBLIC_URL` y sus alias siguen validando el formulario comercial. `PORTAL_ADMIN_URL` valida el Host y el origen administrativo; en producción su valor por defecto está en `routes.json`. No se confía en `X-Forwarded-Host`.
+- Ambos dominios pueden apuntar al mismo servicio Node en :3000; el servidor aplica el aislamiento antes de leer sesiones o datos. PostgreSQL y el puente Core se conservan. Vite genera un manifest privado para bloquear también los assets exclusivos del panel en el host público.
+
+El cambio de origen requiere iniciar sesión de nuevo. Las copias antiguas de localStorage siguen perteneciendo al dominio anterior; no se borran ni se transfieren silenciosamente. Los registros persistidos en PostgreSQL no se migran.
+
 ```sh
 npm run build
 npm start

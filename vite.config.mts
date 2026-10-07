@@ -94,6 +94,7 @@ export default defineConfig({
     },
   },
   build: {
+    manifest: true,
     rollupOptions: {
       input: Object.fromEntries(
         ['index', 'tigrr', 'admin', 'directory', 'recover'].map((name) => [

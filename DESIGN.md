@@ -5,7 +5,7 @@ Refinamiento de la identidad existente, no reemplazo de marca.
 ## Web pública: informar y convertir
 
 - Mantener fondo oscuro cálido (`#140f16`), naranja Tigrr (`#f2711c`), amarillo de foco (`#f9c22e`) y tigre original.
-- CTA comercial prioritario; acceso al portal secundario. Logo del hero más compacto en móvil.
+- CTA comercial prioritario; sin acceso al panel interno en la navegación pública. Logo del hero más compacto en móvil.
 - Conservar copy y distinción empresa / plataforma / central humana. Nada de cifras, testimonios o capacidades inventadas.
 - Ondas WebGL y Matrix sólo como ambiente. Efectos limitados a la superficie correspondiente, con limpieza de recursos y reducción de movimiento.
 - Glassmorphism tenue en cabecera y superficies comerciales seleccionadas; texto siempre legible.
