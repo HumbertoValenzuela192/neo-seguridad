@@ -9,11 +9,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const base = process.env.PREVIEW_BASE || '/';
 const publicRoutes = new Map(routes.publicPages.map((page) => [page.path, page]));
-const portalRoutes = new Set([
-  '/admin',
-  ...Object.values(routes.portalSections).map((slug) => '/admin/' + slug),
-  ...routes.portalExtra.map((slug) => '/admin/' + slug),
-]);
 function routeMiddleware(preview = false) {
   return (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const url = new URL(req.url || '/', 'http://localhost');
@@ -25,7 +20,7 @@ function routeMiddleware(preview = false) {
     const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path;
     const redirect = Object.hasOwn(routes.redirects, path)
       ? routes.redirects[path as keyof typeof routes.redirects]
-      : path !== normalized && (publicRoutes.has(normalized) || portalRoutes.has(normalized))
+      : path !== normalized && publicRoutes.has(normalized)
         ? normalized
         : null;
     if (redirect) {
@@ -34,12 +29,10 @@ function routeMiddleware(preview = false) {
       return;
     }
     const page = publicRoutes.get(path);
-    if (page || portalRoutes.has(path))
+    if (page)
       req.url =
         base +
-        (portalRoutes.has(path)
-          ? 'admin.html'
-          : preview
+        (preview
             ? page!.file
             : page!.page === 'neo'
               ? 'tigrr.html'
@@ -87,17 +80,16 @@ export default defineConfig({
     hmr: process.env.PREVIEW_BASE ? { path: 'hmr' } : undefined,
     proxy: {
       [`${base}api`]: {
-        target: process.env.PORTAL_API_URL || 'http://127.0.0.1:3000',
+        target: process.env.PUBLIC_API_URL || 'http://127.0.0.1:3000',
         changeOrigin: true,
         rewrite: (path) => (base === '/' ? path : path.slice(base.length - 1)),
       },
     },
   },
   build: {
-    manifest: true,
     rollupOptions: {
       input: Object.fromEntries(
-        ['index', 'tigrr', 'admin', 'directory', 'recover'].map((name) => [
+        ['index', 'tigrr'].map((name) => [
           name,
           resolve(root, `${name}.html`),
         ]),

@@ -2,27 +2,23 @@
   "name": "neo-seguridad",
   "version": "2.1.0",
   "private": true,
-  "description": "NEO Seguridad - sitio + API con Postgres",
+  "description": "Web comercial pública de Tigrr Security",
   "scripts": {
-    "format": "prettier --write src scripts vite.config.mts tsconfig.json index.html tigrr.html admin.html directory.html recover.html",
+    "format": "prettier --write src scripts vite.config.mts tsconfig.json index.html tigrr.html",
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build && tsx scripts/prerender.tsx",
     "preview": "vite preview --host 0.0.0.0",
     "start": "node server.js",
-    "test": "node --test portal-server.test.js && tsx --test src/lib/*.test.ts"
+    "test": "node --test public-server.test.js && tsx --test src/lib/*.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
-    "leaflet": "^1.9.4",
     "lucide-react": "^1.52.0",
-    "pg": "^8.13.1",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-router": "^8.4.0"
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@types/leaflet": "^1.9.22",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

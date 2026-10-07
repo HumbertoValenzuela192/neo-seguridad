@@ -1,2 +1,2 @@
-const { start } = require('./portal-server');
+const { start } = require('./public-server');
 start().catch(error => { console.error(error.message); process.exitCode = 1; });
