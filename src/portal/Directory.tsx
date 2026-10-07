@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Plus, RefreshCw, Settings } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
+import { Plus, Settings } from 'lucide-react';
 import {
   Badge,
   Button,
-  Confirm,
+  ConfirmDialog,
   Empty,
   Field,
   Form,
   Loading,
   Modal,
   Notice,
-  PageHeading,
+  PageHeader,
   Panel,
   text,
 } from '../components/ui';
 import { InstallationFields } from '../components/InstallationFields';
-import { errorMessage, request } from '../lib/api';
+import { APIError, errorMessage, request } from '../lib/api';
 import { newInstallation } from '../lib/domain';
 import type { DirectoryClient, DirectoryContact, Installation, Organization } from '../types';
 import { useStore } from './store';
@@ -86,8 +86,10 @@ export default function Directory() {
   );
   return (
     <>
-      <PageHeading
+      <PageHeader
         title="Clientes compartidos con NEO"
+        onRefresh={load}
+        refreshing={loading}
         description="Fichas operativas y organizaciones. Los accesos del portal se administran por separado."
         actions={
           <>
@@ -102,7 +104,7 @@ export default function Directory() {
           </>
         }
       />
-      <div className="mb-6 flex flex-wrap items-end gap-3">
+      <div className="page-toolbar">
         <Field label="Buscar cliente" className="min-w-48 flex-1">
           <input
             type="search"
@@ -122,43 +124,84 @@ export default function Directory() {
             ))}
           </select>
         </Field>
-        <Button variant="secondary" disabled={loading} onClick={() => void load()}>
-          <RefreshCw size={17} />
-          Actualizar
-        </Button>
       </div>
       {error && <Notice error>{error}</Notice>}
       {notice && <Notice>{notice}</Notice>}
       {loading ? (
         <Loading />
       ) : filtered.length ? (
-        <div className="space-y-3">
-          {filtered.map((c) => (
-            <Panel key={c.id}>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-base">
-                    <span className="mr-2 text-bright">{c.code}</span>
-                    {c.name}
-                  </h2>
-                  <p className="mt-2 text-sm text-muted">{c.address || 'Dirección pendiente'}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    {organizations.find((o) => o.id === c.organization_id)?.name ||
-                      'Sin organización'}
-                  </p>
+        <>
+          <div className="record-list directory-table">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Cliente / instalación</th>
+                  <th>Organización</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong className="mr-2 font-medium text-bright">{c.code}</strong>
+                      <span className="font-medium">{c.name}</span>
+                      <p className="mt-1 text-xs text-muted">
+                        {c.address || 'Dirección pendiente'}
+                      </p>
+                    </td>
+                    <td>
+                      {organizations.find((o) => o.id === c.organization_id)?.name ||
+                        'Sin organización'}
+                    </td>
+                    <td>
+                      <Badge tone={c.status === 'ready' ? 'success' : 'warning'}>
+                        {c.status === 'ready' ? 'Datos completos' : 'Datos pendientes'}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button
+                        variant="secondary"
+                        aria-label={`Editar ficha de ${c.name}`}
+                        onClick={() => setEdit(c)}
+                      >
+                        Editar ficha
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="record-list directory-cards">
+            {filtered.map((c) => (
+              <Panel key={c.id}>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-base">
+                      <span className="mr-2 text-bright">{c.code}</span>
+                      {c.name}
+                    </h2>
+                    <p className="mt-2 text-sm text-muted">{c.address || 'Dirección pendiente'}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {organizations.find((o) => o.id === c.organization_id)?.name ||
+                        'Sin organización'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge tone={c.status === 'ready' ? 'success' : 'warning'}>
+                      {c.status === 'ready' ? 'Datos completos' : 'Datos pendientes'}
+                    </Badge>
+                    <Button variant="secondary" onClick={() => setEdit(c)}>
+                      Editar ficha
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge tone={c.status === 'ready' ? 'success' : 'warning'}>
-                    {c.status === 'ready' ? 'Datos completos' : 'Datos pendientes'}
-                  </Badge>
-                  <Button variant="secondary" onClick={() => setEdit(c)}>
-                    Editar ficha
-                  </Button>
-                </div>
-              </div>
-            </Panel>
-          ))}
-        </div>
+              </Panel>
+            ))}
+          </div>
+        </>
       ) : (
         <Empty>No hay fichas que coincidan con el filtro.</Empty>
       )}
@@ -222,11 +265,40 @@ function DirectoryEditor({
   const [externalID] = useState(
     () => client?.external_id || 'portal-directory:' + crypto.randomUUID(),
   );
+  const tabs = [
+    ['general', 'General'],
+    ['location', 'Ubicación'],
+    ['contacts', 'Contactos'],
+    ['guards', 'Guardias y supervisor'],
+  ] as const;
+  const [tab, setTab] = useState<(typeof tabs)[number][0]>('general'),
+    tabID = useId();
   return (
-    <Modal title={client ? `Editar ${client.code}` : 'Nuevo cliente'} onClose={onClose}>
+    <Modal
+      title={client ? `Editar ${client.code}` : 'Nuevo cliente'}
+      onClose={onClose}
+      className="directory-editor"
+    >
       <Form
         cancel={onClose}
-        onSave={async () => {
+        noValidate
+        scrollBody
+        onSave={async (form) => {
+          const invalid = Array.from(
+            form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+              'input,select,textarea',
+            ),
+          ).find((input) => !input.validity.valid);
+          if (invalid) {
+            const section = invalid.closest<HTMLElement>('[data-edit-section]')?.dataset
+              .editSection as typeof tab | undefined;
+            if (section) setTab(section);
+            requestAnimationFrame(() => {
+              invalid.focus();
+              invalid.reportValidity();
+            });
+            throw new Error(invalid.validationMessage);
+          }
           const first = value.addresses[0],
             person = (p: {
               name: string;
@@ -263,36 +335,106 @@ function DirectoryEditor({
             has_guard: value.hasGuard === 'si',
             ...(client ? { version: client.version } : { external_id: externalID }),
           };
-          await request(
-            '/directory/clients' + (client ? '/' + encodeURIComponent(client.id) : ''),
-            client ? 'PATCH' : 'POST',
-            body,
-          );
+          try {
+            await request(
+              '/directory/clients' + (client ? '/' + encodeURIComponent(client.id) : ''),
+              client ? 'PATCH' : 'POST',
+              body,
+            );
+          } catch (error) {
+            if (error instanceof APIError && error.status === 400) {
+              const fieldTabs: Record<string, typeof tab> = {
+                'name required': 'general',
+                'client code must have at most 32 characters': 'general',
+                'address required': 'location',
+                'validated address location required': 'location',
+                'invalid address location': 'location',
+                'invalid entry address': 'location',
+                'contact name required': 'contacts',
+                'contact phone or email required': 'contacts',
+              };
+              if (fieldTabs[error.message]) setTab(fieldTabs[error.message]);
+            }
+            throw error;
+          }
           await onSaved();
         }}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Código" hint="Déjalo vacío para asignarlo automáticamente.">
-            <input value={code} onChange={(e) => setCode(e.target.value)} />
-          </Field>
-          <Field label="Organización">
-            <select value={organization} onChange={(e) => setOrganization(e.target.value)}>
-              <option value="">Sin organización</option>
-              {organizations.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Estado de la ficha">
-            <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-              <option value="pending">Datos pendientes</option>
-              <option value="ready">Datos completos</option>
-            </select>
-          </Field>
+        <div className="editor-tabs" role="tablist" aria-label="Datos de la ficha">
+          {tabs.map(([key, label], index) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              id={`${tabID}-${key}`}
+              aria-controls={`${tabID}-panel-${key}`}
+              aria-selected={tab === key}
+              tabIndex={tab === key ? 0 : -1}
+              onClick={() => setTab(key)}
+              onKeyDown={(event) => {
+                const direction =
+                  event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+                if (direction || event.key === 'Home' || event.key === 'End') {
+                  event.preventDefault();
+                  const next =
+                    event.key === 'Home'
+                      ? 0
+                      : event.key === 'End'
+                        ? tabs.length - 1
+                        : (index + direction + tabs.length) % tabs.length;
+                  setTab(tabs[next][0]);
+                  document.getElementById(`${tabID}-${tabs[next][0]}`)?.focus();
+                }
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <InstallationFields value={value} onChange={setValue} />
+        <div
+          className="editor-panel space-y-5"
+          data-edit-section="general"
+          id={`${tabID}-panel-general`}
+          role="tabpanel"
+          aria-labelledby={`${tabID}-general`}
+          hidden={tab !== 'general'}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Código" hint="Déjalo vacío para asignarlo automáticamente.">
+              <input value={code} onChange={(e) => setCode(e.target.value)} />
+            </Field>
+            <Field label="Organización">
+              <select value={organization} onChange={(e) => setOrganization(e.target.value)}>
+                <option value="">Sin organización</option>
+                {organizations.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Estado de la ficha">
+              <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+                <option value="pending">Datos pendientes</option>
+                <option value="ready">Datos completos</option>
+              </select>
+            </Field>
+          </div>
+          <InstallationFields value={value} onChange={setValue} section="general" />
+        </div>
+        {(['location', 'contacts', 'guards'] as const).map((section) => (
+          <div
+            key={section}
+            className="editor-panel space-y-5"
+            data-edit-section={section}
+            id={`${tabID}-panel-${section}`}
+            role="tabpanel"
+            aria-labelledby={`${tabID}-${section}`}
+            hidden={tab !== section}
+          >
+            <InstallationFields value={value} onChange={setValue} section={section} />
+          </div>
+        ))}
       </Form>
     </Modal>
   );
@@ -356,7 +498,7 @@ function Organizations({
         </Modal>
       )}
       {remove && (
-        <Confirm
+        <ConfirmDialog
           title="Quitar organización"
           description={`Se quitará ${remove.name}. Sus fichas de clientes se conservarán sin esa asociación.`}
           onClose={() => setRemove(null)}

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
-import { ArrowLeft, ArrowRight, CalendarDays, Volume2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, Plus, Volume2 } from 'lucide-react';
 import {
-  AddButton,
   Badge,
   Button,
   Empty,
@@ -10,7 +8,8 @@ import {
   Form,
   Modal,
   Notice,
-  PageHeading,
+  PageHeader,
+  StatCard,
   Panel,
 } from '../components/ui';
 import { dateKey } from '../lib/domain';
@@ -29,7 +28,7 @@ const SLOTS = [
 ];
 export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean }) {
   const [actionError, setActionError] = useState('');
-  const { data, save, session } = useStore();
+  const { data, save, session, refresh, loading } = useStore();
   const [now, setNow] = useState(new Date()),
     [date, setDate] = useState(new Date()),
     [view, setView] = useState<'day' | 'week' | 'month'>('day'),
@@ -73,8 +72,20 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
   monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
   return (
     <>
-      <PageHeading
-        title={agendaOnly ? 'Agenda' : `Bienvenido, ${session?.name || 'usuario'}`}
+      <PageHeader
+        title={agendaOnly ? 'Agenda' : 'Inicio'}
+        onRefresh={refresh}
+        refreshing={loading}
+        actions={
+          <Button
+            onClick={() =>
+              setEditing({ index: -1, task: { time: '', client: '', text: '', complexity: '' } })
+            }
+          >
+            <Plus size={17} />
+            Agregar reunión
+          </Button>
+        }
         description={
           now.toLocaleDateString('es-CL', {
             weekday: 'long',
@@ -88,64 +99,26 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
       />
       {!agendaOnly && (
         <>
-          <div className="mb-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
-            {counts.map(([label, n, section]) =>
-              session?.sections.includes(section) ? (
-                <Link
-                  key={label}
-                  to={sectionPath(section)}
-                  className="panel transition-colors hover:border-accent"
-                >
-                  <span className="text-xs text-muted">{label}</span>
-                  <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
-                </Link>
-              ) : (
-                <div key={label} className="panel">
-                  <span className="text-xs text-muted">{label}</span>
-                  <strong className="mt-3 block text-3xl font-semibold tabular-nums">{n}</strong>
-                </div>
-              ),
-            )}
+          <div className="stat-grid">
+            {counts.map(([label, n, section]) => (
+              <StatCard
+                key={label}
+                label={label}
+                value={n}
+                to={session?.sections.includes(section) ? sectionPath(section) : undefined}
+              />
+            ))}
           </div>
-          <Panel title="Resumen del día" className="mb-6">
-            <p className="mb-5 text-sm text-muted">{summary}</p>
-            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
-              <div className="flex flex-wrap gap-3">
-                <Field label="Voz del resumen">
-                  <select value={voice} onChange={(e) => setVoice(e.target.value)}>
-                    <option value="">Voz predeterminada</option>
-                    {voices.map((v) => (
-                      <option key={v.voiceURI} value={v.voiceURI}>
-                        {v.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Button
-                  className="self-end"
-                  variant="secondary"
-                  onClick={() => {
-                    speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(summary);
-                    utterance.lang = 'es-CL';
-                    utterance.voice = voices.find((v) => v.voiceURI === voice) || null;
-                    speechSynthesis.speak(utterance);
-                  }}
-                >
-                  <Volume2 size={17} />
-                  Escuchar resumen
-                </Button>
-              </div>
-            )}
-          </Panel>
         </>
       )}
       <Panel>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <h2 className="flex items-center gap-2 text-lg">
-            <CalendarDays size={20} className="text-accent" />
-            Agenda
-          </h2>
+          {!agendaOnly && (
+            <h2 className="flex items-center gap-2 text-lg">
+              <CalendarDays size={20} className="text-accent" />
+              Agenda
+            </h2>
+          )}
           <div className="filters">
             {[
               ['day', 'Día'],
@@ -186,16 +159,6 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
                   }}
                 />
               </Field>
-              <AddButton
-                onClick={() =>
-                  setEditing({
-                    index: -1,
-                    task: { time: '', client: '', text: '', complexity: '' },
-                  })
-                }
-              >
-                Agregar reunión
-              </AddButton>
             </div>
             {tasks.length ? (
               <div className="divide-y divide-line">
@@ -294,6 +257,42 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
           </div>
         )}
       </Panel>
+      {!agendaOnly && (
+        <details className="panel summary-details">
+          <summary>Resumen del día</summary>
+          <div className="summary-content">
+            <p className="mb-5 text-sm text-muted">{summary}</p>
+            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
+              <div className="flex flex-wrap gap-3">
+                <Field label="Voz del resumen">
+                  <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+                    <option value="">Voz predeterminada</option>
+                    {voices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Button
+                  className="self-end"
+                  variant="secondary"
+                  onClick={() => {
+                    speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(summary);
+                    utterance.lang = 'es-CL';
+                    utterance.voice = voices.find((v) => v.voiceURI === voice) || null;
+                    speechSynthesis.speak(utterance);
+                  }}
+                >
+                  <Volume2 size={17} />
+                  Escuchar resumen
+                </Button>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
       {editing && (
         <Modal
           title={editing.index < 0 ? 'Agregar reunión' : 'Editar reunión'}

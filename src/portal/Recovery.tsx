@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
-import { Button, Field, Form, Notice, PageHeading, Panel } from '../components/ui';
+import { Button, Field, Form, Notice, PageHeader, Panel } from '../components/ui';
+import { useStore } from './store';
 import { browserBackup } from '../lib/recovery';
 import { request } from '../lib/api';
 
 export default function Recovery() {
+  const { refresh } = useStore();
   const [message, setMessage] = useState('');
   const [snapshot] = useState(() => {
     try {
@@ -15,7 +17,7 @@ export default function Recovery() {
   });
   return (
     <>
-      <PageHeading
+      <PageHeader
         title="Respaldo de este navegador"
         description="Exporta la copia local antes de recuperar datos. Las fichas del servidor no se sobrescriben."
       />
@@ -71,6 +73,7 @@ export default function Recovery() {
               );
               sessionStorage.setItem('neo_recovery_archived', result.archive_id);
               setMessage(result.message);
+              await refresh();
             }}
           >
             <Field label="Archivo JSON">

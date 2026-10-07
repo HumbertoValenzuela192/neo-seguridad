@@ -3,13 +3,13 @@ import { Plus, Printer, RefreshCw } from 'lucide-react';
 import {
   Badge,
   Button,
-  Confirm,
+  ConfirmDialog,
   Empty,
   Field,
   Form,
   Modal,
   Notice,
-  PageHeading,
+  PageHeader,
   Panel,
   Values,
 } from '../components/ui';
@@ -31,7 +31,7 @@ const blank = (): Operator => ({
   gratificacion: '',
 });
 export default function Salary() {
-  const { data, save } = useStore(),
+  const { data, save, refresh, loading } = useStore(),
     params = data.neo_sueldo_params,
     operators = data.neo_sueldos;
   const [edit, setEdit] = useState<{ index: number; op: Operator } | null>(null),
@@ -47,7 +47,9 @@ export default function Salary() {
     totals.reduce((sum, r) => sum + r[key], 0);
   return (
     <>
-      <PageHeading
+      <PageHeader
+        onRefresh={refresh}
+        refreshing={loading}
         title="Sueldos"
         description="Haberes, descuentos y liquidaciones. Los parámetros actuales se conservan."
         actions={
@@ -91,7 +93,7 @@ export default function Salary() {
         </Panel>
       )}
       {operators.length ? (
-        <div className="space-y-3">
+        <div className="record-list">
           {operators.map((op, i) => {
             const r = totals[i];
             return (
@@ -335,7 +337,7 @@ export default function Salary() {
         </Modal>
       )}
       {remove !== null && (
-        <Confirm
+        <ConfirmDialog
           title="Eliminar operador"
           description={`¿Eliminar a ${operators[remove].name || 'este trabajador'} del cálculo?`}
           onClose={() => setRemove(null)}

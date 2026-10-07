@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { NavLink } from 'react-router';
 import { Plus } from 'lucide-react';
 import {
   Badge,
   Button,
-  Confirm,
+  ConfirmDialog,
   Empty,
   Field,
   Form,
   Modal,
-  PageHeading,
+  PageHeader,
   Panel,
   text,
 } from '../components/ui';
@@ -18,7 +19,7 @@ import type { Role, User } from '../types';
 import { useStore } from './store';
 
 export default function Access({ roles = false }: { roles?: boolean }) {
-  const { data, session, save } = useStore(),
+  const { data, session, save, refresh, loading } = useStore(),
     [editUser, setEditUser] = useState<User | null | undefined>(),
     [editRole, setEditRole] = useState<Role | null>(null),
     [remove, setRemove] = useState<{
@@ -31,8 +32,10 @@ export default function Access({ roles = false }: { roles?: boolean }) {
   );
   return (
     <>
-      <PageHeading
-        title={roles ? 'Roles y permisos' : 'Usuarios'}
+      <PageHeader
+        title="Usuarios y roles"
+        onRefresh={refresh}
+        refreshing={loading}
         description={
           roles
             ? 'Define el acceso a cada sección del portal.'
@@ -56,8 +59,20 @@ export default function Access({ roles = false }: { roles?: boolean }) {
           </Button>
         }
       />
+      <nav className="page-tabs" aria-label="Administración de accesos">
+        {session?.sections.includes('usuarios') && (
+          <NavLink to="/usuarios" end>
+            Usuarios
+          </NavLink>
+        )}
+        {session?.sections.includes('roles') && (
+          <NavLink to="/roles" end>
+            Roles y permisos
+          </NavLink>
+        )}
+      </nav>
       {roles ? (
-        <div className="space-y-3">
+        <div className="record-list">
           {data.neo_roles.map((role) => (
             <Panel key={role.id}>
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -91,7 +106,7 @@ export default function Access({ roles = false }: { roles?: boolean }) {
           ))}
         </div>
       ) : data.neo_usuarios.length ? (
-        <div className="space-y-3">
+        <div className="record-list">
           {data.neo_usuarios.map((user) => (
             <Panel key={user.id}>
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -258,7 +273,7 @@ export default function Access({ roles = false }: { roles?: boolean }) {
         </Modal>
       )}
       {remove && (
-        <Confirm
+        <ConfirmDialog
           title={remove.kind === 'role' ? 'Eliminar rol' : 'Eliminar usuario'}
           description={`¿Eliminar ${remove.name}?`}
           onClose={() => setRemove(null)}

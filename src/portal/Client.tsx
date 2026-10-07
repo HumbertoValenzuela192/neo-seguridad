@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Field, Form, Notice, PageHeading, Panel, Values } from '../components/ui';
+import { Badge, Button, Field, Form, Notice, PageHeader, Panel, Values } from '../components/ui';
 import { InstallationFields } from '../components/InstallationFields';
 import { installationReady, installations, newInstallation, nowLabel, STATUS } from '../lib/domain';
 import type { Installation, ServiceRequest } from '../types';
@@ -42,7 +42,7 @@ export default function Client() {
   if (target)
     return (
       <>
-        <PageHeading
+        <PageHeader
           title={pending ? 'Completa los datos de tu instalación' : 'Datos de la instalación'}
           description="Los datos de contacto y ubicación quedan compartidos con NEO."
         />
@@ -63,7 +63,7 @@ export default function Client() {
     );
   return (
     <>
-      <PageHeading
+      <PageHeader
         title="Solicitudes de servicio"
         description={`Bienvenido, ${account.name || account.user}.`}
       />

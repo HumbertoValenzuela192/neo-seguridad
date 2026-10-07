@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { browserBackup, preserveBrowserData, recoverBeforeLoad } from './recovery';
+import {
+  browserBackup,
+  hasPendingRecovery,
+  preserveBrowserData,
+  recoverBeforeLoad,
+} from './recovery';
 test('browser-only data is archived asynchronously before canonical loading, without replacing storage methods', async () => {
   const original = JSON.stringify([
     { id: 'browser-only', user: 'fixture', installations: [{ id: 'old-id', name: 'North' }] },
@@ -52,6 +57,7 @@ test('browser-only data is archived asynchronously before canonical loading, wit
   };
   try {
     const backup = preserveBrowserData();
+    assert.equal(hasPendingRecovery(backup), true);
     assert.equal(local.setItem, native);
     await recoverBeforeLoad(
       {
@@ -70,6 +76,7 @@ test('browser-only data is archived asynchronously before canonical loading, wit
     );
     assert.equal(local.getItem('neo_cuentas_cliente'), original);
     assert.equal(local.getItem('neo_recovery_uploaded_20261006'), 'fixture-archive');
+    assert.equal(hasPendingRecovery(backup), false);
     assert.equal(
       browserBackup(local as Storage, 'https://fixture.invalid').archivedBrowserCopy?.values
         .neo_cuentas_cliente,

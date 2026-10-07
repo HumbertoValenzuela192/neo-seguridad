@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { Button, Field, Form, Notice, PageHeading, Panel } from '../components/ui';
+import { Button, Field, Form, Notice, PageHeader, Panel } from '../components/ui';
 import { errorMessage } from '../lib/api';
 import { clp, number, parseRange } from '../lib/domain';
 import type { Tier } from '../types';
@@ -28,7 +28,7 @@ function Prices() {
     perCamera = number(cameras) > 0 ? Math.round(suggested / number(cameras)) : 0;
   return (
     <>
-      <PageHeading
+      <PageHeader
         title="Precios por cámaras"
         description="Calcula costos y mantén los tramos de monitoreo e implementación."
       />
@@ -280,7 +280,7 @@ function Monthly() {
   ] as const;
   return (
     <>
-      <PageHeading
+      <PageHeader
         title="Cálculo mensual"
         description="Estima sueldos, integración e IVA de la operación."
       />

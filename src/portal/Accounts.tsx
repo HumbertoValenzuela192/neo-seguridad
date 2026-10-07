@@ -3,12 +3,12 @@ import { Plus } from 'lucide-react';
 import {
   Badge,
   Button,
-  Confirm,
+  ConfirmDialog,
   Empty,
   Field,
   Form,
   Modal,
-  PageHeading,
+  PageHeader,
   Panel,
   text,
 } from '../components/ui';
@@ -24,7 +24,7 @@ interface Source {
   email: string;
 }
 export default function Accounts() {
-  const { data, save, session } = useStore(),
+  const { data, save, session, refresh, loading } = useStore(),
     [query, setQuery] = useState(''),
     [editing, setEditing] = useState<{ account: Account | null; source?: Source } | null>(null),
     [remove, setRemove] = useState<Account | null>(null);
@@ -50,8 +50,10 @@ export default function Accounts() {
   );
   return (
     <>
-      <PageHeading
-        title="Cuentas del cliente"
+      <PageHeader
+        title="Cuentas de acceso"
+        onRefresh={refresh}
+        refreshing={loading}
         description="Gestiona accesos y revisa el estado de las instalaciones."
         actions={
           <Button onClick={() => setEditing({ account: null })}>
@@ -89,7 +91,7 @@ export default function Accounts() {
         </Panel>
       )}
       {accounts.length ? (
-        <div className="space-y-3">
+        <div className="record-list">
           {accounts.map((a) => {
             const ready = installations(a).some(installationReady);
             return (
@@ -216,7 +218,7 @@ export default function Accounts() {
         </Modal>
       )}
       {remove && (
-        <Confirm
+        <ConfirmDialog
           title="Eliminar cuenta"
           description={`Se eliminará el acceso de ${remove.name || remove.user}. Sus fichas del directorio NEO se conservarán.`}
           onClose={() => setRemove(null)}

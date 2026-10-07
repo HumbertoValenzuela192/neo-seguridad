@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import '../styles/index.css';
+import './portal.css';
 import { legacyPortalPath, siteURL } from '../lib/routes';
 const legacy = legacyPortalPath(location.hash);
 if (legacy !== null) {

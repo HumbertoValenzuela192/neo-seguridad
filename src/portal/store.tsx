@@ -2,7 +2,12 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Session, StoreData, StoreKey } from '../types';
 import { APIError, errorMessage, request } from '../lib/api';
 import { DEFAULT_IMPL, DEFAULT_PRICES, DEFAULT_ROLES, DEFAULT_SALARY } from '../lib/domain';
-import { preserveBrowserData, recoverBeforeLoad, type BrowserBackup } from '../lib/recovery';
+import {
+  hasPendingRecovery,
+  preserveBrowserData,
+  recoverBeforeLoad,
+  type BrowserBackup,
+} from '../lib/recovery';
 
 const defaults: StoreData = {
   neo_solicitudes: [],
@@ -25,6 +30,7 @@ interface StoreContext {
   saving: boolean;
   message: string;
   error: string;
+  recoveryPending: boolean;
   login(username: string, password: string): Promise<void>;
   logout(): Promise<void>;
   refresh(): Promise<void>;
@@ -37,7 +43,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
     [message, setMessage] = useState(''),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [recoveryPending, setRecoveryPending] = useState(false);
   const versions = useRef<Partial<Record<StoreKey, string>>>({}),
     busy = useRef(false),
     backup = useRef<BrowserBackup | null>(null),
@@ -48,6 +55,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const me = await request<Session>('/auth/me');
       await recoverBeforeLoad(me, backup.current);
+      setRecoveryPending(hasPendingRecovery(backup.current));
       const raw = await request<
         Record<string, string> & { __versions: Partial<Record<StoreKey, string>> }
       >('/db');
@@ -91,6 +99,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     started.current = true;
     try {
       backup.current = preserveBrowserData();
+      setRecoveryPending(hasPendingRecovery(backup.current));
     } catch (e) {
       setError(
         'No se pudo leer el respaldo local. Expórtalo desde Recuperación antes de continuar. ' +
@@ -155,7 +164,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
   return (
     <Context.Provider
-      value={{ session, data, loading, saving, message, error, login, logout, refresh, save }}
+      value={{
+        session,
+        data,
+        loading,
+        saving,
+        message,
+        error,
+        recoveryPending,
+        login,
+        logout,
+        refresh,
+        save,
+      }}
     >
       {children}
     </Context.Provider>

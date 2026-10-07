@@ -72,8 +72,17 @@ Vista previa integrada: `PREVIEW_BASE=/preview/5176/`, `PORTAL_API_URL=http://12
 `src/public/Marketing.tsx`: conecta la página seleccionada con cabecera, pie y tema. No contiene el contenido de las páginas.
 `src/public/Effects.tsx`: efectos WebGL/Canvas.
 `src/portal/`: sesión, navegación y módulos de gestión.
+`src/portal/nav.ts`: definición única del menú (rutas, grupos, etiquetas, iconos, permisos y accesos móviles).
+`src/portal/components/`: `AppShell`, `Sidebar`, `MobileNav` y `SettingsDialog`. Barra de escritorio siempre expandida; cabecera y pie fijos, menú y contenido con scroll independiente.
+`src/portal/portal.css`: disposición y densidad exclusivas del panel administrativo; no redefine la paleta compartida ni estilos públicos.
 `src/components/`: controles accesibles, marca, contactos y ubicación.
 `src/lib/`: API, cálculos y compatibilidad de datos.
 `src/styles/index.css`: tokens Tigrr/NEO y Tailwind.
 
 Ver `DESIGN.md` y `CLIENT-DIRECTORY.md`. Los cambios v2.1 se trabajan en la rama `v2.1`, basada en `neov01`; publicar esa rama no cambia por sí mismo la rama que despliega producción.
+
+## Organización administrativa
+
+Inicio prioriza indicadores compactos y agenda; el resumen del día permanece disponible como bloque desplegable secundario. Usuarios y Roles comparten navegación y pestañas, manteniendo permisos y URLs independientes. Respaldo vive en Configuración y conserva `/admin/recuperacion`, exportación sin sesión y avisos de recuperación pendiente.
+
+El editor del directorio agrupa General, Ubicación, Contactos y Guardias/supervisor en pestañas accesibles. Los campos mantienen su estado entre pestañas; las validaciones revelan el campo correspondiente y un conflicto conserva el borrador. Guardar/Cancelar permanecen visibles mientras el cuerpo del editor desplaza. `InstallationFields` mantiene su modo completo para el portal cliente y ofrece secciones para el editor administrativo.

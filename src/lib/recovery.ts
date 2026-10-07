@@ -8,6 +8,11 @@ export interface BrowserBackup {
 }
 const ARCHIVE = 'neo_local_recovery_20261006',
   UPLOADED = 'neo_recovery_uploaded_20261006';
+export function hasPendingRecovery(backup: BrowserBackup | null) {
+  return (
+    !!backup && !localStorage.getItem(UPLOADED) && !sessionStorage.getItem('neo_recovery_archived')
+  );
+}
 export function browserBackup(storage: Storage, origin: string): BrowserBackup {
   const values: Record<string, string> = {};
   for (let i = 0; i < storage.length; i++) {

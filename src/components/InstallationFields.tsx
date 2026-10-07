@@ -251,10 +251,12 @@ export function InstallationFields({
   value,
   onChange,
   readOnlyLocation = false,
+  section = 'all',
 }: {
   value: Installation;
   onChange: (value: Installation) => void;
   readOnlyLocation?: boolean;
+  section?: 'all' | 'general' | 'location' | 'contacts' | 'guards';
 }) {
   const [active, setActive] = useState(0);
   const addresses = value.addresses.length
@@ -264,91 +266,101 @@ export function InstallationFields({
     onChange({ ...value, addresses: addresses.map((a, i) => (i === index ? address : a)) });
   return (
     <>
-      <Field label="Nombre de la instalación">
-        <input
-          value={value.name}
-          required
-          readOnly={readOnlyLocation}
-          onChange={(e) => onChange({ ...value, name: e.target.value })}
-        />
-      </Field>
-      <section className="space-y-4">
-        <h3 className="text-base">Direcciones de ingreso</h3>
-        {addresses.map((address, i) => (
-          <div key={i} className="flex items-end gap-2">
-            <Field label={`Dirección ${i + 1}`} className="flex-1">
-              <input
-                readOnly={readOnlyLocation}
-                value={address.address}
-                onChange={(e) =>
-                  updateAddress(i, { address: e.target.value, lat: null, lng: null })
+      {(section === 'all' || section === 'general') && (
+        <Field label="Nombre de la instalación">
+          <input
+            value={value.name}
+            required
+            readOnly={readOnlyLocation}
+            onChange={(e) => onChange({ ...value, name: e.target.value })}
+          />
+        </Field>
+      )}
+      {(section === 'all' || section === 'location') && (
+        <section className="space-y-4">
+          <h3 className="text-base">Direcciones de ingreso</h3>
+          {addresses.map((address, i) => (
+            <div key={i} className="flex items-end gap-2">
+              <Field label={`Dirección ${i + 1}`} className="flex-1">
+                <input
+                  readOnly={readOnlyLocation}
+                  value={address.address}
+                  onChange={(e) =>
+                    updateAddress(i, { address: e.target.value, lat: null, lng: null })
+                  }
+                />
+              </Field>
+              {!readOnlyLocation && (
+                <>
+                  <Button
+                    variant="secondary"
+                    aria-label={`Ubicar dirección ${i + 1}`}
+                    onClick={() => setActive(i)}
+                  >
+                    <MapPin size={17} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={addresses.length === 1}
+                    aria-label={`Quitar dirección ${i + 1}`}
+                    onClick={() => {
+                      onChange({ ...value, addresses: addresses.filter((_, j) => j !== i) });
+                      setActive(0);
+                    }}
+                  >
+                    <Trash2 size={17} />
+                  </Button>
+                </>
+              )}
+            </div>
+          ))}
+          {!readOnlyLocation && (
+            <>
+              <AddButton
+                onClick={() => {
+                  onChange({
+                    ...value,
+                    addresses: [...addresses, { address: '', lat: null, lng: null }],
+                  });
+                  setActive(addresses.length);
+                }}
+              >
+                Agregar dirección
+              </AddButton>
+              <p className="text-sm text-muted">
+                Ubicación de la dirección {Math.min(active, addresses.length - 1) + 1}
+              </p>
+              <LocationMap
+                value={addresses[Math.min(active, addresses.length - 1)]}
+                onChange={(address) =>
+                  updateAddress(Math.min(active, addresses.length - 1), address)
                 }
               />
-            </Field>
-            {!readOnlyLocation && (
-              <>
-                <Button
-                  variant="secondary"
-                  aria-label={`Ubicar dirección ${i + 1}`}
-                  onClick={() => setActive(i)}
-                >
-                  <MapPin size={17} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={addresses.length === 1}
-                  aria-label={`Quitar dirección ${i + 1}`}
-                  onClick={() => {
-                    onChange({ ...value, addresses: addresses.filter((_, j) => j !== i) });
-                    setActive(0);
-                  }}
-                >
-                  <Trash2 size={17} />
-                </Button>
-              </>
-            )}
-          </div>
-        ))}
-        {!readOnlyLocation && (
-          <>
-            <AddButton
-              onClick={() => {
-                onChange({
-                  ...value,
-                  addresses: [...addresses, { address: '', lat: null, lng: null }],
-                });
-                setActive(addresses.length);
-              }}
-            >
-              Agregar dirección
-            </AddButton>
-            <p className="text-sm text-muted">
-              Ubicación de la dirección {Math.min(active, addresses.length - 1) + 1}
-            </p>
-            <LocationMap
-              value={addresses[Math.min(active, addresses.length - 1)]}
-              onChange={(address) => updateAddress(Math.min(active, addresses.length - 1), address)}
-            />
-          </>
-        )}
-      </section>
-      <Field label="¿Contiene guardia?">
-        <select
-          value={value.hasGuard}
-          onChange={(e) => onChange({ ...value, hasGuard: e.target.value })}
-        >
-          <option value="">Selecciona una opción</option>
-          <option value="si">Sí</option>
-          <option value="no">No</option>
-        </select>
-      </Field>
-      <ContactsEditor
-        title="Orden de llamado en caso de intrusión"
-        value={value.callOrder}
-        ordered
-        onChange={(callOrder) => onChange({ ...value, callOrder })}
-      />
-      {value.hasGuard === 'si' && (
+            </>
+          )}
+        </section>
+      )}
+      {(section === 'all' || section === 'guards') && (
+        <Field label="¿Contiene guardia?">
+          <select
+            value={value.hasGuard}
+            onChange={(e) => onChange({ ...value, hasGuard: e.target.value })}
+          >
+            <option value="">Selecciona una opción</option>
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+          </select>
+        </Field>
+      )}
+      {(section === 'all' || section === 'contacts') && (
+        <ContactsEditor
+          title="Orden de llamado en caso de intrusión"
+          value={value.callOrder}
+          ordered
+          onChange={(callOrder) => onChange({ ...value, callOrder })}
+        />
+      )}
+      {(section === 'all' || section === 'guards') && value.hasGuard === 'si' && (
         <>
           <ContactsEditor
             title="Guardias de la instalación"

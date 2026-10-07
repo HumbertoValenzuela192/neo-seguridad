@@ -10,7 +10,8 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import { ArrowDown, ArrowUp, LoaderCircle, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, LoaderCircle, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { Link } from 'react-router';
 import { errorMessage } from '../lib/api';
 
 export function Button({
@@ -53,23 +54,70 @@ export function Field({
     </div>
   );
 }
-export function PageHeading({
+export function PageHeader({
   title,
   description,
   actions,
+  onRefresh,
+  refreshing = false,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
+  onRefresh?: () => Promise<void>;
+  refreshing?: boolean;
 }) {
+  const [busy, setBusy] = useState(false);
   return (
     <div className="page-heading">
       <div>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {(actions || onRefresh) && (
+        <div className="page-header-actions flex flex-wrap gap-2">
+          {actions}
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              disabled={busy || refreshing}
+              aria-label="Actualizar datos de esta página"
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await onRefresh();
+                } catch {
+                  /* Page/store retains drafts and presents the error. */
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy || refreshing ? (
+                <LoaderCircle className="animate-spin" size={17} />
+              ) : (
+                <RefreshCw size={17} />
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+export function StatCard({ label, value, to }: { label: string; value: ReactNode; to?: string }) {
+  const content = (
+    <>
+      <strong className="stat-value">{value}</strong>
+      <span className="stat-label">{label}</span>
+    </>
+  );
+  return to ? (
+    <Link className="panel stat-card" to={to}>
+      {content}
+    </Link>
+  ) : (
+    <div className="panel stat-card">{content}</div>
   );
 }
 export function Panel({
@@ -119,10 +167,12 @@ export function Modal({
   title,
   children,
   onClose,
+  className = '',
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null),
     id = useId();
@@ -134,7 +184,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className="modal"
+      className={`modal ${className}`.trim()}
       aria-labelledby={id}
       onCancel={(e) => {
         e.preventDefault();
@@ -163,7 +213,7 @@ export function Modal({
     </dialog>
   );
 }
-export function Confirm({
+export function ConfirmDialog({
   title,
   description,
   onConfirm,
@@ -215,14 +265,25 @@ export function Form({
   onSave,
   label = 'Guardar cambios',
   cancel,
+  noValidate = false,
+  className = '',
+  scrollBody = false,
 }: {
   children: ReactNode;
   onSave: (form: HTMLFormElement) => Promise<void>;
   label?: string;
   cancel?: () => void;
+  noValidate?: boolean;
+  className?: string;
+  scrollBody?: boolean;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const fields = (
+    <fieldset disabled={busy} className="space-y-5">
+      {children}
+    </fieldset>
+  );
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -237,10 +298,8 @@ export function Form({
     }
   }
   return (
-    <form onSubmit={submit} className="space-y-5">
-      <fieldset disabled={busy} className="space-y-5">
-        {children}
-      </fieldset>
+    <form onSubmit={submit} className={`space-y-5 ${className}`.trim()} noValidate={noValidate}>
+      {scrollBody ? <div className="form-body">{fields}</div> : fields}
       {error && <Notice error>{error}</Notice>}
       <div className="dialog-actions">
         {cancel && (

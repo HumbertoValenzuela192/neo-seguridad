@@ -8,7 +8,7 @@ import {
   Form,
   Modal,
   Notice,
-  PageHeading,
+  PageHeader,
   Panel,
   Values,
 } from '../components/ui';
@@ -19,7 +19,7 @@ import { asset } from '../components/Brand';
 import { errorMessage } from '../lib/api';
 
 export default function Commercial({ requests = false }: { requests?: boolean }) {
-  const { data, save, saving } = useStore(),
+  const { data, save, saving, refresh, loading } = useStore(),
     [query, setQuery] = useState(''),
     [filter, setFilter] = useState('all'),
     [selected, setSelected] = useState<Lead | ServiceRequest | null>(null),
@@ -36,7 +36,9 @@ export default function Commercial({ requests = false }: { requests?: boolean })
     .reverse();
   return (
     <>
-      <PageHeading
+      <PageHeader
+        onRefresh={refresh}
+        refreshing={loading}
         title={requests ? 'Solicitudes de clientes' : 'Clientes potenciales'}
         description={
           requests
@@ -44,7 +46,7 @@ export default function Commercial({ requests = false }: { requests?: boolean })
             : 'Desde la primera evaluación hasta la creación de la cuenta.'
         }
       />
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="page-toolbar">
         <Field label="Buscar">
           <input
             type="search"
@@ -62,7 +64,7 @@ export default function Commercial({ requests = false }: { requests?: boolean })
         </div>
       </div>
       {items.length ? (
-        <div className="space-y-3">
+        <div className="record-list">
           {items.map((item) => (
             <Panel key={item.id}>
               <div className="flex flex-wrap items-center justify-between gap-4">

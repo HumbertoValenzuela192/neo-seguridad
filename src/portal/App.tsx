@@ -1,27 +1,12 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router';
-import {
-  Camera,
-  CalendarDays,
-  Check,
-  ClipboardList,
-  Contact,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  RefreshCw,
-  Shield,
-  Users,
-  Wallet,
-  X,
-} from 'lucide-react';
+import { lazy, Suspense, type ReactNode } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { Brand } from '../components/Brand';
-import { Button, Confirm, Field, Form, Loading, Notice, text } from '../components/ui';
-import { SECTIONS } from '../lib/domain';
+import { Button, Field, Form, Loading, Notice, text } from '../components/ui';
 import type { Section } from '../types';
-import { StoreProvider, useStore } from './store';
 import { sectionPath, siteURL } from '../lib/routes';
+import { StoreProvider, useStore } from './store';
+import { homePathFor } from './nav';
+import AppShell from './components/AppShell';
 
 const Dashboard = lazy(() => import('./Dashboard')),
   Commercial = lazy(() => import('./Commercial')),
@@ -32,36 +17,17 @@ const Dashboard = lazy(() => import('./Dashboard')),
   Client = lazy(() => import('./Client')),
   Directory = lazy(() => import('./Directory')),
   Recovery = lazy(() => import('./Recovery'));
-const icons = {
-  inicio: LayoutDashboard,
-  solicitudes: Contact,
-  clientes: ClipboardList,
-  cuentas: Users,
-  usuarios: Users,
-  roles: Shield,
-  precios: Camera,
-  mensual: Wallet,
-  sueldo: FileText,
-};
+
 function Guard({ section, children }: { section: Section; children: ReactNode }) {
   const { session } = useStore();
   return session?.sections.includes(section) ? (
     children
   ) : (
-    <Navigate
-      to={
-        session?.portal
-          ? '/portal-cliente'
-          : session?.sections[0]
-            ? sectionPath(session.sections[0])
-            : '/sin-acceso'
-      }
-      replace
-    />
+    <Navigate to={session ? homePathFor(session) : '/'} replace />
   );
 }
 function Login() {
-  const { login } = useStore();
+  const { login, recoveryPending } = useStore();
   return (
     <div className="login-shell">
       <aside className="login-intro">
@@ -84,6 +50,12 @@ function Login() {
         <div className="login-form">
           <h2>Iniciar sesión</h2>
           <p className="mb-8 text-sm text-muted">Ingresa con tu cuenta del portal.</p>
+          {recoveryPending && (
+            <Notice>
+              Hay una copia local pendiente de recuperar. Puedes respaldarla desde el enlace
+              inferior.
+            </Notice>
+          )}
           <Form
             label="Ingresar"
             onSave={(form) =>
@@ -108,65 +80,10 @@ function Login() {
     </div>
   );
 }
-function Shell() {
-  const sidebarRef = useRef<HTMLElement>(null);
-  const { session, loading, saving, error, message, refresh, logout } = useStore(),
-    [open, setOpen] = useState(false),
-    [confirmLogout, setConfirmLogout] = useState(false),
-    location = useLocation();
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement as HTMLElement | null,
-      sidebar = sidebarRef.current!,
-      overflow = document.body.style.overflow;
-    const controls = () =>
-      Array.from(sidebar.querySelectorAll<HTMLElement>('a[href],button:not(:disabled)'));
-    document.body.style.overflow = 'hidden';
-    controls()[0]?.focus();
-    const handle = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const items = controls(),
-        first = items[0],
-        last = items.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-    sidebar.addEventListener('keydown', handle);
-    return () => {
-      document.body.style.overflow = overflow;
-      sidebar.removeEventListener('keydown', handle);
-      previous?.focus();
-    };
-  }, [open]);
-  const fallback = session?.portal
-    ? '/portal-cliente'
-    : session?.sections[0]
-      ? sectionPath(session.sections[0])
-      : '/sin-acceso';
-  const label =
-    location.pathname === '/clientes'
-      ? 'Clientes compartidos con NEO'
-      : location.pathname === '/recuperacion'
-        ? 'Recuperación'
-        : location.pathname === '/portal-cliente'
-          ? 'Portal cliente'
-          : location.pathname === '/agenda'
-            ? 'Agenda'
-            : SECTIONS.find((s) => sectionPath(s.key) === location.pathname)?.label || 'Portal';
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.title = `${label} | NEO Seguridad`;
-  }, [location.pathname, label]);
-  if (location.pathname === '/recuperacion' && !session)
+function Portal() {
+  const { session, loading, error, refresh } = useStore(),
+    { pathname } = useLocation();
+  if (pathname === '/recuperacion' && !session)
     return (
       <div className="min-h-dvh p-5">
         <div className="mx-auto max-w-5xl">
@@ -197,262 +114,122 @@ function Shell() {
         <Login />
       </>
     );
+  const fallback = homePathFor(session);
   return (
-    <div className="portal-layout">
-      <a className="skip-link" href="#portal-main">
-        Saltar al contenido
-      </a>
-      {open && (
-        <button
-          className="fixed inset-0 z-40 bg-black/60 min-[901px]:hidden"
-          aria-label="Cerrar navegación"
-          onClick={() => setOpen(false)}
-        />
-      )}
-      <aside
-        ref={sidebarRef}
-        className={`portal-sidebar ${open ? 'mobile-open' : ''}`}
-        aria-label="Navegación del portal"
-      >
-        <div className="mb-5 flex items-center justify-between gap-2">
-          <Brand neo />
-          <Button
-            variant="ghost"
-            className="min-[901px]:hidden"
-            aria-label="Cerrar menú"
-            onClick={() => setOpen(false)}
-          >
-            <X size={20} />
-          </Button>
-        </div>
-        <nav>
-          {['Operación', 'Comercial', 'Finanzas', 'Administración'].map((group) => {
-            const links = SECTIONS.filter(
-              (s) => s.group === group && session.sections.includes(s.key),
-            );
-            return links.length > 0 ? (
-              <div key={group}>
-                <h2 className="nav-group">{group}</h2>
-                {links.map((s) => {
-                  const Icon = icons[s.key];
-                  return (
-                    <NavLink
-                      className="nav-item"
-                      to={sectionPath(s.key)}
-                      key={s.key}
-                      onClick={() => setOpen(false)}
-                    >
-                      <Icon size={18} />
-                      {s.label}
-                    </NavLink>
-                  );
-                })}
-                {group === 'Operación' && session.sections.includes('inicio') && (
-                  <NavLink className="nav-item" to="/agenda" onClick={() => setOpen(false)}>
-                    <CalendarDays size={18} />
-                    Agenda
-                  </NavLink>
-                )}
-                {group === 'Comercial' && session.sections.includes('cuentas') && (
-                  <NavLink className="nav-item" to="/clientes" onClick={() => setOpen(false)}>
-                    <Contact size={18} />
-                    Clientes compartidos
-                  </NavLink>
-                )}
-              </div>
-            ) : null;
-          })}
-          {session.portal && (
-            <NavLink className="nav-item" to="/portal-cliente" onClick={() => setOpen(false)}>
-              <ClipboardList size={18} />
-              Portal cliente
-            </NavLink>
-          )}
-          <h2 className="nav-group">Respaldo</h2>
-          <NavLink className="nav-item" to="/recuperacion" onClick={() => setOpen(false)}>
-            <Shield size={18} />
-            Datos del navegador
-          </NavLink>
-        </nav>
-        <div className="mt-auto border-t border-line pt-4">
-          <p className="mb-3 px-3 text-xs text-muted">{session.name}</p>
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={() => setConfirmLogout(true)}
-          >
-            <LogOut size={18} />
-            Cerrar sesión
-          </Button>
-          <a href={siteURL('/')} className="nav-item">
-            Volver al sitio
-          </a>
-        </div>
-      </aside>
-      <div className="min-w-0" inert={open}>
-        <header className="portal-topbar">
-          <div className="flex items-center gap-3">
-            <Button
-              className="min-[901px]:hidden"
-              variant="ghost"
-              aria-label="Abrir navegación"
-              aria-expanded={open}
-              onClick={() => setOpen(true)}
-            >
-              <Menu size={20} />
-            </Button>
-            <span className="text-sm text-muted">{label}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-1 text-xs text-muted sm:flex" role="status">
-              {message === 'Cambios guardados' && <Check size={15} />}
-              {saving ? 'Guardando…' : message}
-            </span>
-            <Button
-              variant="ghost"
-              aria-label="Actualizar datos del portal"
-              disabled={saving || loading}
-              onClick={() => void refresh().catch(() => {})}
-            >
-              <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
-            </Button>
-          </div>
-        </header>
-        <main id="portal-main" className="portal-content">
-          {error && (
-            <Notice error>
-              {error} Tus ediciones no se descartan. Si hay un conflicto, copia el borrador antes de
-              actualizar.
-            </Notice>
-          )}
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              <Route path="/" element={<Navigate replace to={fallback} />} />
-              <Route
-                path="/inicio"
-                element={
-                  <Guard section="inicio">
-                    <Dashboard />
-                  </Guard>
-                }
-              />
-              <Route
-                path={sectionPath('solicitudes')}
-                element={
-                  <Guard section="solicitudes">
-                    <Commercial key="leads" />
-                  </Guard>
-                }
-              />
-              <Route
-                path={sectionPath('clientes')}
-                element={
-                  <Guard section="clientes">
-                    <Commercial key="requests" requests />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/cuentas"
-                element={
-                  <Guard section="cuentas">
-                    <Accounts />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/usuarios"
-                element={
-                  <Guard section="usuarios">
-                    <Access key="users" />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/roles"
-                element={
-                  <Guard section="roles">
-                    <Access key="roles" roles />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/precios"
-                element={
-                  <Guard section="precios">
-                    <Finance />
-                  </Guard>
-                }
-              />
-              <Route
-                path={sectionPath('mensual')}
-                element={
-                  <Guard section="mensual">
-                    <Finance monthly />
-                  </Guard>
-                }
-              />
-              <Route
-                path={sectionPath('sueldo')}
-                element={
-                  <Guard section="sueldo">
-                    <Salary />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/clientes"
-                element={
-                  <Guard section="cuentas">
-                    <Directory />
-                  </Guard>
-                }
-              />
-              <Route
-                path="/agenda"
-                element={
-                  <Guard section="inicio">
-                    <Dashboard agendaOnly />
-                  </Guard>
-                }
-              />
-              <Route path="/recuperacion" element={<Recovery />} />
-              <Route
-                path="/portal-cliente"
-                element={session.portal ? <Client /> : <Navigate to={fallback} replace />}
-              />
-              <Route
-                path="/sin-acceso"
-                element={
-                  <Notice>
-                    Tu cuenta no tiene secciones asignadas. Contacta al administrador.
-                  </Notice>
-                }
-              />
-              <Route path="*" element={<Navigate to={fallback} replace />} />
-            </Routes>
-          </Suspense>
-        </main>
-      </div>
-      {confirmLogout && (
-        <Confirm
-          title="Cerrar sesión"
-          description="¿Quieres salir del portal? Guarda tus cambios antes de continuar."
-          onConfirm={async () => {
-            await logout();
-            setOpen(false);
-          }}
-          onClose={() => setConfirmLogout(false)}
-        />
-      )}
-    </div>
+    <AppShell>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/" element={<Navigate replace to={fallback} />} />
+          <Route
+            path="/inicio"
+            element={
+              <Guard section="inicio">
+                <Dashboard />
+              </Guard>
+            }
+          />
+          <Route
+            path={sectionPath('solicitudes')}
+            element={
+              <Guard section="solicitudes">
+                <Commercial key="leads" />
+              </Guard>
+            }
+          />
+          <Route
+            path={sectionPath('clientes')}
+            element={
+              <Guard section="clientes">
+                <Commercial key="requests" requests />
+              </Guard>
+            }
+          />
+          <Route
+            path="/cuentas"
+            element={
+              <Guard section="cuentas">
+                <Accounts />
+              </Guard>
+            }
+          />
+          <Route
+            path="/usuarios"
+            element={
+              <Guard section="usuarios">
+                <Access key="users" />
+              </Guard>
+            }
+          />
+          <Route
+            path="/roles"
+            element={
+              <Guard section="roles">
+                <Access key="roles" roles />
+              </Guard>
+            }
+          />
+          <Route
+            path="/precios"
+            element={
+              <Guard section="precios">
+                <Finance />
+              </Guard>
+            }
+          />
+          <Route
+            path={sectionPath('mensual')}
+            element={
+              <Guard section="mensual">
+                <Finance monthly />
+              </Guard>
+            }
+          />
+          <Route
+            path={sectionPath('sueldo')}
+            element={
+              <Guard section="sueldo">
+                <Salary />
+              </Guard>
+            }
+          />
+          <Route
+            path="/clientes"
+            element={
+              <Guard section="cuentas">
+                <Directory />
+              </Guard>
+            }
+          />
+          <Route
+            path="/agenda"
+            element={
+              <Guard section="inicio">
+                <Dashboard agendaOnly />
+              </Guard>
+            }
+          />
+          <Route path="/recuperacion" element={<Recovery />} />
+          <Route
+            path="/portal-cliente"
+            element={session.portal ? <Client /> : <Navigate to={fallback} replace />}
+          />
+          <Route
+            path="/sin-acceso"
+            element={
+              <Notice>Tu cuenta no tiene secciones asignadas. Contacta al administrador.</Notice>
+            }
+          />
+          <Route path="*" element={<Navigate to={fallback} replace />} />
+        </Routes>
+      </Suspense>
+    </AppShell>
   );
 }
 export default function App() {
   return (
     <StoreProvider>
       <BrowserRouter basename={siteURL('/admin')}>
-        <Shell />
+        <Portal />
       </BrowserRouter>
     </StoreProvider>
   );
