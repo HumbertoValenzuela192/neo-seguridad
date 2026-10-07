@@ -22,4 +22,4 @@ Este servicio no tiene dependencia `pg`, conexión PostgreSQL, `DATABASE_URL` ni
 
 Entorno: `PORT`, `PUBLIC_URL`, `PUBLIC_ALLOWED_ORIGINS`, `LEAD_SERVICE_URL`, `LEAD_SERVICE_TOKEN`. La web pública y el panel se construyen y despliegan por separado.
 
-Vista previa integrada: `PREVIEW_BASE=/preview/5178/`, servidor Vite en `:5178`; el build productivo utiliza `/`.
+Vista previa integrada: `PREVIEW_BASE=/preview/5180/`, servidor Vite en `:5180`; el build productivo utiliza `/`.
