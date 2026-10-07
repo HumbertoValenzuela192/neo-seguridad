@@ -62,14 +62,16 @@ export default function Accounts() {
           </Button>
         }
       />
-      <Field label="Buscar cuenta" className="mb-6 max-w-md">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nombre o usuario"
-        />
-      </Field>
+      <div className="page-toolbar">
+        <Field label="Buscar cuenta" className="max-w-md">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Nombre o usuario"
+          />
+        </Field>
+      </div>
       {sources.length > 0 && (
         <Panel title="Solicitudes atendidas sin cuenta" className="mb-6">
           <div className="divide-y divide-line">

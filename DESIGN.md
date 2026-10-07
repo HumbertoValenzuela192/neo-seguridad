@@ -17,6 +17,7 @@ Refinamiento de la identidad existente, no reemplazo de marca.
 - Fondo NEO (`#111514`), superficies (`#1a211e`, `#252e29`), verde (`#7fca91`) para acción/foco/selección.
 - Navegación agrupada en Operación, Comercial, Finanzas, Administración y Respaldo.
 - Barra lateral siempre expandida en escritorio (240px), marca y usuario arriba, menú con scroll propio y Configuración/sesión al pie. Respaldo se accede desde Configuración; una recuperación pendiente mantiene aviso directo.
+- Composición por paneles independientes: sidebar separada del borde de la ventana, cabeceras y filtros en contenedores propios, y tarjetas de indicadores/áreas de trabajo con aire entre bloques y radios comunes. Mantener la paleta actual; la sensación flotante viene de separación y bordes, no de glows ni de la paleta de la referencia.
 - Secciones bajo `/admin/...` con navegación History API, recarga directa y compatibilidad de URLs anteriores. Agenda también tiene una vista propia en `/admin/agenda`.
 - Listados resumidos, filtros claros, edición contextual y formulario amplio para instalaciones.
 - Patrón común `PageHeader → búsqueda/filtros → listado/detalle`. Crear/editar en diálogos cuando corresponde, acciones de filas consistentes y listados compactos; directorio en tabla de escritorio y tarjetas móviles.
