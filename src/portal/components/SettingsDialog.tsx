@@ -7,7 +7,7 @@ import { useStore } from '../store';
 export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const { session, recoveryPending } = useStore();
   return (
-    <Modal title="Configuración" onClose={onClose}>
+    <Modal title="Configuración" className="settings-dialog" onClose={onClose}>
       <p className="mb-5 text-sm text-muted">
         {session?.name} · Administra los respaldos de este navegador.
       </p>

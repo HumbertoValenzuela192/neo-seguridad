@@ -9,7 +9,7 @@ import MobileNav from './MobileNav';
 import SettingsDialog from './SettingsDialog';
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const { session, logout, error, recoveryPending } = useStore();
+  const { session, logout, error, recoveryPending, message, saving } = useStore();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false),
     [settings, setSettings] = useState(false),
@@ -119,6 +119,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <MobileNav onOpen={() => setOpen(true)} inert={open} />
+      {(saving || message) && (
+        <div className="portal-save-state" role="status" inert={open}>
+          {saving ? 'Guardando cambios…' : message}
+        </div>
+      )}
       {settings && <SettingsDialog onClose={() => setSettings(false)} />}{' '}
       {confirmLogout && (
         <ConfirmDialog

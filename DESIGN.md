@@ -14,10 +14,10 @@ Refinamiento de la identidad existente, no reemplazo de marca.
 
 ## Portal: operar
 
-- Fondo NEO (`#111514`), superficies (`#1a211e`, `#252e29`), verde (`#7fca91`) para acción/foco/selección.
+- Fondo negro (`#000000`), superficies verdes existentes (`#1a211e`, `#252e29`), verde (`#7fca91`) para acción/foco/selección. El fondo negro se aplica sólo al portal.
 - Navegación agrupada en Operación, Comercial, Finanzas, Administración y Respaldo.
-- Barra lateral siempre expandida en escritorio (240px), marca y usuario arriba, menú con scroll propio y Configuración/sesión al pie. Respaldo se accede desde Configuración; una recuperación pendiente mantiene aviso directo.
-- Composición por paneles independientes: sidebar separada del borde de la ventana, cabeceras y filtros en contenedores propios, y tarjetas de indicadores/áreas de trabajo con aire entre bloques y radios comunes. Mantener la paleta actual; la sensación flotante viene de separación y bordes, no de glows ni de la paleta de la referencia.
+- Barra lateral siempre expandida en escritorio (224px). Cabecera de 56px: logo de 32px y saludo en dos líneas ("Bienvenido," secundario y nombre del usuario). Menú con scroll propio; pie compacto sólo con iconos accesibles de Configuración y cierre de sesión. Volver al sitio y Respaldo se acceden desde Configuración; una recuperación pendiente mantiene aviso directo. La confirmación de guardado aparece sólo cuando hay una operación, fuera del pie.
+- Geometría alineada con la consola NEO: margen y separación del shell de 12px, paneles de 16px, títulos de página de 20px/600 y cuerpo de 14px. Cabeceras y filtros sobre el fondo negro sin tarjetas adicionales; las tarjetas de datos conservan el verde oscuro. Agenda con controles agrupados y estado vacío compacto. Sin glows ni sombras estructurales decorativas.
 - Secciones bajo `/admin/...` con navegación History API, recarga directa y compatibilidad de URLs anteriores. Agenda también tiene una vista propia en `/admin/agenda`.
 - Listados resumidos, filtros claros, edición contextual y formulario amplio para instalaciones.
 - Patrón común `PageHeader → búsqueda/filtros → listado/detalle`. Crear/editar en diálogos cuando corresponde, acciones de filas consistentes y listados compactos; directorio en tabla de escritorio y tarjetas móviles.
@@ -29,10 +29,10 @@ Refinamiento de la identidad existente, no reemplazo de marca.
 ## Sistema compartido
 
 - Geist Variable autohospedada. Cuerpo 14–16px, números tabulares, títulos con peso moderado.
-- Radios: 10px controles, 16px superficies, pastilla en CTA público y badges.
-- Controles de al menos 44px; inputs 46px y fuente 16px en móvil.
+- Radios: 10px controles, 15px superficies del portal (16px públicas), pastilla en CTA público y badges.
+- Portal de escritorio: controles compactos de 32–36px, navegación de 36px. En móvil o puntero táctil, objetivos de al menos 44px; inputs 46px y fuente 16px en móvil.
 - Tokens CSS expuestos a Tailwind con `@theme inline`. No duplicar estilos de controles en cada página.
-- La reorganización administrativa conserva todos los colores actuales (incluidos estados, bordes y botones); no usa la paleta de cctvgrr. Sus estilos viven bajo `.portal-admin` en `src/portal/portal.css`.
+- La reorganización administrativa conserva los colores actuales de paneles, estados, bordes y botones; la única sustitución cromática es el fondo general negro. Sus estilos viven en `src/portal/portal.css`, bajo `.portal-theme` y `.portal-admin`.
 - Formulario: labels asociados, hints como descripción, campos preservados ante error.
 - Diálogos nativos: foco, Escape, backdrop, título accesible. Menú móvil con foco contenido y retorno al disparador.
 - Imprimir sólo documento activo, con fondo blanco y paginado de liquidaciones.

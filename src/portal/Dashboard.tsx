@@ -111,13 +111,40 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
           </div>
         </>
       )}
-      <Panel>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <Panel className="agenda-panel">
+        <div className="agenda-toolbar">
           {!agendaOnly && (
-            <h2 className="flex items-center gap-2 text-lg">
-              <CalendarDays size={20} className="text-accent" />
+            <h2 className="agenda-title">
+              <CalendarDays size={16} className="text-accent" />
               Agenda
             </h2>
+          )}
+          <div className="agenda-period">
+            <Button variant="ghost" aria-label="Período anterior" onClick={() => shift(-1)}>
+              <ArrowLeft size={16} />
+            </Button>
+            <span className="agenda-period-label">
+              {date.toLocaleDateString(
+                'es-CL',
+                view === 'month'
+                  ? { month: 'long', year: 'numeric' }
+                  : { weekday: 'long', day: 'numeric', month: 'long' },
+              )}
+            </span>
+            <Button variant="ghost" aria-label="Período siguiente" onClick={() => shift(1)}>
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+          {view === 'day' && (
+            <Field label="Elegir fecha" className="agenda-date">
+              <input
+                type="date"
+                value={dateKey(date)}
+                onChange={(e) => {
+                  if (e.target.value) setDate(new Date(e.target.value + 'T12:00:00'));
+                }}
+              />
+            </Field>
           )}
           <div className="filters">
             {[
@@ -131,35 +158,8 @@ export default function Dashboard({ agendaOnly = false }: { agendaOnly?: boolean
             ))}
           </div>
         </div>
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <Button variant="ghost" aria-label="Período anterior" onClick={() => shift(-1)}>
-            <ArrowLeft size={18} />
-          </Button>
-          <div className="text-center text-sm capitalize">
-            {date.toLocaleDateString(
-              'es-CL',
-              view === 'month'
-                ? { month: 'long', year: 'numeric' }
-                : { weekday: 'long', day: 'numeric', month: 'long' },
-            )}
-          </div>
-          <Button variant="ghost" aria-label="Período siguiente" onClick={() => shift(1)}>
-            <ArrowRight size={18} />
-          </Button>
-        </div>
         {view === 'day' ? (
           <>
-            <div className="mb-5 flex flex-wrap items-end gap-3">
-              <Field label="Elegir fecha">
-                <input
-                  type="date"
-                  value={dateKey(date)}
-                  onChange={(e) => {
-                    if (e.target.value) setDate(new Date(e.target.value + 'T12:00:00'));
-                  }}
-                />
-              </Field>
-            </div>
             {tasks.length ? (
               <div className="divide-y divide-line">
                 {tasks.map((task, i) => (

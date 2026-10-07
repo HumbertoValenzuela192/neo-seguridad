@@ -82,16 +82,23 @@ Vista previa integrada: `PREVIEW_BASE=/preview/5176/`, `PORTAL_API_URL=http://12
 `src/public/Effects.tsx`: efectos WebGL/Canvas.
 `src/portal/`: sesión, navegación y módulos de gestión.
 `src/portal/nav.ts`: definición única del menú (rutas, grupos, etiquetas, iconos, permisos y accesos móviles).
-`src/portal/components/`: `AppShell`, `Sidebar`, `MobileNav` y `SettingsDialog`. Barra de escritorio siempre expandida; cabecera y pie fijos, menú y contenido con scroll independiente.
-`src/portal/portal.css`: disposición y densidad exclusivas del panel administrativo; no redefine la paleta compartida ni estilos públicos.
+`src/portal/components/`: `AppShell`, `Sidebar`, `MobileNav` y `SettingsDialog`. Barra de escritorio siempre expandida (224px), saludo en dos líneas junto al logo y pie sólo con iconos de Configuración y cierre de sesión. Menú y contenido con scroll independiente; guardado confirmado fuera del pie.
+`src/portal/portal.css`: disposición y densidad alineadas con la consola NEO. Fondo negro exclusivo del portal, superficies verdes originales y cabeceras/filtros sin tarjetas adicionales; no modifica los estilos públicos. Controles compactos en escritorio y objetivos táctiles de al menos 44px en móvil.
 `src/components/`: controles accesibles, marca, contactos y ubicación.
 `src/lib/`: API, cálculos y compatibilidad de datos.
 `src/styles/index.css`: tokens Tigrr/NEO y Tailwind.
 
-Ver `DESIGN.md` y `CLIENT-DIRECTORY.md`. Los cambios v2.1 se trabajan en la rama `v2.1`, basada en `neov01`; publicar esa rama no cambia por sí mismo la rama que despliega producción.
+Ver `DESIGN.md` y `CLIENT-DIRECTORY.md`. Los cambios se trabajan en la rama `v2.1`, basada en `neov01`. Dokploy despliega actualmente `v2.1` para la aplicación `neo-seguridad` (`JSc6kdyvD3ErPD80ikHcj`), con auto-deploy por push activo. Antes de lanzar un deploy manual, comprobar si el push ya creó uno para el mismo commit. El panel publicado se verifica en `https://administrativo.tigrrsecurity.cl/admin/inicio`.
 
 ## Organización administrativa
 
 Inicio prioriza indicadores compactos y agenda; el resumen del día permanece disponible como bloque desplegable secundario. Usuarios y Roles comparten navegación y pestañas, manteniendo permisos y URLs independientes. Respaldo vive en Configuración y conserva `/admin/recuperacion`, exportación sin sesión y avisos de recuperación pendiente.
 
 El editor del directorio agrupa General, Ubicación, Contactos y Guardias/supervisor en pestañas accesibles. Los campos mantienen su estado entre pestañas; las validaciones revelan el campo correspondiente y un conflicto conserva el borrador. Guardar/Cancelar permanecen visibles mientras el cuerpo del editor desplaza. `InstallationFields` mantiene su modo completo para el portal cliente y ofrece secciones para el editor administrativo.
+
+### Diseño aprobado — 2026-10-07
+
+- Fondo negro `#000000`, conservando superficies verdes `#1a211e` / `#252e29`, botones y estados existentes.
+- Sidebar expandida de 224px, saludo junto al logo y pie sólo con iconos accesibles; Configuración conserva Respaldo y el enlace al sitio. Los avisos de guardado se muestran fuera del pie.
+- Cabeceras y filtros sin contenedores adicionales, controles compactos en escritorio, agenda con controles agrupados y estado vacío reducido. En móvil se conservan menú, accesos inferiores y objetivos táctiles de 44px.
+- Validado con `npm run build`, las 10 pruebas de `npm test` contra PostgreSQL desechable, `git diff --check` y revisión visual a 1440px/390px. Se comprobaron las diez secciones administrativas, agenda día/semana/mes, Configuración, cancelación de logout, foco del menú móvil y editor de clientes sin desbordamientos. El detector visual no reportó hallazgos.

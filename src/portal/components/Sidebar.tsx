@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router';
 import { ClipboardList, LogOut, Settings, X } from 'lucide-react';
-import { Brand } from '../../components/Brand';
+import { asset } from '../../components/Brand';
 import { Button } from '../../components/ui';
 import { siteURL } from '../../lib/routes';
 import { NAV, canSee, navPath, type NavItem } from '../nav';
@@ -20,7 +20,7 @@ export default function Sidebar({
   onSettings: () => void;
   onLogout: () => void;
 }) {
-  const { session, message, saving, recoveryPending } = useStore();
+  const { session, recoveryPending } = useStore();
   const { pathname } = useLocation();
   if (!session) return null;
   const items = NAV.filter((item) => canSee(item, session));
@@ -39,20 +39,26 @@ export default function Sidebar({
       aria-label="Navegación del portal"
     >
       <div className="sidebar-header">
-        <div className="flex items-center justify-between gap-2">
-          <Brand neo />
-          <Button
-            variant="ghost"
-            className="min-[901px]:hidden"
-            aria-label="Cerrar menú"
-            onClick={onClose}
-          >
-            <X size={20} />
-          </Button>
-        </div>
+        <a
+          href={siteURL('/')}
+          className="sidebar-brand"
+          aria-label="NEO Seguridad · Volver al sitio"
+          title="NEO Seguridad"
+        >
+          <img src={asset('neo-globo-icon.png')} alt="" width="32" height="32" />
+        </a>
         <p className="sidebar-user">
-          Bienvenido, <strong>{session.name}</strong>
+          <span>Bienvenido,</span>
+          <strong title={session.name}>{session.name}</strong>
         </p>
+        <Button
+          variant="ghost"
+          className="sidebar-icon-action min-[901px]:hidden"
+          aria-label="Cerrar menú"
+          onClick={onClose}
+        >
+          <X size={18} />
+        </Button>
       </div>
       <nav className="sidebar-navigation">
         {[...new Set(items.map((item) => item.group))].map((group) => (
@@ -70,8 +76,9 @@ export default function Sidebar({
                   aria-current={item.paths?.includes(pathname) ? 'page' : undefined}
                   end
                   onClick={onClose}
+                  title={item.label}
                 >
-                  <item.icon size={18} />
+                  <item.icon size={16} />
                   <span className="truncate">{item.label}</span>
                 </NavLink>
               ))}
@@ -79,20 +86,27 @@ export default function Sidebar({
         ))}
       </nav>
       <div className="sidebar-footer">
-        <p className="sidebar-save-state" role="status">
-          {saving ? 'Guardando cambios…' : message || 'Sesión activa'}
-        </p>
-        <Button variant="ghost" className="w-full justify-start" onClick={onSettings}>
-          <Settings size={18} />
-          Configuración{recoveryPending && <span className="badge badge-warning">Pendiente</span>}
+        <Button
+          variant="ghost"
+          className="sidebar-icon-action"
+          onClick={onSettings}
+          aria-label={recoveryPending ? 'Configuración · Respaldo pendiente' : 'Configuración'}
+          title={recoveryPending ? 'Configuración · Respaldo pendiente' : 'Configuración'}
+          aria-haspopup="dialog"
+        >
+          <Settings size={16} />
+          {recoveryPending && <span className="sidebar-pending-dot" aria-hidden="true" />}
         </Button>
-        <Button variant="ghost" className="w-full justify-start" onClick={onLogout}>
-          <LogOut size={18} />
-          Cerrar sesión
+        <Button
+          variant="ghost"
+          className="sidebar-icon-action"
+          onClick={onLogout}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          aria-haspopup="dialog"
+        >
+          <LogOut size={16} />
         </Button>
-        <a href={siteURL('/')} className="nav-item">
-          Volver al sitio
-        </a>
       </div>
     </aside>
   );

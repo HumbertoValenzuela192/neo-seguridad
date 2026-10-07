@@ -11,5 +11,5 @@ if (legacy !== null) {
   });
   history.replaceState(null, '', destination.pathname + destination.search);
 }
-document.body.classList.add('theme-neo');
+document.body.classList.add('theme-neo', 'portal-theme');
 createRoot(document.getElementById('root')!).render(<App />);
