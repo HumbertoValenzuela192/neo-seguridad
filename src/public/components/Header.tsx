@@ -63,7 +63,7 @@ export default function Header({ page }: { page: PublicPage }) {
           </a>
           <button
             type="button"
-            className="button button-secondary lg:hidden"
+            className="button button-secondary size-11 shrink-0 rounded-full p-0 lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-navigation"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
