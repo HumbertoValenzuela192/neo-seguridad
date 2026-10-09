@@ -1,9 +1,31 @@
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { asset } from '../../components/Brand';
+import { Waves } from '../Effects';
+import NeoGlobe from '../NeoGlobe';
 import { siteURL } from '../../lib/routes';
 import { Checklist, Section } from '../components/Sections';
 
+declare global {
+  interface Window {
+    __heroManaged?: boolean;
+  }
+}
+
 export default function NeoPage() {
+  // Entrada coordinada del hero: todo espera a que el globo esté listo y aparece a la vez.
+  const [phase, setPhase] = useState<'hold' | 'go' | 'done'>('hold');
+  const release = useCallback(() => setPhase((p) => (p === 'hold' ? 'go' : p)), []);
+  useEffect(() => {
+    // Si el respaldo del <head> ya mostró el hero (JavaScript muy lento), no se vuelve a animar:
+    // ocultarlo para reanimarlo se vería como un parpadeo.
+    window.__heroManaged = true;
+    if (document.documentElement.classList.contains('hero-failsafe')) setPhase('done');
+  }, []);
+  useEffect(() => {
+    if (phase !== 'go') return;
+    const timer = window.setTimeout(() => setPhase('done'), 1600);
+    return () => clearTimeout(timer);
+  }, [phase]);
   const problems = [
     ['Demasiadas señales', 'Alertas sin relevancia compiten por la atención del operador.'],
     [
@@ -45,31 +67,23 @@ export default function NeoPage() {
   ];
   return (
     <>
-      <section className="public-hero">
-        <div className="site-container grid items-center gap-10 md:grid-cols-2">
+      <section className="public-hero neo-hero" data-hero={phase}>
+        <Waves />
+        <div className="site-container relative grid items-center gap-10 md:grid-cols-2">
           <div>
             <h1>Inteligencia para monitorear mejor.</h1>
             <p className="hero-description">
-              NEO transforma cámaras, analíticas y alertas en eventos accionables, concentrando la
-              atención donde realmente importa.
+              NEO transforma cámaras, analíticas y alertas en eventos accionables y concentra la
+              atención en lo que importa.
             </p>
-            <p className="mb-6 text-bright">NEO — menos ruido. Más control.</p>
+            <p className="hero-tagline mb-6 text-bright">NEO: menos ruido y más control.</p>
             <div className="flex flex-wrap gap-3">
               <a href={siteURL('/contacto')} className="button button-primary rounded-full">
                 Contáctanos
               </a>
-              <a href={siteURL('/')} className="button button-secondary rounded-full">
-                Volver a Tigrr Security
-              </a>
             </div>
           </div>
-          <img
-            src={asset('neo-globo.png')}
-            alt="Neo Software de Monitoreo"
-            width="480"
-            height="399"
-            className="hero-mark hero-mark-neo"
-          />
+          <NeoGlobe onSettled={release} />
         </div>
       </section>
       <main id="main" className="site-container">
@@ -135,7 +149,7 @@ export default function NeoPage() {
           </ol>
           <p className="mt-6 text-muted">
             Resultado: menos eventos sin valor llegan a la central. La capacidad operativa se
-            relaciona con la demanda real de gestión, no solo con el total de cámaras.
+            relaciona con la demanda de gestión y no sólo con el total de cámaras.
           </p>
         </Section>
         <Section title="NEO organiza el ciclo completo de atención">
@@ -180,7 +194,7 @@ export default function NeoPage() {
         </Section>
         <Section
           title="El filtrado efectivo reduce la demanda de atención humana"
-          description="NEO permite dimensionar la dotación según el trabajo que realmente llega al operador"
+          description="NEO permite dimensionar la dotación según el trabajo que llega al operador"
         >
           <div className="grid gap-5 md:grid-cols-2">
             <article className="glass-card">
@@ -290,7 +304,7 @@ export default function NeoPage() {
           </p>
         </Section>
         <Section
-          title="NEO — Cambia la forma de dimensionar una central"
+          title="NEO cambia la forma de dimensionar una central"
           description="La operación deja de organizarse solo alrededor de cámaras y se concentra en alertas efectivas que requieren criterio humano."
         >
           <p className="mb-7 text-muted">

@@ -20,7 +20,7 @@ test('public server has only commercial pages and forwards contact without sessi
  const html=await request('/');assert.equal(html.headers.get('cache-control'),'no-cache');assert.equal((await request('/',{headers:{'If-None-Match':html.headers.get('etag')}})).status,304);
  const asset=await request('/assets/public.js',{method:'HEAD'});assert.equal(asset.status,200);assert.match(asset.headers.get('content-type'),/javascript/);assert.match(asset.headers.get('cache-control'),/immutable/);
  for(const route of ['/admin','/admin/inicio','/admin.html','/directory.html','/recover.html','/api/db','/api/auth/me','/api/directory/clients','/src/portal/App.tsx','/public-server.js','/routes.json','/pagina-inexistente'])assert.equal((await request(route,{headers:{Cookie:'portal_session=old-session'}})).status,404,route);
- for(const [old,target]of Object.entries(routes.redirects)){const r=await request(old+'?test=1');assert.equal(r.status,308);assert.equal(r.headers.get('location'),target+'?test=1');}
+ for(const [old,target]of Object.entries(routes.redirects)){const r=await request(old+'?test=1');assert.equal(r.status,308);assert.equal(r.headers.get('location'),target.split('#')[0]+'?test=1'+(target.includes('#')?'#'+target.split('#')[1]:''));}
  const post=(body,origin='https://tigrrsecurity.cl')=>request('/api/leads',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Portal-Request':'1',Cookie:'portal_session=never-forward'},body:JSON.stringify(body)});
  assert.equal((await post({company:'Example',email:'qa@example.test'},'https://evil.invalid')).status,403);
  assert.equal((await post({})).status,400);assert.equal(deliveries.length,0);

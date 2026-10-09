@@ -10,6 +10,32 @@
     <meta name="theme-color" content="#140f16" />
     <title>Tigrr Security | Seguridad que se anticipa</title>
     <link rel="icon" href="./tigrr.png" />
+    <script>
+      // Portada: los elementos del hero esperan y aparecen todos a la vez en cuanto el efecto
+      // del logo está listo (clase hero-go). Si el efecto no puede arrancar, el logo estático
+      // se muestra como respaldo (fx-off) y la portada se libera igualmente. Con "reducir
+      // movimiento" no se retiene nada.
+      (function () {
+        try {
+          var d = document.documentElement;
+          if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          d.classList.add('hero-hold');
+          if ('WebGL2RenderingContext' in window) d.classList.add('fx');
+          setTimeout(function () {
+            // Si la página ya se hidrató, ella se encarga de liberar la portada.
+            if (window.__heroManaged) return;
+            if (
+              (!window.__heroGo && document.querySelector('.hero-visual')) ||
+              (!window.__metalReady && document.querySelector('.neo-globe'))
+            ) {
+              d.classList.add('fx-off');
+              d.classList.add('hero-go');
+              d.classList.add('hero-failsafe');
+            }
+          }, 3000);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="canonical" href="https://tigrrsecurity.cl/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Tigrr Security" />

@@ -1,7 +1,6 @@
 {
   "publicPages": [
     { "path": "/", "page": "home", "file": "index.html", "title": "Tigrr Security | Seguridad que se anticipa", "description": "Tecnología, inteligencia y monitoreo 24/7 para anticiparnos a los riesgos y proteger tu operación." },
-    { "path": "/soluciones", "page": "solutions", "file": "soluciones.html", "title": "Soluciones de seguridad | Tigrr Security", "description": "Monitoreo 24/7 o plataforma NEO para tu propia central. Dos soluciones, una inteligencia." },
     { "path": "/neo", "page": "neo", "file": "neo.html", "title": "NEO | Inteligencia para monitorear mejor", "description": "NEO transforma cámaras, analíticas y alertas en eventos accionables: menos ruido, más control y dotación medible." },
     { "path": "/central-24-7", "page": "central", "file": "central.html", "title": "Central de monitoreo 24/7 | Tigrr Security", "description": "Supervisión, verificación y respuesta humana permanente con protocolos definidos para cada operación." },
     { "path": "/contacto", "page": "contact", "file": "contacto.html", "title": "Solicita una evaluación | Tigrr Security", "description": "Cuéntanos qué necesitas proteger. Evaluamos tus riesgos, infraestructura y necesidades." }
@@ -9,7 +8,8 @@
   "redirects": {
     "/inicio": "/",
     "/index.html": "/",
+    "/soluciones": "/#soluciones",
     "/tigrr.html": "/neo"
   },
-  "legacyPublicHashes": { "#soluciones": "/soluciones", "#tigrr": "/neo", "#central": "/central-24-7", "#contacto": "/contacto" }
+  "legacyPublicHashes": { "#tigrr": "/neo", "#central": "/central-24-7", "#contacto": "/contacto" }
 }

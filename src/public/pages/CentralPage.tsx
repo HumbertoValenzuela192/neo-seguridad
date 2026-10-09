@@ -8,8 +8,8 @@ export default function CentralPage() {
       <section className="public-section">
         <h1 className="public-page-title">Central Tigrr Security 24/7: personas que responden.</h1>
         <p className="mt-6 text-lg text-muted">
-          No solo observamos cámaras. Analizamos eventos, verificamos amenazas y actuamos según
-          protocolos definidos para cada operación.
+          Analizamos eventos, verificamos amenazas y actuamos según protocolos definidos para cada
+          operación.
         </p>
       </section>
       <section className="grid gap-10 pb-12 md:grid-cols-2">
@@ -33,7 +33,7 @@ export default function CentralPage() {
       </section>
       <Section
         title="De alertas a decisiones."
-        description="De miles de alertas a las que realmente importan. NEO concentra la información, nuestro equipo aporta el criterio y juntos convertimos eventos en decisiones."
+        description="NEO concentra la información, nuestro equipo aporta el criterio y juntos convertimos las alertas en decisiones."
       >
         <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[

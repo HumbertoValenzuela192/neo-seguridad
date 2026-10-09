@@ -3,64 +3,40 @@ import { Menu, X } from 'lucide-react';
 import { Brand } from '../../components/Brand';
 import { siteURL, type PublicPage } from '../../lib/routes';
 
-function Country() {
-  const [country, setCountry] = useState<{ name: string; code: string } | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    void (async () => {
-      for (const url of [
-        'https://ipwho.is/',
-        'https://get.geojs.io/v1/ip/country.json',
-        'https://api.country.is/',
-      ]) {
-        try {
-          const response = await fetch(url, { signal: controller.signal });
-          const d = await response.json();
-          const code = d.country_code || d.country;
-          if (response.ok && d.success !== false && /^[a-z]{2}$/i.test(code)) {
-            setCountry({ name: d.name || d.country || code, code });
-            return;
-          }
-        } catch {
-          if (controller.signal.aborted) return;
-        }
-      }
-    })();
-    return () => controller.abort();
-  }, []);
-  return country ? (
-    <span className="hidden items-center gap-2 text-xs text-muted xl:flex">
-      <img
-        src={`https://flagcdn.com/w20/${country.code.toLowerCase()}.png`}
-        alt=""
-        width="20"
-        height="15"
-      />
-      {country.name}
-    </span>
-  ) : null;
-}
-
 export default function Header({ page }: { page: PublicPage }) {
   const neo = page === 'neo';
   const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [page]);
+  // "Soluciones" es una sección de Inicio: se resalta mientras esa sección está a la vista.
+  const [inSolutions, setInSolutions] = useState(false);
+  useEffect(() => {
+    setInSolutions(false);
+    if (page !== 'home') return;
+    const section = document.getElementById('soluciones');
+    if (!section || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(([entry]) => setInSolutions(entry.isIntersecting), {
+      rootMargin: '-40% 0px -50% 0px',
+    });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [page]);
   const links = [
     ['/', 'Inicio'],
-    ['/soluciones', 'Soluciones'],
+    ['/#soluciones', 'Soluciones'],
     ['/neo', 'NEO'],
     ['/central-24-7', 'Central 24/7'],
-    ['/contacto', 'Contacto'],
   ];
   const active = {
-    home: '/',
-    solutions: '/soluciones',
+    home: inSolutions ? '/#soluciones' : '/',
     neo: '/neo',
     central: '/central-24-7',
     contact: '/contacto',
   }[page];
+  const current = (href: string) =>
+    active === href ? (href === '/#soluciones' ? 'location' : 'page') : undefined;
   return (
     <header className="site-header">
-      <div className="site-container flex min-h-18 items-center justify-between gap-4">
+      <div className="site-container flex min-h-16 items-center justify-between gap-4">
         <Brand neo={neo} />
         <div className="flex items-center gap-3">
           <nav
@@ -71,16 +47,19 @@ export default function Header({ page }: { page: PublicPage }) {
               <a
                 key={href}
                 href={siteURL(href)}
-                aria-current={active === href ? 'page' : undefined}
+                aria-current={current(href)}
                 className={active === href ? 'text-bright' : 'hover:text-bright'}
               >
                 {label}
               </a>
             ))}
           </nav>
-          <Country />
-          <a className="button button-primary rounded-full" href={siteURL('/contacto')}>
-            {neo ? 'Contáctanos' : 'Evaluación'}
+          <a
+            className="button button-primary rounded-full"
+            href={siteURL('/contacto')}
+            aria-current={page === 'contact' ? 'page' : undefined}
+          >
+            Contáctanos
           </a>
           <button
             type="button"
@@ -105,7 +84,7 @@ export default function Header({ page }: { page: PublicPage }) {
               className="rounded-lg px-3 py-3 text-sm hover:bg-raised"
               key={href}
               href={siteURL(href)}
-              aria-current={active === href ? 'page' : undefined}
+              aria-current={current(href)}
               onClick={() => setOpen(false)}
             >
               {label}

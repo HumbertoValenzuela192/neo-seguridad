@@ -1,7 +1,17 @@
-import { ArrowRight, Camera, ListFilter, Search, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  Camera,
+  Headset,
+  ListFilter,
+  Radar,
+  Search,
+  ShieldCheck,
+} from 'lucide-react';
 import { asset } from '../../components/Brand';
 import { siteURL } from '../../lib/routes';
 import { Matrix, Waves } from '../Effects';
+import HeroElectric from '../HeroElectric';
 import { Checklist, Section } from '../components/Sections';
 
 export default function HomePage() {
@@ -20,15 +30,18 @@ export default function HomePage() {
               Solicita una evaluación <ArrowRight size={18} />
             </a>
           </div>
-          <div className="flex justify-center md:justify-end">
+          <div className="hero-visual">
+            <span className="hero-ring" aria-hidden="true" />
+            <span className="hero-ring hero-ring-2" aria-hidden="true" />
             <img
               className="hero-mark"
-              src={asset('tigrr.png')}
+              src={asset('tigrr-dark.svg')}
               alt="Tigrr Security"
               width="380"
               height="380"
               fetchPriority="high"
             />
+            <HeroElectric />
           </div>
         </div>
       </section>
@@ -36,42 +49,53 @@ export default function HomePage() {
         <Section
           id="arquitectura"
           title="Una marca, tres capas."
-          description="La seguridad tradicional reacciona. NEO se anticipa: la tecnología detecta, NEO prioriza y Tigrr Security responde."
+          description="La tecnología detecta, NEO prioriza y Tigrr Security responde."
         >
           <div className="grid gap-4 md:grid-cols-3">
             {[
               [
+                Building2,
                 'Empresa',
                 'Tigrr Security',
                 'Empresa y marca principal. Seguridad que se anticipa.',
               ],
               [
+                Radar,
                 'Plataforma',
                 'NEO',
                 'Inteligencia para monitorear. Convierte cámaras, analíticas y alertas en eventos accionables.',
               ],
               [
+                Headset,
                 'Servicio',
                 'Central Tigrr Security 24/7',
                 'Supervisión, verificación y respuesta humana permanente.',
               ],
-            ].map(([tag, title, description]) => (
-              <article className="glass-card" key={tag}>
-                <Matrix />
-                <span className="text-sm text-bright">{tag}</span>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </article>
-            ))}
+            ].map(([Icon, tag, title, description], index) => {
+              const Component = Icon as typeof Building2;
+              return (
+                <article className="glass-card layer-card" key={tag as string}>
+                  <Matrix />
+                  <div className="layer-head">
+                    <span className="icon-chip">
+                      <Component size={22} />
+                    </span>
+                    <span className="layer-index" aria-hidden="true">
+                      0{index + 1}
+                    </span>
+                  </div>
+                  <span className="eyebrow">{tag as string}</span>
+                  <h3>{title as string}</h3>
+                  <p>{description as string}</p>
+                </article>
+              );
+            })}
           </div>
-          <p className="mt-7 text-sm text-muted">
-            La tecnología detecta. NEO prioriza. Tigrr Security responde.
-          </p>
         </Section>
         <Section
           id="soluciones"
           title="Dos soluciones, una inteligencia."
-          description="Implementa NEO en tu propia central de monitoreo o deja que Tigrr Security gestione completamente tu seguridad desde nuestra Central 24/7."
+          description="Implementa NEO en tu propia central de monitoreo o deja que Tigrr Security gestione tu seguridad desde nuestra Central 24/7."
         >
           <div className="grid gap-5 md:grid-cols-2">
             <article className="glass-card flex flex-col">
@@ -118,22 +142,21 @@ export default function HomePage() {
             </article>
           </div>
         </Section>
-        <section
-          id="tigrr"
-          className="public-section grid gap-10 border-t border-line md:grid-cols-2"
-        >
+        <section id="tigrr" className="public-section split-section">
           <div>
+            <span className="eyebrow">Plataforma</span>
             <h2>NEO: inteligencia para monitorear mejor.</h2>
             <p className="section-description">
-              NEO transforma cámaras, analíticas y alertas en eventos accionables, concentrando la
-              atención donde realmente importa.
+              NEO transforma cámaras, analíticas y alertas en eventos accionables y concentra la
+              atención en lo que importa.
             </p>
-            <p className="mb-6 text-bright">NEO — menos ruido. Más control.</p>
+            <p className="mb-6 font-semibold text-bright">NEO: menos ruido y más control.</p>
             <a href={siteURL('/neo')} className="button button-secondary rounded-full">
               Ver NEO en detalle <ArrowRight size={17} />
             </a>
           </div>
           <Checklist
+            className="check-panel"
             items={[
               'Centralización de eventos de seguridad.',
               'Gestión inteligente de alertas.',
@@ -146,19 +169,13 @@ export default function HomePage() {
             ]}
           />
         </section>
-        <section
-          id="central"
-          className="public-section grid gap-10 border-t border-line md:grid-cols-2"
-        >
+        <section id="central" className="public-section split-section split-reverse">
           <div>
+            <span className="eyebrow">Servicio</span>
             <h2>Central Tigrr Security 24/7: personas que responden.</h2>
             <p className="section-description">
-              No solo observamos cámaras. Analizamos eventos, verificamos amenazas y actuamos según
-              protocolos definidos para cada operación.
-            </p>
-            <p className="text-bright">
-              Una central convencional mira cámaras. Tigrr Security detecta, analiza, verifica y
-              responde.
+              Analizamos eventos, verificamos amenazas y actuamos según protocolos definidos para
+              cada operación.
             </p>
             <a
               href={siteURL('/central-24-7')}
@@ -168,6 +185,7 @@ export default function HomePage() {
             </a>
           </div>
           <Checklist
+            className="check-panel"
             items={[
               'Supervisión continua.',
               'Verificación y gestión de alertas.',
@@ -181,37 +199,40 @@ export default function HomePage() {
         <Section
           id="proceso"
           title="De alertas a decisiones."
-          description="De miles de alertas a las que realmente importan. NEO concentra la información, nuestro equipo aporta el criterio y juntos convertimos eventos en decisiones."
+          description="NEO concentra la información, nuestro equipo aporta el criterio y juntos convertimos las alertas en decisiones."
         >
-          <ol className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <ol className="steps">
             {[
-              [Camera, 'Detectamos'],
-              [ListFilter, 'Priorizamos'],
-              [Search, 'Verificamos'],
-              [ShieldCheck, 'Actuamos'],
-            ].map(([Icon, label], index) => {
+              [Camera, 'Detectamos', 'Cámaras y analíticas generan los eventos.'],
+              [ListFilter, 'Priorizamos', 'NEO concentra y ordena las alertas.'],
+              [Search, 'Verificamos', 'Nuestro equipo confirma qué ocurre.'],
+              [ShieldCheck, 'Actuamos', 'Se aplica el protocolo definido.'],
+            ].map(([Icon, label, text], index) => {
               const Component = Icon as typeof Camera;
               return (
-                <li key={index} className="flex items-center gap-3">
-                  <Component size={28} className="text-accent" />
-                  <strong className="text-sm">{label as string}</strong>
+                <li key={index} className="step">
+                  <span className="step-node">
+                    <Component size={22} />
+                  </span>
+                  <span className="step-number" aria-hidden="true">
+                    0{index + 1}
+                  </span>
+                  <strong>{label as string}</strong>
+                  <span>{text as string}</span>
                 </li>
               );
             })}
           </ol>
         </Section>
-        <section
-          id="contacto"
-          className="public-section grid gap-10 border-t border-line lg:grid-cols-2"
-        >
-          <div>
-            <h2>Cuéntanos qué necesitas proteger.</h2>
-            <p className="section-description">
-              Analizamos tu operación y te ayudamos a definir la solución adecuada para tus riesgos,
-              infraestructura y necesidades.
-            </p>
-          </div>
-          <div className="flex items-center">
+        <section id="contacto" className="public-section">
+          <div className="cta-panel">
+            <div>
+              <h2>Cuéntanos qué necesitas proteger.</h2>
+              <p className="section-description">
+                Analizamos tu operación y te ayudamos a definir la solución adecuada para tus
+                riesgos, infraestructura y necesidades.
+              </p>
+            </div>
             <a href={siteURL('/contacto')} className="button button-primary rounded-full px-6">
               Solicita una evaluación <ArrowRight size={18} />
             </a>

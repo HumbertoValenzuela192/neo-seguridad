@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const routes = require('./routes.json');
 const pages = new Map(routes.publicPages.map(page => [page.path, page.file]));
-const files = new Set(['tigrr.png', 'neo-globo.png', 'neo-globo-icon.png']);
+const files = new Set(['tigrr.png', 'tigrr-dark.svg', 'neo-globo.png', 'neo-globo-icon.png', 'neo-globo-metal.svg']);
 const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2'};
 const fail = (status, message) => Object.assign(new Error(message), {status});
 function send(res, status, value) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(JSON.stringify(value)); }
@@ -34,7 +34,7 @@ function createPublicServer({root=path.join(__dirname,'dist'),publicURL='',allow
    if(!['GET','HEAD'].includes(req.method)||url.pathname.startsWith('/api/'))throw fail(404,'Ruta no encontrada.');
    const normalized=url.pathname.length>1?url.pathname.replace(/\/+$/,''):url.pathname;
    const redirect=routes.redirects[url.pathname]||(normalized!==url.pathname&&pages.has(normalized)?normalized:null);
-   if(redirect){res.writeHead(308,{Location:redirect+url.search,'Cache-Control':'no-cache'});res.end();return;}
+   if(redirect){res.writeHead(308,{Location:redirect.split('#')[0]+url.search+(redirect.includes('#')?'#'+redirect.split('#')[1]:''),'Cache-Control':'no-cache'});res.end();return;}
    const rel=pages.get(url.pathname)||decodeURIComponent(url.pathname).slice(1);
    const asset=/^assets\/[a-zA-Z0-9_./-]+\.(js|css|png|jpg|jpeg|webp|svg|woff|woff2)$/.test(rel)&&!rel.includes('..');
    if(!pages.has(url.pathname)&&!files.has(rel)&&!asset)throw fail(404,'Ruta no encontrada.');

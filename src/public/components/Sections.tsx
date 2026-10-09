@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import { siteURL } from '../../lib/routes';
 
-export function Checklist({ items }: { items: string[] }) {
+export function Checklist({ items, className = '' }: { items: string[]; className?: string }) {
   return (
-    <ul className="check-list">
+    <ul className={`check-list ${className}`}>
       {items.map((item) => (
         <li key={item}>
           <Check size={17} />

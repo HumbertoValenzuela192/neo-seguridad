@@ -24,7 +24,10 @@ function routeMiddleware(preview = false) {
         ? normalized
         : null;
     if (redirect) {
-      res.writeHead(308, { Location: base + redirect.slice(1) + url.search });
+      const [target, hash] = redirect.split('#');
+      res.writeHead(308, {
+        Location: base + target.slice(1) + url.search + (hash ? '#' + hash : ''),
+      });
       res.end();
       return;
     }
@@ -32,11 +35,7 @@ function routeMiddleware(preview = false) {
     if (page)
       req.url =
         base +
-        (preview
-            ? page!.file
-            : page!.page === 'neo'
-              ? 'tigrr.html'
-              : 'index.html') +
+        (preview ? page!.file : page!.page === 'neo' ? 'tigrr.html' : 'index.html') +
         url.search;
     next();
   };
@@ -61,8 +60,10 @@ export default defineConfig({
       generateBundle() {
         for (const file of [
           'tigrr.png',
+          'tigrr-dark.svg',
           'neo-globo.png',
           'neo-globo-icon.png',
+          'neo-globo-metal.svg',
           'a2791a37-6fe2-413d-9f5a-526532134dcc.jpg',
         ]) {
           this.emitFile({
@@ -89,10 +90,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: Object.fromEntries(
-        ['index', 'tigrr'].map((name) => [
-          name,
-          resolve(root, `${name}.html`),
-        ]),
+        ['index', 'tigrr'].map((name) => [name, resolve(root, `${name}.html`)]),
       ),
     },
   },
