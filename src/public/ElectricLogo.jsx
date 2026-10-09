@@ -455,6 +455,7 @@ const ElectricLogo = ({
   cursorRadius = 100,
   theme = 'dark',
   onRender,
+  onError,
   className = '',
   style,
 }) => {
@@ -483,6 +484,7 @@ const ElectricLogo = ({
       cursorRadius,
       theme,
       onRender,
+      onError,
     };
   });
 
@@ -500,15 +502,24 @@ const ElectricLogo = ({
     const container = containerRef.current;
     if (!container) return undefined;
 
-    const renderer = new Renderer({
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
-      alpha: true,
-      premultipliedAlpha: true,
-      antialias: false,
-    });
+    const mobile = matchMedia('(hover: none), (pointer: coarse)').matches;
+    let renderer;
+    try {
+      renderer = new Renderer({
+        dpr: Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 2),
+        alpha: true,
+        premultipliedAlpha: true,
+        antialias: false,
+        powerPreference: 'low-power',
+      });
+    } catch {
+      settingsRef.current?.onError?.();
+      return;
+    }
     const gl = renderer.gl;
     if (!renderer.isWebgl2) {
       gl.getExtension('WEBGL_lose_context')?.loseContext();
+      settingsRef.current?.onError?.();
       return undefined;
     }
     gl.clearColor(0, 0, 0, 0);
@@ -612,6 +623,7 @@ const ElectricLogo = ({
     let raf = 0;
     let last = performance.now();
     let visible = true;
+    let announced = false;
 
     const load = (slot, next) => {
       slot.shape = next;
@@ -643,7 +655,7 @@ const ElectricLogo = ({
       height = Math.max(1, container.clientHeight);
       renderer.dpr = Math.min(
         window.devicePixelRatio || 1,
-        2,
+        mobile ? 1.25 : 2,
         Math.sqrt(PIXEL_BUDGET / (width * height)),
       );
       renderer.setSize(width, height);
@@ -652,6 +664,11 @@ const ElectricLogo = ({
 
     const frame = (now) => {
       raf = 0;
+      if (!visible || document.hidden || gl.isContextLost()) return;
+      if (now - last < 1000 / (mobile ? 30 : 60)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const s = settingsRef.current;
       const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
       last = now;
@@ -799,25 +816,43 @@ const ElectricLogo = ({
         uniforms.uFill.value = s.fill;
         uniforms.uInk.value = ink;
         renderer.render({ scene: mesh });
-        s.onRender?.(canvas);
+        if (!announced) {
+          announced = true;
+          s.onRender?.(canvas);
+        }
       }
 
       if (visible) raf = requestAnimationFrame(frame);
     };
 
     const start = () => {
-      if (raf || !visible) return;
+      if (raf || !visible || document.hidden || gl.isContextLost()) return;
       last = performance.now();
       raf = requestAnimationFrame(frame);
     };
 
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+    const sync = () => {
+      if (!visible || document.hidden) stop();
+      else start();
+    };
+    const lost = () => {
+      stop();
+      settingsRef.current?.onError?.();
+    };
+
     const onMove = (e) => {
+      if (e.pointerType === 'touch') return;
       const rect = container.getBoundingClientRect();
       pointer.x = e.clientX - rect.left;
       pointer.y = e.clientY - rect.top;
       pointer.over = true;
     };
     const onDown = (e) => {
+      if (e.pointerType === 'touch') return;
       onMove(e);
       if (!settingsRef.current?.interactive || reducedMotion) return;
       pulses.push({ x: pointer.x, y: pointer.y, born: performance.now() });
@@ -827,8 +862,8 @@ const ElectricLogo = ({
     const onLeave = () => {
       pointer.over = false;
     };
-    container.addEventListener('pointermove', onMove);
-    container.addEventListener('pointerdown', onDown);
+    container.addEventListener('pointermove', onMove, { passive: true });
+    container.addEventListener('pointerdown', onDown, { passive: true });
     container.addEventListener('pointerleave', onLeave);
     container.addEventListener('pointercancel', onLeave);
 
@@ -836,16 +871,20 @@ const ElectricLogo = ({
     resizeObserver.observe(container);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      start();
+      sync();
     });
     intersectionObserver.observe(container);
+    document.addEventListener('visibilitychange', sync);
+    canvas.addEventListener('webglcontextlost', lost);
 
     resize();
     start();
 
     return () => {
       visible = false;
-      cancelAnimationFrame(raf);
+      stop();
+      document.removeEventListener('visibilitychange', sync);
+      canvas.removeEventListener('webglcontextlost', lost);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       container.removeEventListener('pointermove', onMove);

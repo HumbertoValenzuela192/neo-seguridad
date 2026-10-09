@@ -18,7 +18,7 @@
       (function () {
         try {
           var d = document.documentElement;
-          if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          if (matchMedia('(prefers-reduced-motion: reduce), (hover: none), (pointer: coarse)').matches) return;
           d.classList.add('hero-hold');
           if ('WebGL2RenderingContext' in window) d.classList.add('fx');
           setTimeout(function () {

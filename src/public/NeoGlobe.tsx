@@ -10,16 +10,12 @@ declare global {
 
 function supported() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-  try {
-    return !!document.createElement('canvas').getContext('webgl2');
-  } catch {
-    return false;
-  }
+  return typeof WebGL2RenderingContext !== 'undefined';
 }
 
 /**
  * Globo de NEO en metal líquido (MetallicPaint). Sin WebGL2, o si se pidió menos movimiento,
- * no se dibuja nada: el hero queda sólo con el texto. `onSettled` avisa cuando el globo está
+ * se conserva el globo estático. `onSettled` avisa cuando el globo está
  * listo o ya no se espera (para liberar la entrada del hero).
  */
 export default function NeoGlobe({ onSettled }: { onSettled?: () => void }) {
@@ -41,6 +37,14 @@ export default function NeoGlobe({ onSettled }: { onSettled?: () => void }) {
 
   return (
     <div className="neo-globe" role="img" aria-label="Globo NEO">
+      <img
+        className={`neo-globe-fallback${ready ? ' is-hidden' : ''}`}
+        src={asset('neo-globo-metal.svg')}
+        alt=""
+        width="420"
+        height="420"
+        aria-hidden="true"
+      />
       {on && (
         <div className={`neo-globe-metal${ready ? ' is-ready' : ''}`} aria-hidden="true">
           <MetallicPaint
@@ -66,6 +70,11 @@ export default function NeoGlobe({ onSettled }: { onSettled?: () => void }) {
             onReady={() => {
               window.__metalReady = true;
               setReady(true);
+              settled.current?.();
+            }}
+            onError={() => {
+              setOn(false);
+              setReady(false);
               settled.current?.();
             }}
           />

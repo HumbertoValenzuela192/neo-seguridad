@@ -38,7 +38,7 @@ function transition(update: () => void) {
   const start = (
     document as Document & { startViewTransition?: (cb: () => void) => unknown }
   ).startViewTransition?.bind(document);
-  if (start && !reduced()) start(update);
+  if (start && !reduced() && !matchMedia('(hover: none), (pointer: coarse)').matches) start(update);
   else update();
 }
 
@@ -46,11 +46,11 @@ function afterNavigate(hash: string, y: number | null) {
   if (hash) {
     const target = document.getElementById(decodeURIComponent(hash.slice(1)));
     if (target) {
-      target.scrollIntoView();
+      target.scrollIntoView({ behavior: 'instant' });
       return;
     }
   }
-  window.scrollTo(0, y ?? 0);
+  window.scrollTo({ top: y ?? 0, behavior: 'instant' });
   const main = document.getElementById('main');
   if (main) {
     main.setAttribute('tabindex', '-1');

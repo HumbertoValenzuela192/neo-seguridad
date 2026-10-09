@@ -1,22 +1,12 @@
 import { useEffect, useState } from 'react';
 import { asset } from '../components/Brand';
-import ElectricLogo, { prepareShape } from './ElectricLogo';
+import ElectricLogo from './ElectricLogo';
 
 const LOGO = asset('tigrr.png');
 
 function supported() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-  try {
-    return !!document.createElement('canvas').getContext('webgl2');
-  } catch {
-    return false;
-  }
-}
-
-// Al evaluarse el módulo (antes de hidratar la página) se carga el logo y se calcula su
-// silueta, de modo que el efecto pueda dibujarse en cuanto el hero esté montado.
-if (typeof window !== 'undefined' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  void prepareShape(LOGO);
+  return typeof WebGL2RenderingContext !== 'undefined';
 }
 
 declare global {
@@ -32,11 +22,17 @@ const root = () => document.documentElement;
 function release() {
   if (window.__heroGo) return;
   window.__heroGo = true;
+  if (matchMedia('(hover: none), (pointer: coarse)').matches) {
+    root().classList.add('hero-done');
+    return;
+  }
   root().classList.add('hero-go');
   window.setTimeout(() => root().classList.add('hero-done'), 1600);
 }
 const started = () => {
   window.__fxStarted = true;
+  root().classList.add('fx');
+  root().classList.remove('fx-off');
   release();
 };
 const fallback = () => {
@@ -78,6 +74,10 @@ export default function HeroElectric() {
         cursorRadius={110}
         interactive
         onRender={started}
+        onError={() => {
+          setOn(false);
+          fallback();
+        }}
       />
     </div>
   );

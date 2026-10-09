@@ -19,6 +19,8 @@ export default function NeoPage() {
     // Si el respaldo del <head> ya mostró el hero (JavaScript muy lento), no se vuelve a animar:
     // ocultarlo para reanimarlo se vería como un parpadeo.
     window.__heroManaged = true;
+    if (matchMedia('(prefers-reduced-motion: reduce), (hover: none), (pointer: coarse)').matches)
+      setPhase('done');
     if (document.documentElement.classList.contains('hero-failsafe')) setPhase('done');
   }, []);
   useEffect(() => {

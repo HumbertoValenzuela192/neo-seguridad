@@ -7,6 +7,16 @@ export default function Header({ page }: { page: PublicPage }) {
   const neo = page === 'neo';
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [page]);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      document.querySelector<HTMLButtonElement>('[aria-controls="mobile-navigation"]')?.focus();
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [open]);
   // "Soluciones" es una sección de Inicio: se resalta mientras esa sección está a la vista.
   const [inSolutions, setInSolutions] = useState(false);
   useEffect(() => {

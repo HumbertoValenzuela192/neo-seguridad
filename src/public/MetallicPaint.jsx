@@ -276,6 +276,7 @@ export default function MetallicPaint({
   contour = 0.2,
   tintColor = '#feb3ff',
   onReady,
+  onError,
 }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
@@ -290,6 +291,8 @@ export default function MetallicPaint({
   const mouseRef = useRef({ x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5 });
   const mouseAnimRef = useRef(mouseAnimation);
   const readyRef = useRef(onReady);
+  const errorRef = useRef(onError);
+  errorRef.current = onError;
 
   const [ready, setReady] = useState(false);
   const [textureReady, setTextureReady] = useState(false);
@@ -308,7 +311,7 @@ export default function MetallicPaint({
     const canvas = canvasRef.current;
     if (!canvas) return false;
 
-    const gl = canvas.getContext('webgl2', { antialias: true, alpha: true });
+    const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, powerPreference: 'low-power' });
     if (!gl) return false;
 
     const compile = (src, type) => {
@@ -395,19 +398,32 @@ export default function MetallicPaint({
   }, []);
 
   useEffect(() => {
-    if (!initGL()) return;
+    if (!initGL()) {
+      errorRef.current?.();
+      return;
+    }
 
     const canvas = canvasRef.current;
     const gl = glRef.current;
-    // Resolución interna acotada: el efecto es suave y no necesita 1000 px × dpr.
-    const side = Math.round(640 * Math.min(window.devicePixelRatio || 1, 2));
-    canvas.width = side;
-    canvas.height = side;
-    gl.viewport(0, 0, side, side);
+    const mobile = matchMedia('(hover: none), (pointer: coarse)').matches;
+    const resize = () => {
+      const side = Math.max(1, Math.round(canvas.clientWidth * Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 2)));
+      if (canvas.width === side && canvas.height === side) return;
+      canvas.width = side;
+      canvas.height = side;
+      gl.viewport(0, 0, side, side);
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+    const lost = () => errorRef.current?.();
+    canvas.addEventListener('webglcontextlost', lost);
 
     setReady(true);
 
     return () => {
+      observer.disconnect();
+      canvas.removeEventListener('webglcontextlost', lost);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (textureRef.current && glRef.current) {
         glRef.current.deleteTexture(textureRef.current);
@@ -424,11 +440,16 @@ export default function MetallicPaint({
     img.crossOrigin = 'anonymous';
     let cancelled = false;
     img.onload = async () => {
-      const imgData = await processImage(img);
-      if (cancelled) return;
-      uploadTexture(imgData);
-      setTextureReady(true);
+      try {
+        const imgData = await processImage(img);
+        if (cancelled) return;
+        uploadTexture(imgData);
+        setTextureReady(true);
+      } catch {
+        if (!cancelled) errorRef.current?.();
+      }
     };
+    img.onerror = () => { if (!cancelled) errorRef.current?.(); };
     img.src = imageSrc;
     return () => {
       cancelled = true;
@@ -493,6 +514,7 @@ export default function MetallicPaint({
     const mouse = mouseRef.current;
     let visible = true;
     let first = true;
+    const interval = 1000 / (matchMedia('(hover: none), (pointer: coarse)').matches ? 30 : 60);
 
     const handleMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -504,7 +526,12 @@ export default function MetallicPaint({
 
     const render = (time) => {
       rafRef.current = null;
-      const delta = time - lastTimeRef.current;
+      if (!visible || document.hidden || gl.isContextLost()) return;
+      if (time - lastTimeRef.current < interval) {
+        rafRef.current = requestAnimationFrame(render);
+        return;
+      }
+      const delta = Math.min(time - lastTimeRef.current, 100);
       lastTimeRef.current = time;
 
       if (mouseAnimRef.current) {
@@ -525,23 +552,33 @@ export default function MetallicPaint({
     };
 
     const start = () => {
-      if (rafRef.current || !visible) return;
+      if (rafRef.current || !visible || document.hidden || gl.isContextLost()) return;
       lastTimeRef.current = performance.now();
       rafRef.current = requestAnimationFrame(render);
+    };
+    const stop = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+    const sync = () => {
+      if (!visible || document.hidden) stop();
+      else start();
     };
 
     // Sin dibujar cuando el globo no se ve en pantalla.
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      start();
+      sync();
     });
     observer.observe(canvas);
+    document.addEventListener('visibilitychange', sync);
     start();
 
     return () => {
       visible = false;
       observer.disconnect();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      stop();
+      document.removeEventListener('visibilitychange', sync);
       canvas.removeEventListener('mousemove', handleMouseMove);
     };
   }, [ready, textureReady]);

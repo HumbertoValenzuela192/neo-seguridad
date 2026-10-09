@@ -77,27 +77,46 @@ export function Waves() {
       frame = 0,
       last = 0,
       elapsed = 0;
+    const interval = 1000 / (matchMedia('(hover: none), (pointer: coarse)').matches ? 20 : 30);
     const visibility = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
+      sync();
     });
     visibility.observe(host);
     const tick = (t: number) => {
+      frame = 0;
+      if (!visible || document.hidden || gl.isContextLost()) return;
       frame = requestAnimationFrame(tick);
-      if (t - last < 1000 / 30) return;
+      if (t - last < interval) return;
       const delta = Math.min((t - last) / 1000, 0.1);
       last = t;
-      if (!visible || document.hidden) return;
       elapsed += delta;
       gl.uniform1f(uTime, elapsed);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
-    frame = requestAnimationFrame(tick);
-    return () => {
+    const stop = () => {
       cancelAnimationFrame(frame);
+      frame = 0;
+    };
+    const sync = () => {
+      if (!visible || document.hidden || gl.isContextLost()) stop();
+      else if (!frame) {
+        last = performance.now();
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    document.addEventListener('visibilitychange', sync);
+    canvas.addEventListener('webglcontextlost', stop);
+    sync();
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', sync);
+      canvas.removeEventListener('webglcontextlost', stop);
       observer.disconnect();
       visibility.disconnect();
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
       canvas.remove();
     };
   }, []);
@@ -113,6 +132,7 @@ export function Matrix() {
     if (!ctx) return;
     let frame = 0,
       last = 0;
+    let visible = false;
     let drops: number[] = [];
     const resize = () => {
       canvas.width = parent.clientWidth;
@@ -135,21 +155,25 @@ export function Matrix() {
       });
     };
     const start = () => {
-        if (!frame) frame = requestAnimationFrame(tick);
+        if (!frame && visible && !document.hidden) frame = requestAnimationFrame(tick);
       },
       stop = () => {
         cancelAnimationFrame(frame);
         frame = 0;
       };
+    const sync = () => visible && !document.hidden ? start() : stop();
     // Corre mientras la tarjeta está a la vista, no sólo al pasar el mouse.
-    const visibility = new IntersectionObserver(([entry]) =>
-      entry.isIntersecting ? start() : stop(),
-    );
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sync();
+    });
     visibility.observe(parent);
+    document.addEventListener('visibilitychange', sync);
     const observer = new ResizeObserver(resize);
     observer.observe(parent);
     return () => {
       stop();
+      document.removeEventListener('visibilitychange', sync);
       visibility.disconnect();
       observer.disconnect();
     };

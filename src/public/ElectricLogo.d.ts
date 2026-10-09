@@ -22,6 +22,7 @@ export interface ElectricLogoProps {
   cursorRadius?: number;
   theme?: 'dark' | 'light';
   onRender?: (canvas: HTMLCanvasElement) => void;
+  onError?: () => void;
   className?: string;
   style?: CSSProperties;
 }

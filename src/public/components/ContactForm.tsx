@@ -39,19 +39,19 @@ export default function ContactForm() {
               <input name="company" autoComplete="organization" required />
             </Field>
             <Field label="RUT">
-              <input name="rut" placeholder="12.345.678-5" required />
+              <input name="rut" placeholder="12.345.678-5" autoCapitalize="characters" spellCheck={false} required />
             </Field>
             <Field label="Nombre del contacto">
               <input name="manager" autoComplete="name" required />
             </Field>
             <Field label="Correo corporativo">
-              <input name="email" type="email" autoComplete="email" required />
+              <input name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required />
             </Field>
             <Field label="Teléfono">
-              <input name="phone" type="tel" autoComplete="tel" required />
+              <input name="phone" type="tel" inputMode="tel" autoComplete="tel" required />
             </Field>
             <Field label="Cantidad de cámaras">
-              <input name="cameras" type="number" min="1" step="1" required />
+              <input name="cameras" type="number" inputMode="numeric" min="1" step="1" required />
             </Field>
           </div>
           <Field label="Solución">
@@ -69,7 +69,7 @@ export default function ContactForm() {
           </Field>
           {solution === 'NEO' && (
             <Field label="Cantidad de operadores">
-              <input name="operators" type="number" min="1" step="1" required />
+              <input name="operators" type="number" inputMode="numeric" min="1" step="1" required />
             </Field>
           )}
         </Form>

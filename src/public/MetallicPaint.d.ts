@@ -22,6 +22,7 @@ export interface MetallicPaintProps {
   tintColor?: string;
   /** Se llama una vez, tras dibujar el primer cuadro. */
   onReady?: () => void;
+  onError?: () => void;
 }
 declare const MetallicPaint: (props: MetallicPaintProps) => JSX.Element;
 export default MetallicPaint;
