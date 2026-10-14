@@ -3,8 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const routes = require('./routes.json');
 const pages = new Map(routes.publicPages.map(page => [page.path, page.file]));
-const files = new Set(['tigrr.png', 'tigrr-dark.svg', 'neo-globo.png', 'neo-globo-icon.png', 'neo-globo-metal.svg']);
-const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2'};
+const files = new Set(['tigrr.png', 'tigrr-dark.svg', 'neo-globo.png', 'neo-globo-icon.png', 'neo-globo-metal.svg', 'videoIniciodetodo.mp4']);
+const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2','.mp4':'video/mp4'};
 const fail = (status, message) => Object.assign(new Error(message), {status});
 function send(res, status, value) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(JSON.stringify(value)); }
 
