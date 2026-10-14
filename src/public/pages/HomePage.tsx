@@ -224,6 +224,17 @@ export default function HomePage() {
             })}
           </ol>
         </Section>
+        <Section id="video" title="Nuestra historia" description="Central receptora de alertas">
+          <video
+            className="w-full rounded-xl border border-line"
+            controls
+            playsInline
+            preload="metadata"
+            src={asset('videoIniciodetodo.mp4')}
+          >
+            Tu navegador no soporta el video.
+          </video>
+        </Section>
         <section id="contacto" className="public-section">
           <div className="cta-panel">
             <div>
